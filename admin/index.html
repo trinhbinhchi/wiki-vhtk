@@ -210,13 +210,6 @@ button,input,textarea,select{font:inherit}
   right:10px!important;
   opacity:.88;
 }
-</style><style id="v16-hero-style">
-.meta.meta-v16,.meta{
-  grid-template-columns:minmax(220px,1.2fr) minmax(320px,2fr) minmax(80px,.55fr) 90px 105px!important;
-}
-@media(max-width:1100px){
-  .meta.meta-v16,.meta{grid-template-columns:1fr 1fr!important}
-}
 </style></head>
 <body>
 <div class="login" id="loginView">
@@ -260,7 +253,7 @@ button,input,textarea,select{font:inherit}
 </div>
 <section class="hidden" id="articlePanel">
 <div class="meta">
-<div class="field"><label>Tên bài viết</label><input id="titleInput" type="text"/></div><div class="field hero-sub-field"><label>Dòng mô tả dưới tiêu đề</label><input id="heroSubtitleInput" type="text"/></div>
+<div class="field"><label>Tên bài viết</label><input id="titleInput" type="text"/></div>
 <div class="field"><label>Icon</label><input id="iconInput" type="text"/></div>
 <div class="field"><label>Thứ tự</label><input id="orderInput" min="1" type="number"/></div>
 <div class="field switch-field"><label>Hiển thị</label><input id="visibleInput" type="checkbox"/></div>
@@ -433,14 +426,6 @@ function ensurePublicEditMode(){
     }
   });
 
-  // Update hero/title area outside the editable body.
-  const heroTitle=sec.querySelector(".hero-title,.page-title,.article-title,h1");
-  if(heroTitle)heroTitle.textContent=currentData.title||heroTitle.textContent;
-
-  const heroSub=sec.querySelector(".hero-subtitle,.page-subtitle,.article-subtitle,.subtitle") ||
-    [...sec.querySelectorAll("p,div")].find(el=>/Biên soạn lại từ nội dung Võ Lâm 79/i.test(el.textContent||""));
-  if(heroSub)heroSub.textContent=currentData.hero_subtitle||"";
-
   const node=editablePublicNode();
   if(!node)return false;
 
@@ -571,7 +556,6 @@ function openArticle(name){
   $("#articlePanel").classList.remove("hidden");$("#settingsPanel").classList.add("hidden");
   $("#currentTitle").textContent=currentData.title||name;
   $("#titleInput").value=currentData.title||"";
-  $("#heroSubtitleInput").value=currentData.hero_subtitle||"Biên soạn lại từ nội dung Võ Lâm 79 • giao diện độc lập";
   $("#iconInput").value=currentData.icon||"";
   $("#orderInput").value=currentData.order||1;
   $("#visibleInput").checked=currentData.visible!==false;
@@ -591,7 +575,6 @@ function openArticle(name){
 function collectArticle(){
   if(!currentData)return null;
   currentData.title=$("#titleInput").value.trim();
-  currentData.hero_subtitle=$("#heroSubtitleInput").value.trim();
   currentData.icon=$("#iconInput").value.trim();
   currentData.order=Number($("#orderInput").value||1);
   currentData.visible=$("#visibleInput").checked;
@@ -603,12 +586,6 @@ function collectArticle(){
     const tmp=document.createElement("div");
     tmp.innerHTML=currentData.section_html||"";
     const body=tmp.querySelector(".article-content,.page-body,.content-body,.content,.article-body,.section-body");
-    const ht=tmp.querySelector(".hero-title,.page-title,.article-title,h1");
-    if(ht)ht.textContent=currentData.title||ht.textContent;
-    const hs=tmp.querySelector(".hero-subtitle,.page-subtitle,.article-subtitle,.subtitle") ||
-      [...tmp.querySelectorAll("p,div")].find(el=>/Biên soạn lại từ nội dung Võ Lâm 79/i.test(el.textContent||""));
-    if(hs)hs.textContent=currentData.hero_subtitle||"";
-
     if(body){
       body.innerHTML=edited;
       currentData.section_html=tmp.innerHTML;
@@ -767,23 +744,6 @@ async function uploadImage(){
 $("#loginBtn").onclick=login;$("#logoutBtn").onclick=logout;$("#reloadBtn").onclick=()=>loadArticles();
 $("#saveBtn").onclick=saveArticle;$("#settingsBtn").onclick=loadSettings;$("#saveSettingsBtn").onclick=saveSettings;
 $("#newArticleBtn").onclick=newArticle;$("#articleSearch").oninput=renderArticleList;
-$("#titleInput").addEventListener("input",()=>{
-  if(!currentData)return;
-  currentData.title=$("#titleInput").value;
-  const sec=selectedPublicSection();
-  const t=sec&&sec.querySelector(".hero-title,.page-title,.article-title,h1");
-  if(t)t.textContent=currentData.title;
-});
-$("#heroSubtitleInput").addEventListener("input",()=>{
-  if(!currentData)return;
-  currentData.hero_subtitle=$("#heroSubtitleInput").value;
-  const sec=selectedPublicSection();
-  if(sec){
-    const el=sec.querySelector(".hero-subtitle,.page-subtitle,.article-subtitle,.subtitle") ||
-      [...sec.querySelectorAll("p,div")].find(x=>/Biên soạn lại từ nội dung Võ Lâm 79/i.test(x.textContent||""));
-    if(el)el.textContent=currentData.hero_subtitle;
-  }
-});
 $("#sourceBtn").onclick=toggleSource;$("#linkBtn").onclick=addLink;$("#videoBtn").onclick=addVideo;$("#tableBtn").onclick=addTable;
 $("#imageBtn").onclick=openMedia;$("#closeMediaBtn").onclick=()=>$("#mediaModal").classList.add("hidden");$("#uploadBtn").onclick=uploadImage;
 document.querySelectorAll("[data-cmd]").forEach(b=>b.onmousedown=e=>e.preventDefault());
