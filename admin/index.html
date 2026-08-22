@@ -459,6 +459,10 @@ function loadPublicForEditing(){
 const $=s=>document.querySelector(s);
 const enc=s=>encodeURIComponent(s).replace(/%2F/g,"/");
 function b64EncodeUnicode(str){return btoa(unescape(encodeURIComponent(str)))}
+function safeJSONStringify(obj){
+  // Luôn dùng JSON.stringify chuẩn; tuyệt đối không tự nối chuỗi JSON.
+  return JSON.stringify(obj, null, 2);
+}
 function b64DecodeUnicode(str){return decodeURIComponent(escape(atob(str.replace(/\n/g,""))))}
 function setStatus(msg,type=""){const el=$("#status");el.textContent=msg;el.className="status "+type}
 function authHeaders(){return {"Authorization":"Bearer "+token,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"}}
@@ -569,7 +573,9 @@ async function saveArticle(){
   if(!currentFile)return;
   collectArticle();setStatus("Đang commit...");
   try{
-    const content=JSON.stringify(currentData,null,2);
+    const content=safeJSONStringify(currentData);
+    // Tự kiểm tra JSON trước khi gửi GitHub.
+    JSON.parse(content);
     const res=await api(`/repos/${OWNER}/${REPO}/contents/content/articles/${enc(currentFile)}`,{
       method:"PUT",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({
@@ -581,7 +587,11 @@ async function saveArticle(){
     const a=articles.find(x=>x.name===currentFile);if(a){a.sha=currentSha;a.data=structuredClone(currentData)}
     articles.sort((a,b)=>(a.data.order||999)-(b.data.order||999));renderArticleList();
     setStatus("Đã commit. GitHub Pages đang deploy...","ok");
-  }catch(e){setStatus("Lỗi lưu: "+e.message,"bad")}
+  }catch(e){if(String(e.message||"").includes("409")){
+      setStatus("Xung đột phiên bản (409). Bấm Tải lại rồi lưu lại.","bad");
+    }else{
+      setStatus("Lỗi lưu: "+e.message,"bad");
+    }}
 }
 
 async function loadSettings(){
@@ -606,7 +616,7 @@ async function saveSettings(){
   try{
     const res=await api(`/repos/${OWNER}/${REPO}/contents/content/settings.json`,{
       method:"PUT",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({message:"Update site settings",content:b64EncodeUnicode(JSON.stringify(d,null,2)),sha:settingsSha,branch:BRANCH})
+      body:JSON.stringify({message:"Update site settings",content:b64EncodeUnicode(safeJSONStringify(d)),sha:settingsSha,branch:BRANCH})
     });
     settingsSha=res.content.sha;setStatus("Đã commit cài đặt","ok");
   }catch(e){setStatus("Lỗi lưu: "+e.message,"bad")}
@@ -627,7 +637,7 @@ async function newArticle(){
     const data={title,icon:"✦",order:(articles.at(-1)?.data.order||0)+1,visible:true,section_id:"article-"+slugify(title),section_class:"article",section_html:`<div class="article-content"><h2>${title}</h2><p>Nội dung mới...</p></div>`};
     await api(`/repos/${OWNER}/${REPO}/contents/${enc(path)}`,{
       method:"PUT",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({message:`Create article: ${title}`,content:b64EncodeUnicode(JSON.stringify(data,null,2)),branch:BRANCH})
+      body:JSON.stringify({message:`Create article: ${title}`,content:b64EncodeUnicode(safeJSONStringify(data)),branch:BRANCH})
     });
     await loadArticles();openArticle(name);
   }catch(e){alert("Không tạo được bài: "+e.message)}

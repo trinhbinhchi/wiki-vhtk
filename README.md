@@ -1,13 +1,19 @@
-# CMS v19 — Cài đặt website hiển thị thật
+# CMS v20 — Safe JSON
 
-Các trường trong Admin -> Cài đặt website đã được nối ra Public:
+Sửa lỗi build:
+`SyntaxError: Expected ',' or '}' after property value in JSON`
 
-- Tên website / sidebar -> dòng `Võ Hiệp Truyền Kỳ`
-- Dòng phụ dưới tên website -> `Cẩm nang Võ Lâm 79`
-- Giới thiệu ngắn ở sidebar -> block giới thiệu nhỏ bên dưới brand
-- Ghi chú nguồn -> cuối sidebar
-- Ghi chú hoạt động -> cuối sidebar
+Nguyên nhân:
+- `content/articles/ky-nang-90-rework.json` bị hỏng cú pháp JSON sau khi lưu HTML/video phức tạp.
 
-Nếu một trường để trống, block tương ứng sẽ tự ẩn.
+V20:
+- Sửa lại `ky-nang-90-rework.json` thành JSON hợp lệ.
+- Canonicalize toàn bộ `content/articles/*.json`.
+- Admin dùng `safeJSONStringify()` = `JSON.stringify(obj, null, 2)` cho:
+  - lưu bài
+  - tạo bài
+  - lưu settings
+- Tự `JSON.parse()` kiểm tra lại payload trước khi PUT lên GitHub.
+- 409 hiển thị thông báo rõ: tải lại rồi lưu lại.
 
-PAT, GitHub API, editor trực tiếp, Dã Tẩu, video, search và GitHub Pages giữ nguyên.
+Sau khi copy đè repo và Push, GitHub Actions phải qua bước `Build CMS content`.
