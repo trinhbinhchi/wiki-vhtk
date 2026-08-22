@@ -1408,28 +1408,51 @@ document.querySelector('.mobile-menu').onclick=()=>document.body.classList.toggl
 document.querySelector('#search').addEventListener('input',e=>{const q=e.target.value.toLowerCase().trim();nav.forEach(n=>{const a=document.getElementById(n.dataset.target);n.style.display=(!q||a.innerText.toLowerCase().includes(q))?'grid':'none';});});
 </script>
 <script id="da-tau-collapse-script">
-document.addEventListener("DOMContentLoaded", function(){
-  var section = document.getElementById("da-tau-milestones");
-  if(!section) return;
+(function(){
+  function setDaTauState(btn, opened){
+    var section = btn.closest("#da-tau-milestones, .da-tau-section");
+    if(!section) return;
 
-  var btn = section.querySelector(".da-tau-toggle");
-  var body = section.querySelector(".da-tau-collapse-body");
-  var hint = section.querySelector(".da-tau-toggle-hint");
-  if(!btn || !body) return;
+    var body = section.querySelector(".da-tau-collapse-body");
+    var hint = section.querySelector(".da-tau-toggle-hint");
+    if(!body) return;
 
-  btn.addEventListener("click", function(){
-    var opened = btn.getAttribute("aria-expanded") === "true";
-    btn.setAttribute("aria-expanded", opened ? "false" : "true");
+    btn.setAttribute("aria-expanded", opened ? "true" : "false");
 
     if(opened){
-      body.setAttribute("hidden", "");
-      if(hint) hint.textContent = "Nhấn để xem";
-    }else{
       body.removeAttribute("hidden");
       if(hint) hint.textContent = "Nhấn để thu gọn";
+    }else{
+      body.setAttribute("hidden", "");
+      if(hint) hint.textContent = "Nhấn để xem";
     }
+  }
+
+  /* Event delegation:
+     nội dung CMS được inject sau khi DOMContentLoaded,
+     nên không gắn listener trực tiếp vào button lúc trang khởi tạo. */
+  document.addEventListener("click", function(e){
+    var btn = e.target.closest(".da-tau-toggle");
+    if(!btn) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    var opened = btn.getAttribute("aria-expanded") === "true";
+    setDaTauState(btn, !opened);
   });
-});
+
+  /* Đồng bộ trạng thái khi CMS vừa nạp xong nội dung. */
+  function normalizeDaTau(){
+    document.querySelectorAll(".da-tau-toggle").forEach(function(btn){
+      var opened = btn.getAttribute("aria-expanded") === "true";
+      setDaTauState(btn, opened);
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", normalizeDaTau);
+  window.addEventListener("vhtk:cms-loaded", normalizeDaTau);
+})();
 </script>
 <script id="vhtk-search-v7-script">
 (function(){

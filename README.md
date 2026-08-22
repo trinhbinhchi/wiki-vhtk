@@ -1,8 +1,12 @@
-# CMS v17 — Sửa trực tiếp toàn bộ bài Public
+# CMS v18 — sửa bung/thu Phần thưởng Dã Tẩu
 
-- Toàn bộ section Public đang chọn được bật contenteditable.
-- Bấm trực tiếp vào tiêu đề lớn, dòng mô tả, nội dung, bảng... để sửa.
-- Không có ô hero riêng.
-- Không chèn section_html vào body nên không bị lặp hero.
-- Lưu & Commit lấy nguyên section.innerHTML và commit lại GitHub.
-- PAT, GitHub API, toolbar và HTML mode giữ nguyên.
+Nguyên nhân:
+- Nội dung các bài được tải động từ `content/site.json`.
+- Script Dã Tẩu cũ chạy khi DOMContentLoaded, lúc đó nút Dã Tẩu chưa tồn tại.
+- Sau khi CMS inject bài, nút xuất hiện nhưng không có click listener.
+
+V18:
+- Dùng event delegation trên `document`.
+- Nút `.da-tau-toggle` hoạt động dù được tạo sau khi trang đã load.
+- Đồng bộ `aria-expanded`, thuộc tính `hidden` và dòng Nhấn để xem / thu gọn.
+- Hoạt động cả Public lẫn Public iframe trong Admin.
