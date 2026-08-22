@@ -1,12 +1,13 @@
-# CMS v18 — sửa bung/thu Phần thưởng Dã Tẩu
+# CMS v19 — Cài đặt website hiển thị thật
 
-Nguyên nhân:
-- Nội dung các bài được tải động từ `content/site.json`.
-- Script Dã Tẩu cũ chạy khi DOMContentLoaded, lúc đó nút Dã Tẩu chưa tồn tại.
-- Sau khi CMS inject bài, nút xuất hiện nhưng không có click listener.
+Các trường trong Admin -> Cài đặt website đã được nối ra Public:
 
-V18:
-- Dùng event delegation trên `document`.
-- Nút `.da-tau-toggle` hoạt động dù được tạo sau khi trang đã load.
-- Đồng bộ `aria-expanded`, thuộc tính `hidden` và dòng Nhấn để xem / thu gọn.
-- Hoạt động cả Public lẫn Public iframe trong Admin.
+- Tên website / sidebar -> dòng `Võ Hiệp Truyền Kỳ`
+- Dòng phụ dưới tên website -> `Cẩm nang Võ Lâm 79`
+- Giới thiệu ngắn ở sidebar -> block giới thiệu nhỏ bên dưới brand
+- Ghi chú nguồn -> cuối sidebar
+- Ghi chú hoạt động -> cuối sidebar
+
+Nếu một trường để trống, block tương ứng sẽ tự ẩn.
+
+PAT, GitHub API, editor trực tiếp, Dã Tẩu, video, search và GitHub Pages giữ nguyên.
