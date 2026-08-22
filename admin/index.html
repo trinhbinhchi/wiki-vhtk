@@ -276,7 +276,7 @@ button,input,textarea,select{font:inherit}
 <span class="sep"></span>
 <button id="sourceBtn">&lt;/&gt; HTML</button><button data-cmd="removeFormat">⌫ Format</button>
 </div>
-<div class="editor" contenteditable="true" id="editor"></div><div class="public-live-wrap" id="publicLiveWrap"><div class="preview-badge">PUBLIC ARTICLE • body edit</div><iframe id="publicLiveFrame" title="Trang Public thật"></iframe></div>
+<div class="editor" contenteditable="true" id="editor"></div><div class="public-live-wrap" id="publicLiveWrap"><div class="preview-badge">PUBLIC ARTICLE • sửa trực tiếp</div><iframe id="publicLiveFrame" title="Trang Public thật"></iframe></div>
 <textarea class="source" id="sourceEditor" spellcheck="false"></textarea>
 <div class="help">V15: Admin chỉ sửa phần thân bài. Header/hero Public được giữ nguyên nên không còn lặp tiêu đề như “Cơ Bản” hai lần.</div>
 </div>
@@ -340,29 +340,12 @@ function selectedPublicSection(){
   return id ? d.getElementById(id) : null;
 }
 function editablePublicNode(){
-  const sec=selectedPublicSection();
-  if(!sec)return null;
-  return sec.querySelector(".article-content,.page-body,.content-body,.content,.article-body,.section-body")
-      || sec;
+  return selectedPublicSection();
 }
-function extractEditableHTMLFromStored(){
-  const raw=currentData?.section_html||currentData?.body_html||"";
-  if(!raw)return "";
 
-  // Parse stored HTML and extract only the article body when possible.
-  // This prevents public hero/title blocks from being inserted twice.
-  const tmp=document.createElement("div");
-  tmp.innerHTML=raw;
-
-  const body=tmp.querySelector(".article-content,.page-body,.content-body,.content,.article-body,.section-body");
-  if(body)return body.innerHTML;
-
-  // Fallback: if stored HTML itself is already only body content, use it as-is.
-  return raw;
-}
 function getVisualHTML(){
-  const node=editablePublicNode();
-  return node ? node.innerHTML : ($("#editor").innerHTML||"");
+  const sec=selectedPublicSection();
+  return sec ? sec.innerHTML : ($("#editor").innerHTML||"");
 }
 function syncFromPublic(){
   const html=getVisualHTML();
@@ -376,22 +359,18 @@ function ensurePublicEditMode(){
   const sec=d.getElementById(currentData.section_id);
   if(!sec)return false;
 
-  /* Hide public chrome that is redundant inside Admin. */
   [
     "aside",".sidebar",".side-bar",".left-sidebar",
     "header",".site-header",".topbar",".top-bar",
-    ".hero",".brand-header",".page-header",
     ".search-box",".search",".search-wrap",
     ".admin-link",".pdf-button",".pdf-actions",
     "footer",".site-footer"
   ].forEach(sel=>{
     d.querySelectorAll(sel).forEach(el=>{
-      /* Never hide elements inside the selected article itself. */
       if(!sec.contains(el))el.style.setProperty("display","none","important");
     });
   });
 
-  /* Force public layout into a single clean article column. */
   const app=d.querySelector(".app,.layout,.page-layout,.site-layout");
   if(app){
     app.style.setProperty("display","block","important");
@@ -410,7 +389,6 @@ function ensurePublicEditMode(){
   d.body.style.setProperty("background","#f7f8f3","important");
   d.body.style.setProperty("overflow","auto","important");
 
-  /* Hide all other article sections, show only current one. */
   d.querySelectorAll("section[id]").forEach(s=>{
     if(s===sec){
       s.style.setProperty("display","block","important");
@@ -426,29 +404,27 @@ function ensurePublicEditMode(){
     }
   });
 
-  const node=editablePublicNode();
-  if(!node)return false;
+  const full=currentData.section_html||currentData.body_html||"";
+  if(sec.innerHTML!==full)sec.innerHTML=full;
 
-  const html=extractEditableHTMLFromStored();
-  if(node.innerHTML!==html)node.innerHTML=html;
+  sec.setAttribute("contenteditable","true");
+  sec.setAttribute("spellcheck","false");
+  sec.dataset.vhtkAdminEditing="1";
+  sec.style.outline="none";
 
-  node.setAttribute("contenteditable","true");
-  node.setAttribute("spellcheck","false");
-  node.style.outline="none";
-  node.dataset.vhtkAdminEditing="1";
-
-  node.addEventListener("input",syncFromPublic);
-  node.addEventListener("blur",syncFromPublic);
+  sec.addEventListener("input",syncFromPublic);
+  sec.addEventListener("blur",syncFromPublic);
 
   if(!d.getElementById("vhtk-admin-live-style")){
     const marker=d.createElement("style");
     marker.id="vhtk-admin-live-style";
     marker.textContent=`
       [data-vhtk-admin-editing="1"]:focus{
-        box-shadow:0 0 0 2px rgba(32,107,81,.15)!important;
-        border-radius:8px!important;
+        box-shadow:0 0 0 2px rgba(32,107,81,.16)!important;
+        border-radius:10px!important;
       }
-      html,body{min-width:0!important}
+      [data-vhtk-admin-editing="1"] *{cursor:text}
+      [data-vhtk-admin-editing="1"] img{cursor:default}
     `;
     d.head.appendChild(marker);
   }
@@ -457,7 +433,7 @@ function ensurePublicEditMode(){
 
   publicFrameLoaded=true;
   syncFromPublic();
-  setStatus("Đã tải • chỉnh trực tiếp nội dung Public","ok");
+  setStatus("Đã tải • bấm trực tiếp vào bất kỳ nội dung nào để sửa","ok");
   return true;
 }
 function loadPublicForEditing(){
@@ -560,7 +536,7 @@ function openArticle(name){
   $("#orderInput").value=currentData.order||1;
   $("#visibleInput").checked=currentData.visible!==false;
 
-  const html=extractEditableHTMLFromStored();
+  const html=currentData.section_html||currentData.body_html||"";
   $("#editor").innerHTML=html;
   $("#sourceEditor").value=html;
 
@@ -582,16 +558,7 @@ function collectArticle(){
   const edited=sourceMode?$("#sourceEditor").value:getVisualHTML();
 
   if("section_html" in currentData){
-    // Preserve the original public hero/header and only replace its editable body.
-    const tmp=document.createElement("div");
-    tmp.innerHTML=currentData.section_html||"";
-    const body=tmp.querySelector(".article-content,.page-body,.content-body,.content,.article-body,.section-body");
-    if(body){
-      body.innerHTML=edited;
-      currentData.section_html=tmp.innerHTML;
-    }else{
-      currentData.section_html=edited;
-    }
+    currentData.section_html=edited;
   }else{
     currentData.body_html=edited;
   }
