@@ -1,10 +1,7 @@
-# CMS v21 — bỏ ghi chú thừa
+# CMS v22 — Khôi phục nội dung + bỏ ghi chú thừa an toàn
 
-Đã xóa hoàn toàn khỏi Public:
-- Nội dung được làm sạch và trình bày lại từ bản lưu Notion.
-- Website hoạt động độc lập, không cần giao diện Notion.
-
-Đồng thời:
-- Bỏ hai trường Ghi chú nguồn / Ghi chú hoạt động khỏi Admin -> Cài đặt website.
-- Xóa hai key tương ứng khỏi settings.json/site.json.
-- Giữ nguyên editor, PAT, GitHub API, video, search, Dã Tẩu và Safe JSON của v20.
+Sửa lỗi v21:
+- V21 xóa nhầm thẻ đóng của wrapper khi dùng regex, làm phần nội dung chính bên phải biến mất.
+- V22 quay lại nền v20 và xóa 2 ghi chú bằng DOM parser, chỉ xóa đúng element.
+- Giữ nguyên sidebar, main content, sections, editor, PAT, GitHub API, search, video, Dã Tẩu và Safe JSON.
+- Bỏ 2 trường Ghi chú nguồn / Ghi chú hoạt động khỏi Admin vì không còn dùng.
