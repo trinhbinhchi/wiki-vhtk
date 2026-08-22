@@ -195,6 +195,21 @@ button,input,textarea,select{font:inherit}
   .public-live-wrap{height:680px;min-height:620px}
   .toolbar{top:52px!important}
 }
+
+/* V14 - cleaner editor viewport */
+.public-live-wrap{
+  height:calc(100vh - 205px)!important;
+  min-height:720px!important;
+  background:#f7f8f3!important;
+}
+#publicLiveFrame{
+  background:#f7f8f3!important;
+}
+.preview-badge{
+  top:8px!important;
+  right:10px!important;
+  opacity:.88;
+}
 </style></head>
 <body>
 <div class="login" id="loginView">
@@ -261,9 +276,9 @@ button,input,textarea,select{font:inherit}
 <span class="sep"></span>
 <button id="sourceBtn">&lt;/&gt; HTML</button><button data-cmd="removeFormat">⌫ Format</button>
 </div>
-<div class="editor" contenteditable="true" id="editor"></div><div class="public-live-wrap" id="publicLiveWrap"><div class="preview-badge">LIVE PUBLIC • đang chỉnh sửa</div><iframe id="publicLiveFrame" title="Trang Public thật"></iframe></div>
+<div class="editor" contenteditable="true" id="editor"></div><div class="public-live-wrap" id="publicLiveWrap"><div class="preview-badge">PUBLIC ARTICLE • đang chỉnh</div><iframe id="publicLiveFrame" title="Trang Public thật"></iframe></div>
 <textarea class="source" id="sourceEditor" spellcheck="false"></textarea>
-<div class="help">V13: khung dưới là chính trang Public thật đang được bật contenteditable trên bài hiện tại. Toolbar được cố định riêng phía trên.</div>
+<div class="help">V14: chỉ hiển thị nội dung bài Public trong editor; menu, header, tìm kiếm và nút Public đã được ẩn để Admin gọn hơn.</div>
 </div>
 </section>
 <section class="settings-panel hidden" id="settingsPanel">
@@ -343,28 +358,62 @@ function ensurePublicEditMode(){
   const d=publicDoc();
   if(!d || !currentData)return false;
 
-  // Open the selected article using the public site's own navigation if possible.
   const sec=d.getElementById(currentData.section_id);
-  const nav=d.querySelector('.nav-item[data-target="'+CSS.escape(currentData.section_id||"")+'"]');
+  if(!sec)return false;
 
-  if(nav){
-    try{nav.click()}catch(e){}
-  }
-
-  // Fallback: force the selected section visible while leaving public layout intact.
-  d.querySelectorAll("section[id]").forEach(s=>{
-    if(s===sec){
-      s.style.removeProperty("display");
-      s.classList.add("active");
-    }
+  /* Hide public chrome that is redundant inside Admin. */
+  [
+    "aside",".sidebar",".side-bar",".left-sidebar",
+    "header",".site-header",".topbar",".top-bar",
+    ".hero",".brand-header",".page-header",
+    ".search-box",".search",".search-wrap",
+    ".admin-link",".pdf-button",".pdf-actions",
+    "footer",".site-footer"
+  ].forEach(sel=>{
+    d.querySelectorAll(sel).forEach(el=>{
+      /* Never hide elements inside the selected article itself. */
+      if(!sec.contains(el))el.style.setProperty("display","none","important");
+    });
   });
 
-  if(!sec)return false;
+  /* Force public layout into a single clean article column. */
+  const app=d.querySelector(".app,.layout,.page-layout,.site-layout");
+  if(app){
+    app.style.setProperty("display","block","important");
+    app.style.setProperty("grid-template-columns","1fr","important");
+    app.style.setProperty("width","100%","important");
+  }
+
+  const main=d.querySelector("main,.main,.content-main,.page-main");
+  if(main){
+    main.style.setProperty("width","100%","important");
+    main.style.setProperty("max-width","none","important");
+    main.style.setProperty("margin","0","important");
+    main.style.setProperty("padding","18px 24px 60px","important");
+  }
+
+  d.body.style.setProperty("background","#f7f8f3","important");
+  d.body.style.setProperty("overflow","auto","important");
+
+  /* Hide all other article sections, show only current one. */
+  d.querySelectorAll("section[id]").forEach(s=>{
+    if(s===sec){
+      s.style.setProperty("display","block","important");
+      s.style.setProperty("visibility","visible","important");
+      s.style.setProperty("opacity","1","important");
+      s.style.setProperty("max-width","1180px","important");
+      s.style.setProperty("width","100%","important");
+      s.style.setProperty("margin","0 auto","important");
+      s.classList.add("active");
+    }else{
+      s.style.setProperty("display","none","important");
+      s.classList.remove("active");
+    }
+  });
 
   const node=editablePublicNode();
   if(!node)return false;
 
-  // Inject the current GitHub article HTML into the REAL public section.
   const html=currentData.section_html||currentData.body_html||"";
   if(node.innerHTML!==html)node.innerHTML=html;
 
@@ -376,23 +425,24 @@ function ensurePublicEditMode(){
   node.addEventListener("input",syncFromPublic);
   node.addEventListener("blur",syncFromPublic);
 
-  // Distinguish editing without changing layout.
-  const marker=d.createElement("style");
-  marker.id="vhtk-admin-live-style";
-  marker.textContent=`
-    [data-vhtk-admin-editing="1"]:focus{
-      box-shadow:0 0 0 2px rgba(32,107,81,.18)!important;
-      border-radius:8px!important;
-    }
-  `;
-  if(!d.getElementById("vhtk-admin-live-style"))d.head.appendChild(marker);
+  if(!d.getElementById("vhtk-admin-live-style")){
+    const marker=d.createElement("style");
+    marker.id="vhtk-admin-live-style";
+    marker.textContent=`
+      [data-vhtk-admin-editing="1"]:focus{
+        box-shadow:0 0 0 2px rgba(32,107,81,.15)!important;
+        border-radius:8px!important;
+      }
+      html,body{min-width:0!important}
+    `;
+    d.head.appendChild(marker);
+  }
 
-  // Scroll article into view inside the public page.
-  setTimeout(()=>sec.scrollIntoView({behavior:"auto",block:"start"}),50);
+  setTimeout(()=>sec.scrollIntoView({behavior:"auto",block:"start"}),30);
 
   publicFrameLoaded=true;
   syncFromPublic();
-  setStatus("Đã tải • đang chỉnh trực tiếp trên trang Public thật","ok");
+  setStatus("Đã tải • chỉnh trực tiếp nội dung Public","ok");
   return true;
 }
 function loadPublicForEditing(){
