@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Quản trị Cẩm Nang Võ Hiệp Truyền Kỳ</title>
+<link href="/admin/editor-content.css" rel="stylesheet"/>
+
+
+<style id="vhtk-v8-admin-style">
+/* Expand Decap content column */
+body{background:#f4f7f4!important}
+[data-slate-editor], [class*="EditorControl"], [class*="ControlPane"]{max-width:none!important}
+main, [class*="AppMainContainer"], [class*="EditorContainer"]{max-width:none!important}
+form{max-width:1480px!important;margin:0 auto!important}
+[class*="EditorControlPane"]{max-width:1480px!important;width:calc(100vw - 80px)!important}
+
+/* Compact the metadata fields at top */
+.vhtk-compact-meta-note{
+  font-size:11px;color:#718078;margin:2px 0 8px
+}
+.v8-wrap{border:1px solid #d5e1d8;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 4px 16px rgba(30,60,43,.06)}
+.v8-toolbar{
+  display:flex;align-items:center;flex-wrap:wrap;gap:5px;padding:9px 10px;
+  background:#f5f9f6;border-bottom:1px solid #d5e1d8;position:sticky;top:0;z-index:50
+}
+.v8-toolbar button,.v8-toolbar select,.v8-toolbar input[type="color"]{
+  border:1px solid #d1ddd5;background:#fff;color:#31463a;border-radius:7px;
+  min-height:31px;padding:6px 8px;cursor:pointer;font-weight:700;font-size:12px
+}
+.v8-toolbar button:hover,.v8-toolbar select:hover{background:#eaf5ef;color:#185541}
+.v8-sep{width:1px;height:25px;background:#d6e1da;margin:0 2px}
+.v8-editor-surface{
+  min-height:780px;max-height:78vh;overflow:auto;padding:28px 34px 80px;
+  background:#fff;outline:none;color:#26372d;font:15px/1.72 "Segoe UI",Arial,sans-serif
+}
+.v8-editor-surface:focus{box-shadow:inset 0 0 0 2px rgba(32,107,81,.13)}
+.v8-editor-surface img{max-width:100%!important;height:auto!important}
+.v8-editor-surface table{max-width:100%!important}
+.v8-help{padding:8px 10px;background:#fffaf0;border-top:1px solid #eadcbf;color:#776449;font-size:11px}
+.v8-source{
+  width:100%;min-height:780px;max-height:78vh;resize:vertical;display:none;
+  border:0;outline:none;padding:20px 22px;box-sizing:border-box;
+  background:#111827;color:#e5e7eb;font:13px/1.55 Consolas,"Courier New",monospace
+}
+.v8-source.active{display:block}.v8-editor-surface.source-hidden{display:none}
+
+/* Compact metadata controls: fields before editor become a 4-column grid on desktop */
+@media(min-width:1000px){
+  [class*="EditorControlPane"] > div > div:first-child,
+  form > div:first-child{
+    max-width:none!important;
+  }
+}
+@media(max-width:900px){
+  form{max-width:100%!important}
+  [class*="EditorControlPane"]{width:100%!important}
+  .v8-editor-surface,.v8-source{min-height:600px}
+}
+</style>
+</head>
+<body>
+<script src="https://unpkg.com/decap-cms@^3.8.0/dist/decap-cms.js"></script>
+
+
+<script id="vhtk-v8-widget">
+(function(){
+  const val=v=>{
+    if(v==null)return "";
+    if(typeof v==="string")return v;
+    if(v&&typeof v.toJS==="function"){const x=v.toJS();return typeof x==="string"?x:String(x||"")}
+    return String(v);
+  };
+
+  const HtmlControl=createClass({
+    getInitialState:function(){return {source:false}},
+
+    componentDidMount:function(){
+      const v=val(this.props.value);
+      if(this.ed&&this.ed.innerHTML!==v)this.ed.innerHTML=v;
+      if(this.src&&this.src.value!==v)this.src.value=v;
+    },
+
+    componentDidUpdate:function(prev){
+      const a=val(prev.value),b=val(this.props.value);
+      if(a!==b){
+        if(this.ed&&document.activeElement!==this.ed&&this.ed.innerHTML!==b)this.ed.innerHTML=b;
+        if(this.src&&document.activeElement!==this.src&&this.src.value!==b)this.src.value=b;
+      }
+    },
+
+    syncVisual:function(){
+      if(!this.ed)return;
+      const html=this.ed.innerHTML;
+      if(this.src)this.src.value=html;
+      this.props.onChange(html);
+    },
+
+    syncSource:function(){
+      if(!this.src)return;
+      const html=this.src.value;
+      if(this.ed)this.ed.innerHTML=html;
+      this.props.onChange(html);
+    },
+
+    exec:function(cmd,arg){
+      this.ed.focus();
+      document.execCommand(cmd,false,arg||null);
+      this.syncVisual();
+    },
+
+    block:function(tag){this.exec("formatBlock",tag)},
+
+    fontSize:function(v){
+      if(!v)return;
+      this.ed.focus();
+      document.execCommand("fontSize",false,v);
+      this.syncVisual();
+    },
+
+    foreColor:function(v){if(v)this.exec("foreColor",v)},
+    hilite:function(v){if(v)this.exec("hiliteColor",v)},
+
+    link:function(){
+      const u=prompt("Nhập URL liên kết:");
+      if(u)this.exec("createLink",u);
+    },
+
+    image:function(){
+      const u=prompt("Đường dẫn ảnh, ví dụ /assets/uploads/anh-001.png");
+      if(u)this.exec("insertHTML",'<p><img src="'+u.replace(/"/g,"&quot;")+'" alt="Hình ảnh"></p>');
+    },
+
+    video:function(){
+      const u=prompt("Dán URL YouTube hoặc URL embed:");
+      if(!u)return;
+      let src=u;
+      const m=u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([A-Za-z0-9_-]{6,})/);
+      if(m)src="https://www.youtube.com/embed/"+m[1]+"?rel=0";
+      this.exec("insertHTML",
+        '<div class="rework-video-box"><iframe src="'+src.replace(/"/g,"&quot;")+
+        '" style="width:100%;aspect-ratio:16/9;border:0;border-radius:10px" allowfullscreen '+
+        'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"></iframe></div>'
+      );
+    },
+
+    table:function(){
+      const raw=prompt("Số hàng,số cột","4,3");if(!raw)return;
+      const p=raw.split(","),r=Math.max(2,Math.min(40,parseInt(p[0])||4)),c=Math.max(2,Math.min(12,parseInt(p[1])||3));
+      let x='<div class="clean-table-wrap"><table class="clean-guide-table"><tbody>';
+      for(let i=0;i<r;i++){x+='<tr>';for(let j=0;j<c;j++)x+=i===0?'<th>Tiêu đề</th>':'<td>Nội dung</td>';x+='</tr>'}
+      x+='</tbody></table></div>';this.exec("insertHTML",x);
+    },
+
+    toggleSource:function(){
+      const goingSource=!this.state.source;
+      if(goingSource && this.src && this.ed)this.src.value=this.ed.innerHTML;
+      if(!goingSource && this.src && this.ed){
+        this.ed.innerHTML=this.src.value;
+        this.props.onChange(this.src.value);
+      }
+      this.setState({source:goingSource});
+    },
+
+    render:function(){
+      const self=this;
+      const b=(t,f,title)=>h("button",{type:"button",onMouseDown:e=>e.preventDefault(),onClick:f,title:title||t},t);
+      const sep=()=>h("span",{className:"v8-sep"});
+      return h("div",{className:this.props.classNameWrapper},
+        h("div",{className:"v8-wrap"},
+          h("div",{className:"v8-toolbar"},
+            b("↶",()=>self.exec("undo"),"Hoàn tác"),
+            b("↷",()=>self.exec("redo"),"Làm lại"),
+            sep(),
+            b("B",()=>self.exec("bold"),"Đậm"),
+            b("I",()=>self.exec("italic"),"Nghiêng"),
+            b("U",()=>self.exec("underline"),"Gạch chân"),
+            b("S",()=>self.exec("strikeThrough"),"Gạch ngang"),
+            sep(),
+            h("select",{defaultValue:"",onChange:e=>self.block(e.target.value),title:"Kiểu đoạn"},
+              h("option",{value:""},"Đoạn"),
+              h("option",{value:"p"},"Paragraph"),
+              h("option",{value:"h2"},"H2"),
+              h("option",{value:"h3"},"H3"),
+              h("option",{value:"h4"},"H4"),
+              h("option",{value:"blockquote"},"Quote")
+            ),
+            h("select",{defaultValue:"",onChange:e=>self.fontSize(e.target.value),title:"Cỡ chữ"},
+              h("option",{value:""},"Cỡ chữ"),
+              h("option",{value:"1"},"Rất nhỏ"),
+              h("option",{value:"2"},"Nhỏ"),
+              h("option",{value:"3"},"Bình thường"),
+              h("option",{value:"4"},"Lớn"),
+              h("option",{value:"5"},"Rất lớn"),
+              h("option",{value:"6"},"Tiêu đề")
+            ),
+            h("label",{title:"Màu chữ"}, "A ",
+              h("input",{type:"color",defaultValue:"#26372d",onChange:e=>self.foreColor(e.target.value)})
+            ),
+            h("label",{title:"Màu nền chữ"}, "▧ ",
+              h("input",{type:"color",defaultValue:"#fff4b8",onChange:e=>self.hilite(e.target.value)})
+            ),
+            sep(),
+            b("≡ Trái",()=>self.exec("justifyLeft"),"Căn trái"),
+            b("≡ Giữa",()=>self.exec("justifyCenter"),"Căn giữa"),
+            b("≡ Phải",()=>self.exec("justifyRight"),"Căn phải"),
+            sep(),
+            b("• List",()=>self.exec("insertUnorderedList"),"Danh sách"),
+            b("1. List",()=>self.exec("insertOrderedList"),"Danh sách số"),
+            b("↤",()=>self.exec("outdent"),"Giảm thụt"),
+            b("↦",()=>self.exec("indent"),"Tăng thụt"),
+            sep(),
+            b("🔗",()=>self.link(),"Liên kết"),
+            b("🖼 Ảnh",()=>self.image(),"Chèn ảnh"),
+            b("▶ Video",()=>self.video(),"Chèn YouTube"),
+            b("▦ Bảng",()=>self.table(),"Chèn bảng"),
+            b("―",()=>self.exec("insertHorizontalRule"),"Phân cách"),
+            sep(),
+            b(self.state.source?"👁 Trực quan":"</> HTML",()=>self.toggleSource(),"Chuyển HTML / trực quan"),
+            b("⌫ Format",()=>self.exec("removeFormat"),"Xóa định dạng")
+          ),
+          h("div",{
+            className:"v8-editor-surface"+(self.state.source?" source-hidden":""),
+            contentEditable:true,suppressContentEditableWarning:true,
+            ref:el=>self.ed=el,onInput:()=>self.syncVisual(),onBlur:()=>self.syncVisual()
+          }),
+          h("textarea",{
+            className:"v8-source"+(self.state.source?" active":""),
+            ref:el=>self.src=el,onInput:()=>self.syncSource(),onBlur:()=>self.syncSource(),
+            spellCheck:false
+          }),
+          h("div",{className:"v8-help"},
+            "Có thể sửa trực quan hoặc bấm </> HTML để chỉnh code. Toolbar hỗ trợ màu chữ, màu nền, cỡ chữ, căn lề, video, ảnh, bảng và danh sách."
+          )
+        )
+      )
+    }
+  });
+  CMS.registerWidget("exact_html_editor",HtmlControl);
+})();
+</script>
+
+<script id="vhtk-v8-admin-compact">
+(function(){
+  function compact(){
+    const labels=[...document.querySelectorAll("label")];
+    const names=["TÊN BÀI VIẾT","BIỂU TƯỢNG MENU","THỨ TỰ","HIỂN THỊ"];
+    const nodes=[];
+    labels.forEach(l=>{
+      const t=(l.textContent||"").trim().toUpperCase();
+      if(names.some(n=>t.includes(n))){
+        let p=l.parentElement;
+        for(let i=0;i<3&&p;i++,p=p.parentElement){
+          if(p.querySelector("input,textarea,button")){nodes.push(p);break}
+        }
+      }
+    });
+    const unique=[...new Set(nodes)];
+    if(unique.length>=3){
+      unique.forEach(n=>{
+        n.style.marginBottom="6px";
+      });
+      // Try to compact their nearest common parent
+      let parent=unique[0].parentElement;
+      if(parent && unique.every(n=>n.parentElement===parent)){
+        parent.style.display="grid";
+        parent.style.gridTemplateColumns="minmax(260px,2fr) minmax(150px,1fr) 120px 120px";
+        parent.style.gap="10px";
+        parent.style.alignItems="end";
+      }
+    }
+  }
+  const mo=new MutationObserver(()=>compact());
+  mo.observe(document.body,{childList:true,subtree:true});
+  setTimeout(compact,800);
+})();
+</script>
+</body></html>

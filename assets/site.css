@@ -1,0 +1,1397 @@
+
+:root{--paper:#fffdf7;--paper2:#f7f2e6;--ink:#2f322f;--muted:#73756d;--jade:#23725a;--jade2:#dff1e9;--gold:#b58a39;--gold2:#fbf0cf;--red:#9e4236;--line:#e4dccb;--shadow:0 20px 55px rgba(70,62,42,.11)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 20% 0,#fffdf6 0,#f6f1e5 48%,#eee7d8 100%);font:15.5px/1.7 Georgia,"Times New Roman","Noto Serif",serif}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.12;background-image:linear-gradient(90deg,transparent 49.6%,rgba(100,90,70,.08) 50%,transparent 50.4%);background-size:44px 44px}
+.app{display:grid;grid-template-columns:310px minmax(0,1fr);min-height:100vh}.sidebar{position:sticky;top:0;height:100vh;overflow:auto;padding:24px 18px;background:rgba(255,253,247,.94);backdrop-filter:blur(14px);border-right:1px solid var(--line);z-index:30}
+.brand{padding:10px 10px 18px;display:flex;gap:13px;align-items:center}.brand-mark{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#2c7c62,#175341);color:#fff;font-size:20px;font-weight:800;box-shadow:inset 0 0 0 4px rgba(255,255,255,.16),0 8px 20px rgba(35,114,90,.22)}.brand h2{margin:0;font:700 18px/1.2 Georgia,serif;color:#25483d}.brand small{color:var(--muted)}
+.search{margin:0 6px 16px;position:relative}.search input{width:100%;border:1px solid var(--line);background:#fffefa;border-radius:12px;padding:11px 12px 11px 38px;outline:0;color:var(--ink)}.search:before{content:"⌕";position:absolute;left:13px;top:7px;font:22px/1 Georgia;color:#8a8a7f}.search input:focus{border-color:#9bc4b4;box-shadow:0 0 0 4px rgba(35,114,90,.08)}
+.nav{display:flex;flex-direction:column;gap:4px}.nav-item{border:0;background:transparent;text-align:left;display:grid;grid-template-columns:31px 1fr;align-items:center;gap:8px;padding:9px 10px;border-radius:10px;color:#5d615b;cursor:pointer;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:13px}.nav-item:hover{background:#f5f0e5}.nav-item.active{background:linear-gradient(90deg,#e4f2ec,#eef7f2);color:#185842;font-weight:750}.nav-icon{width:27px;height:27px;border-radius:9px;display:grid;place-items:center;background:#f1eadb;color:#8f6722;font-family:Georgia,serif}.nav-item.active .nav-icon{background:#cfe8de;color:#1f6c54}
+.side-note{margin:18px 7px 0;padding:13px;border-top:1px solid var(--line);color:#89877e;font:12px/1.55 system-ui,sans-serif}.main{min-width:0;padding:34px clamp(18px,4vw,60px) 80px}.toolbar{max-width:1180px;margin:0 auto 20px;display:flex;justify-content:space-between;align-items:center;gap:10px}.toolbar-badge{background:rgba(255,255,255,.72);border:1px solid var(--line);border-radius:999px;padding:8px 13px;color:#6a6b64;font:13px system-ui,sans-serif}.tool-btn{border:1px solid var(--line);background:#fffef9;border-radius:10px;padding:8px 11px;cursor:pointer;color:#555;font:13px system-ui,sans-serif}.mobile-menu{display:none}
+.article{display:none;max-width:1180px;margin:0 auto}.article.active{display:block;animation:rise .22s ease}@keyframes rise{from{opacity:.25;transform:translateY(5px)}to{opacity:1;transform:none}}
+.article-head{display:flex;gap:20px;align-items:center;padding:30px 34px;margin-bottom:18px;border-radius:22px;border:1px solid var(--line);background:linear-gradient(115deg,#fffef9 20%,#f5f0e3 100%);box-shadow:var(--shadow);position:relative;overflow:hidden}.article-head:after{content:"武";position:absolute;right:26px;bottom:-38px;font:140px Georgia;color:rgba(181,138,57,.05);transform:rotate(-8deg)}.seal{width:62px;height:62px;border-radius:18px;display:grid;place-items:center;flex:0 0 auto;background:#9f4237;color:#fff;border:4px double rgba(255,255,255,.55);font-size:22px;box-shadow:0 8px 22px rgba(158,66,54,.18)}.kicker{font:800 11px/1.4 system-ui,sans-serif;letter-spacing:.16em;color:var(--jade);margin-bottom:6px}.article-head h1{margin:0;font-size:clamp(28px,4vw,45px);line-height:1.1;color:#34342f;letter-spacing:-.025em}.article-head p{margin:9px 0 0;color:var(--muted);font:13px system-ui,sans-serif}
+.article-content{background:rgba(255,253,247,.96);border:1px solid var(--line);border-radius:22px;padding:clamp(22px,4vw,46px);box-shadow:var(--shadow);overflow:hidden}.notion-page-content{display:block!important}.notion-selectable{max-width:100%!important}.notion-text-block{margin:5px 0}.article-content h1,.article-content h2,.article-content h3,.article-content h4{color:#30493f}.article-content h2,.article-content h3,.article-content h4{margin:28px 0 10px;padding:10px 14px;border-left:4px solid var(--jade);background:linear-gradient(90deg,#edf7f2,transparent);border-radius:0 10px 10px 0}.article-content h4{font-size:19px}.article-content blockquote{margin:15px 0;padding:13px 17px;background:#fbf4df;border-left:4px solid var(--gold);border-radius:0 12px 12px 0;color:#665538;font-style:italic}.notion-callout-block{margin:14px 0!important;padding:16px 18px!important;border:1px solid #e7d8a8;border-radius:15px;background:linear-gradient(135deg,#fff9e7,#fffdf7)}
+.article-content a{color:#1f6f58;text-decoration:none;font-weight:700}.article-content a:hover{text-decoration:underline}.article-content [data-notion-highlight="red"]{color:#a33e34}.article-content [data-notion-highlight="blue"]{color:#2868a8}.article-content [data-notion-highlight="green"]{color:#26745b}.article-content [data-notion-highlight="yellow"]{color:#8c6c20}.article-content strong{color:#3f4d44}.article-content hr{border:0;border-top:1px solid var(--line);margin:24px 0}
+.table-scroll{overflow:auto;width:100%;margin:16px 0 22px;border:1px solid var(--line);border-radius:14px;background:white}.table-scroll table{width:100%;min-width:650px;border-collapse:collapse;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:13.5px}.table-scroll td,.table-scroll th{padding:10px 12px;border-right:1px solid #e8e1d5;border-bottom:1px solid #e8e1d5;vertical-align:top}.table-scroll tr:first-child td,.table-scroll tr:first-child th{background:#eaf5f0;color:#2a5a49;font-weight:750}.table-scroll tr:nth-child(even) td{background:#fffdfa}.table-scroll td:last-child,.table-scroll th:last-child{border-right:0}.table-scroll tr:last-child td{border-bottom:0}
+.article-image{display:block!important;max-width:100%!important;width:auto!important;height:auto!important;max-height:none!important;object-fit:contain!important;margin:18px auto!important;border-radius:15px!important;border:1px solid #ddd4c3!important;box-shadow:0 10px 30px rgba(67,58,39,.13)!important;background:#fff}.missing-image{min-height:92px;margin:14px 0;border:1px dashed #c3b79e;border-radius:13px;background:#fbf7ed;color:#8c8371;display:grid;place-items:center;text-align:center;padding:17px;font:13px system-ui,sans-serif}.video-frame{display:block;width:100%!important;aspect-ratio:16/9;height:auto!important;border:0;border-radius:15px;background:#1f1f1f;margin:15px 0}.empty{padding:18px;border:1px dashed var(--line);border-radius:12px;color:var(--muted)}
+@media(max-width:900px){.app{grid-template-columns:1fr}.sidebar{position:fixed;left:0;top:0;width:min(88vw,320px);transform:translateX(-105%);transition:.22s;box-shadow:20px 0 55px rgba(0,0,0,.13)}body.menu-open .sidebar{transform:none}.main{padding:18px 13px 55px}.mobile-menu{display:inline-block}.article-head{padding:22px 20px}.article-content{padding:20px}.seal{width:50px;height:50px}.toolbar-badge{display:none}}
+@media print{.sidebar,.toolbar{display:none!important}.app{display:block}.main{padding:0}.article{display:block!important;page-break-after:always}.article-head,.article-content{box-shadow:none}}
+
+
+.embedded-asset{display:block!important;max-width:100%!important;height:auto!important;margin:18px auto 24px!important;object-fit:contain!important}
+
+
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
+
+:root{
+  --v-bg:#f4f7f2;
+  --v-paper:#fffefb;
+  --v-paper2:#f9fbf7;
+  --v-ink:#233128;
+  --v-muted:#718078;
+  --v-jade:#24715a;
+  --v-jade-dark:#185541;
+  --v-jade-soft:#eaf5ef;
+  --v-gold:#b88731;
+  --v-gold-soft:#fff7e8;
+  --v-line:#dbe5dc;
+  --v-line-strong:#cbd9cc;
+  --v-shadow:0 12px 34px rgba(45,70,54,.08);
+}
+
+html,body,button,input,textarea,select,
+.article-content,.article-content *{
+  font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif !important;
+}
+
+body{
+  color:var(--v-ink)!important;
+  font-size:15.5px!important;
+  line-height:1.72!important;
+}
+
+/* Article outer shell */
+.article-content{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:18px!important;
+}
+
+.intro-panel,
+.topic-card{
+  position:relative;
+  background:var(--v-paper)!important;
+  border:1px solid var(--v-line)!important;
+  border-radius:18px!important;
+  padding:22px 24px!important;
+  box-shadow:0 4px 18px rgba(43,65,51,.045)!important;
+  overflow:hidden;
+}
+
+.intro-panel{
+  background:linear-gradient(135deg,#fffefb 0%,#f3f8f4 100%)!important;
+  border-left:4px solid var(--v-jade)!important;
+}
+
+.topic-card{
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+}
+
+.topic-card:hover{
+  border-color:var(--v-line-strong)!important;
+  box-shadow:var(--v-shadow)!important;
+}
+
+.topic-card::before{
+  content:attr(data-section);
+  position:absolute;
+  right:17px;
+  top:14px;
+  min-width:28px;
+  height:28px;
+  padding:0 7px;
+  display:grid;
+  place-items:center;
+  border-radius:9px;
+  background:var(--v-jade-soft);
+  color:var(--v-jade);
+  font-size:12px;
+  font-weight:800;
+}
+
+/* Headings */
+.topic-card > .notion-sub_header-block,
+.topic-card > .notion-sub_sub_header-block,
+.topic-card > .notion-header_4-block{
+  margin:-22px -24px 18px!important;
+  padding:17px 62px 16px 24px!important;
+  background:linear-gradient(90deg,#edf7f1 0%,#f8fbf8 70%,#fff 100%)!important;
+  border-bottom:1px solid var(--v-line)!important;
+  border-left:4px solid var(--v-jade)!important;
+}
+
+.topic-card h2,
+.topic-card h3,
+.topic-card h4,
+.topic-card h5,
+.topic-card h6{
+  margin:0!important;
+  color:var(--v-jade-dark)!important;
+  font-weight:800!important;
+  line-height:1.35!important;
+  letter-spacing:-.018em!important;
+}
+
+.topic-card h2{font-size:21px!important}
+.topic-card h3{font-size:19px!important}
+.topic-card h4,.topic-card h5{font-size:17px!important}
+
+/* Paragraphs */
+.prose-block{
+  margin:9px 0 13px!important;
+  color:#35443a!important;
+  line-height:1.78!important;
+}
+
+.info-row{
+  position:relative;
+  margin:7px 0!important;
+  padding:10px 13px 10px 38px!important;
+  border:1px solid #e2e9e2!important;
+  border-radius:10px!important;
+  background:#fcfdfb!important;
+  color:#334138!important;
+}
+
+.info-row::before{
+  content:"◆";
+  position:absolute;
+  left:14px;
+  top:10px;
+  color:var(--v-gold);
+  font-size:10px;
+}
+
+/* Real visible bullets */
+.bullet-group{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:8px!important;
+  margin:10px 0 15px!important;
+}
+
+.bullet-item{
+  position:relative!important;
+  margin:0!important;
+  padding:10px 12px 10px 37px!important;
+  min-height:45px!important;
+  border:1px solid #e0e8e0!important;
+  border-radius:10px!important;
+  background:#fbfdfb!important;
+  display:flex!important;
+  align-items:center!important;
+}
+
+.bullet-item::before{
+  content:"✓";
+  position:absolute;
+  left:12px;
+  top:10px;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:var(--v-jade-soft);
+  color:var(--v-jade);
+  font-size:11px;
+  font-weight:800;
+}
+
+/* Hide Notion's original bullet gutter where present */
+.bullet-item .notion-list-item-box-left{
+  display:none!important;
+}
+
+/* Callouts */
+.guide-callout{
+  margin:12px 0!important;
+  padding:15px 17px!important;
+  border:1px solid #ecd9ad!important;
+  border-left:4px solid var(--v-gold)!important;
+  border-radius:12px!important;
+  background:linear-gradient(135deg,#fffaf0,#fffdf8)!important;
+  box-shadow:none!important;
+}
+
+/* Quotes */
+.guide-quote{
+  margin:14px 0!important;
+  padding:14px 18px!important;
+  border-left:4px solid var(--v-jade)!important;
+  border-radius:0 12px 12px 0!important;
+  background:#f1f7f3!important;
+  color:#496056!important;
+  font-style:italic!important;
+}
+
+/* Tables: clear cell borders */
+.guide-table,
+.guide-table > div{
+  max-width:100%!important;
+}
+
+.guide-table{
+  margin:16px 0 20px!important;
+  overflow-x:auto!important;
+  border:1px solid var(--v-line-strong)!important;
+  border-radius:13px!important;
+  background:#fff!important;
+}
+
+.guide-table table{
+  width:100%!important;
+  border-collapse:collapse!important;
+  border-spacing:0!important;
+  min-width:620px!important;
+}
+
+.guide-table td,
+.guide-table th,
+.notion-table-cell{
+  border-right:1px solid var(--v-line)!important;
+  border-bottom:1px solid var(--v-line)!important;
+  padding:10px 12px!important;
+  vertical-align:middle!important;
+  background:#fff!important;
+}
+
+.guide-table tr:nth-child(even) td,
+.guide-table .notion-table-row:nth-child(even) .notion-table-cell{
+  background:#f9fbf9!important;
+}
+
+.guide-table tr:first-child td,
+.guide-table tr:first-child th,
+.guide-table .notion-table-row:first-child .notion-table-cell{
+  background:#edf5f0!important;
+  color:var(--v-jade-dark)!important;
+  font-weight:700!important;
+}
+
+.guide-table td:last-child,
+.guide-table th:last-child,
+.guide-table .notion-table-cell:last-child{
+  border-right:0!important;
+}
+
+/* Images */
+.image-panel{
+  margin:17px 0 22px!important;
+  padding:10px!important;
+  border:1px solid var(--v-line)!important;
+  border-radius:14px!important;
+  background:#f8faf7!important;
+}
+
+.article-image,
+.embedded-asset{
+  display:block!important;
+  max-width:100%!important;
+  height:auto!important;
+  margin:0 auto!important;
+  border-radius:10px!important;
+  border:0!important;
+  box-shadow:none!important;
+  background:#fff!important;
+}
+
+/* Links and emphasis */
+.article-content a{
+  color:#176c51!important;
+  font-weight:600!important;
+  text-decoration:none!important;
+  border-bottom:1px dashed #79a995;
+}
+
+.article-content a:hover{
+  color:#0d513c!important;
+  border-bottom-style:solid;
+}
+
+.article-content strong,
+.article-content b{
+  color:#1f4f3e!important;
+  font-weight:700!important;
+}
+
+/* Dividers */
+.notion-divider-block{
+  margin:16px 0!important;
+  opacity:.6;
+}
+
+/* Better main article headings */
+.article-head h1{
+  font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif!important;
+  font-weight:800!important;
+  letter-spacing:-.035em!important;
+}
+
+/* Mobile */
+@media(max-width:760px){
+  .intro-panel,.topic-card{
+    padding:18px 16px!important;
+    border-radius:14px!important;
+  }
+  .topic-card > .notion-sub_header-block,
+  .topic-card > .notion-sub_sub_header-block,
+  .topic-card > .notion-header_4-block{
+    margin:-18px -16px 15px!important;
+    padding:15px 50px 14px 16px!important;
+  }
+  .bullet-group{
+    grid-template-columns:1fr!important;
+  }
+  .topic-card::before{
+    right:12px;
+    top:11px;
+  }
+}
+
+
+/* ===== Áp dụng cho TOÀN BỘ cấu trúc Notion, kể cả block lồng sâu ===== */
+
+/* Tiêu đề mục con */
+.article-content .notion-sub_header-block,
+.article-content .notion-sub_sub_header-block,
+.article-content .notion-header_4-block{
+  position:relative!important;
+  margin:24px 0 13px!important;
+  padding:12px 44px 12px 15px!important;
+  border:1px solid #d7e4da!important;
+  border-left:4px solid #24715a!important;
+  border-radius:10px!important;
+  background:linear-gradient(90deg,#edf6f0,#fafcf9)!important;
+  box-shadow:none!important;
+}
+
+.article-content .notion-sub_header-block::after,
+.article-content .notion-sub_sub_header-block::after,
+.article-content .notion-header_4-block::after{
+  content:"✦";
+  position:absolute;
+  right:14px;
+  top:12px;
+  color:#b88731;
+  font-size:14px;
+}
+
+.article-content .notion-sub_header-block h2,
+.article-content .notion-sub_header-block h3,
+.article-content .notion-sub_sub_header-block h2,
+.article-content .notion-sub_sub_header-block h3,
+.article-content .notion-header_4-block h2,
+.article-content .notion-header_4-block h3,
+.article-content .notion-header_4-block h4{
+  margin:0!important;
+  padding:0!important;
+  color:#185541!important;
+  font-size:18px!important;
+  line-height:1.45!important;
+  font-weight:800!important;
+}
+
+/* Tất cả dòng bullet Notion */
+.article-content .notion-bulleted_list-block{
+  position:relative!important;
+  display:block!important;
+  margin:6px 0!important;
+  padding:9px 12px 9px 38px!important;
+  min-height:42px!important;
+  border:1px solid #e0e8e1!important;
+  border-radius:9px!important;
+  background:#fbfdfb!important;
+  color:#33433a!important;
+}
+
+.article-content .notion-bulleted_list-block::before{
+  content:"•";
+  position:absolute;
+  left:14px;
+  top:8px;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:#e5f3eb;
+  color:#24715a;
+  font-size:18px;
+  line-height:18px;
+  font-weight:800;
+}
+
+.article-content .notion-bulleted_list-block .notion-list-item-box-left{
+  display:none!important;
+}
+
+/* Danh sách số */
+.article-content .notion-numbered_list-block{
+  margin:6px 0!important;
+  padding:9px 12px!important;
+  border-bottom:1px dashed #dae4dc!important;
+}
+
+/* Text thường */
+.article-content .notion-text-block{
+  margin:6px 0 10px!important;
+  color:#39483f!important;
+  line-height:1.78!important;
+}
+
+/* Các đoạn nội dung ngắn: khung mềm */
+.article-content .info-row{
+  border:1px solid #e2e9e2!important;
+  background:#fcfdfb!important;
+  border-radius:9px!important;
+}
+
+/* Callout */
+.article-content .notion-callout-block{
+  margin:14px 0!important;
+  padding:14px 16px!important;
+  border:1px solid #ead9b3!important;
+  border-left:4px solid #b88731!important;
+  border-radius:11px!important;
+  background:#fffaf1!important;
+}
+
+/* Quote */
+.article-content .notion-quote-block{
+  margin:14px 0!important;
+  padding:13px 16px!important;
+  border-left:4px solid #24715a!important;
+  border-radius:0 10px 10px 0!important;
+  background:#f0f7f3!important;
+  color:#52645a!important;
+  font-style:italic!important;
+}
+
+/* Table Notion dạng div */
+.article-content .notion-table-block{
+  margin:16px 0!important;
+  border:1px solid #cad9cd!important;
+  border-radius:12px!important;
+  overflow:auto!important;
+  background:#fff!important;
+}
+
+.article-content .notion-table-row{
+  display:flex!important;
+  min-width:max-content!important;
+  border-bottom:1px solid #dce6de!important;
+}
+
+.article-content .notion-table-row:last-child{
+  border-bottom:0!important;
+}
+
+.article-content .notion-table-cell{
+  min-width:130px!important;
+  padding:9px 11px!important;
+  border-right:1px solid #dce6de!important;
+  background:#fff!important;
+}
+
+.article-content .notion-table-cell:last-child{
+  border-right:0!important;
+}
+
+.article-content .notion-table-row:first-child .notion-table-cell{
+  background:#edf5f0!important;
+  color:#1d5843!important;
+  font-weight:700!important;
+}
+
+.article-content .notion-table-row:nth-child(even) .notion-table-cell{
+  background:#fafcf9!important;
+}
+
+/* Table HTML nếu có */
+.article-content table{
+  width:100%!important;
+  border-collapse:collapse!important;
+  margin:14px 0!important;
+  background:#fff!important;
+}
+
+.article-content th,
+.article-content td{
+  border:1px solid #d9e4db!important;
+  padding:9px 11px!important;
+}
+
+.article-content th{
+  background:#edf5f0!important;
+  color:#185541!important;
+  font-weight:700!important;
+}
+
+/* Ảnh thành khung gallery rõ ràng */
+.article-content .notion-image-block{
+  margin:16px 0 22px!important;
+  padding:9px!important;
+  border:1px solid #dbe5dc!important;
+  border-radius:12px!important;
+  background:#f8faf7!important;
+}
+
+.article-content .notion-image-block img,
+.article-content img.embedded-asset{
+  display:block!important;
+  max-width:100%!important;
+  height:auto!important;
+  margin:0 auto!important;
+  border-radius:8px!important;
+}
+
+/* Cột Notion */
+.article-content .notion-column_list-block{
+  gap:14px!important;
+  margin:12px 0!important;
+}
+
+.article-content .notion-column-block{
+  padding:12px!important;
+  border:1px solid #e1e8e2!important;
+  border-radius:11px!important;
+  background:#fcfdfb!important;
+}
+
+/* Divider đẹp hơn */
+.article-content .notion-divider-block{
+  margin:20px 0!important;
+  border:0!important;
+  height:1px!important;
+  background:linear-gradient(90deg,transparent,#cad8cc,transparent)!important;
+}
+
+/* Link download/action */
+.article-content a{
+  display:inline!important;
+  color:#176c51!important;
+  font-weight:650!important;
+  text-decoration:none!important;
+  border-bottom:1px dashed #87b19f!important;
+}
+
+.article-content a:hover{
+  color:#0d513c!important;
+  border-bottom-style:solid!important;
+}
+
+/* Khoảng cách giữa block */
+.article-content > .notion-selectable,
+.article-content .topic-card > .notion-selectable{
+  max-width:100%!important;
+}
+
+/* Typography */
+.article-content,
+.article-content p,
+.article-content div,
+.article-content span,
+.article-content td,
+.article-content th{
+  font-size:15.5px!important;
+  line-height:1.7!important;
+}
+
+.article-content strong,
+.article-content b{
+  color:#1d513e!important;
+  font-weight:750!important;
+}
+
+/* Mobile */
+@media(max-width:720px){
+  .article-content .notion-sub_header-block,
+  .article-content .notion-sub_sub_header-block,
+  .article-content .notion-header_4-block{
+    margin-top:19px!important;
+    padding:11px 38px 11px 12px!important;
+  }
+  .article-content .notion-bulleted_list-block{
+    padding-left:36px!important;
+  }
+  .article-content .notion-column-block{
+    padding:9px!important;
+  }
+}
+
+
+/* Giảm cảm giác đóng khung quá nhiều */
+.intro-panel,
+.topic-card{
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  padding:8px 0 18px!important;
+  overflow:visible!important;
+}
+
+.intro-panel{
+  border-left:0!important;
+  padding-top:0!important;
+}
+
+.topic-card::before{
+  display:none!important;
+}
+
+.topic-card > .notion-sub_header-block,
+.topic-card > .notion-sub_sub_header-block,
+.topic-card > .notion-header_4-block,
+.article-content .notion-sub_header-block,
+.article-content .notion-sub_sub_header-block,
+.article-content .notion-header_4-block{
+  margin:24px 0 14px!important;
+  padding:10px 0 10px 14px!important;
+  border:0!important;
+  border-left:4px solid #24715a!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+
+.article-content .notion-sub_header-block::after,
+.article-content .notion-sub_sub_header-block::after,
+.article-content .notion-header_4-block::after{
+  display:none!important;
+}
+
+/* Bullet vẫn rõ nhưng bớt ô */
+.article-content .notion-bulleted_list-block,
+.bullet-item{
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  padding-top:6px!important;
+  padding-bottom:6px!important;
+  min-height:auto!important;
+}
+
+.article-content .notion-bulleted_list-block::before,
+.bullet-item::before{
+  background:transparent!important;
+  color:#24715a!important;
+  width:auto!important;
+  height:auto!important;
+  left:10px!important;
+  top:6px!important;
+}
+
+/* Dòng thông tin ngắn: bỏ ô, dùng phân tách nhẹ */
+.info-row{
+  border:0!important;
+  border-bottom:1px dashed #e2e8e3!important;
+  border-radius:0!important;
+  background:transparent!important;
+  padding:7px 0 7px 26px!important;
+}
+
+.info-row::before{
+  left:4px!important;
+}
+
+/* Callout giữ khung vì có ý nghĩa */
+.guide-callout,
+.article-content .notion-callout-block{
+  border-radius:10px!important;
+  box-shadow:none!important;
+}
+
+/* Ảnh: bỏ khung ngoài, chỉ giữ ảnh sạch */
+.image-panel,
+.article-content .notion-image-block{
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  padding:0!important;
+  margin:18px 0 24px!important;
+}
+
+.article-image,
+.embedded-asset{
+  border-radius:10px!important;
+}
+
+/* Column/card: bớt khung */
+.article-content .notion-column-block{
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  padding:6px 10px!important;
+}
+
+.article-content .notion-column_list-block{
+  gap:18px!important;
+}
+
+/* Giữ bảng có viền vì cần đọc dữ liệu */
+.article-content .notion-table-block{
+  border:1px solid #d4dfd6!important;
+  box-shadow:none!important;
+}
+
+/* Khoảng cách giữa section nhẹ nhàng */
+.topic-card + .topic-card{
+  border-top:1px solid #edf1ed!important;
+  padding-top:24px!important;
+}
+
+.article-content{
+  gap:8px!important;
+}
+
+/* Khối page body cũng nhẹ hơn */
+.page-body{
+  border:0!important;
+  box-shadow:none!important;
+  background:#fff!important;
+  padding:clamp(20px,3vw,34px)!important;
+}
+
+
+/* ===== BỐ CỤC WEB THẦN MÃ: 2 ẢNH LỚN, NGANG, ĐỐI XỨNG ===== */
+
+.horse-showcase-grid{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+  gap:20px !important;
+  width:100% !important;
+  margin:18px 0 28px !important;
+  align-items:stretch !important;
+}
+
+.horse-showcase-card{
+  display:flex !important;
+  flex-direction:column !important;
+  min-width:0 !important;
+  background:#fff !important;
+  border:1px solid #d7e2d9 !important;
+  border-radius:12px !important;
+  overflow:hidden !important;
+}
+
+.horse-showcase-label{
+  flex:0 0 auto !important;
+  padding:10px 14px !important;
+  background:#1f664f !important;
+  color:#fff !important;
+  font-size:15px !important;
+  font-weight:700 !important;
+  text-align:center !important;
+  letter-spacing:.01em !important;
+}
+
+.horse-showcase-card .notion-image-block{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:100% !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:10px !important;
+  background:#fbfcfa !important;
+  border:0 !important;
+  border-radius:0 !important;
+  flex:1 1 auto !important;
+}
+
+/* Quan trọng: làm ảnh lớn thay vì bị thu nhỏ */
+.horse-showcase-card .notion-image-block > div,
+.horse-showcase-card .notion-image-block figure,
+.horse-showcase-card .notion-image-block a{
+  width:100% !important;
+  max-width:none !important;
+  margin:0 !important;
+}
+
+.horse-showcase-card img,
+.horse-showcase-card img.embedded-asset,
+.horse-showcase-card .article-image{
+  display:block !important;
+  width:100% !important;
+  max-width:none !important;
+  height:420px !important;
+  object-fit:contain !important;
+  object-position:center !important;
+  margin:0 auto !important;
+  border-radius:8px !important;
+  background:#f7f9f6 !important;
+  box-shadow:none !important;
+}
+
+/* Xóa các width cố định mà Notion để lại quanh ảnh */
+.horse-showcase-card [style*="width"]{
+  max-width:none !important;
+}
+
+/* Desktop rộng: tăng thêm chiều cao ảnh */
+@media(min-width:1400px){
+  .horse-showcase-card img,
+  .horse-showcase-card img.embedded-asset,
+  .horse-showcase-card .article-image{
+    height:470px !important;
+  }
+}
+
+/* Tablet vẫn giữ ngang nếu đủ chỗ */
+@media(max-width:980px){
+  .horse-showcase-grid{
+    gap:14px !important;
+  }
+  .horse-showcase-card img,
+  .horse-showcase-card img.embedded-asset,
+  .horse-showcase-card .article-image{
+    height:330px !important;
+  }
+}
+
+/* Mobile mới xếp dọc */
+@media(max-width:700px){
+  .horse-showcase-grid{
+    grid-template-columns:1fr !important;
+  }
+  .horse-showcase-card img,
+  .horse-showcase-card img.embedded-asset,
+  .horse-showcase-card .article-image{
+    height:auto !important;
+    max-height:460px !important;
+  }
+}
+
+
+/* ===== BẢNG DỮ LIỆU SẠCH, DỄ ĐỌC ===== */
+
+.clean-table-wrap{
+  width:100% !important;
+  overflow-x:auto !important;
+  margin:18px 0 24px !important;
+  border:1px solid #ccd8cf !important;
+  border-radius:12px !important;
+  background:#fff !important;
+  box-shadow:0 4px 14px rgba(37,69,52,.05) !important;
+  -webkit-overflow-scrolling:touch;
+}
+
+.clean-guide-table{
+  width:100% !important;
+  min-width:680px !important;
+  border-collapse:collapse !important;
+  border-spacing:0 !important;
+  table-layout:auto !important;
+  background:#fff !important;
+  color:#2f3e35 !important;
+  font-size:14.5px !important;
+  line-height:1.55 !important;
+  margin:0 !important;
+}
+
+.clean-guide-table th,
+.clean-guide-table td{
+  position:static !important;
+  min-width:110px !important;
+  max-width:420px !important;
+  padding:11px 13px !important;
+  border:1px solid #dbe4dd !important;
+  vertical-align:top !important;
+  text-align:left !important;
+  white-space:normal !important;
+  word-break:break-word !important;
+  overflow-wrap:anywhere !important;
+  background:#fff !important;
+  color:#334239 !important;
+  height:auto !important;
+}
+
+.clean-guide-table th{
+  background:#eaf4ee !important;
+  color:#185541 !important;
+  font-weight:750 !important;
+  text-align:center !important;
+  border-color:#cfddd3 !important;
+}
+
+.clean-guide-table tr:nth-child(even) td{
+  background:#f8fbf8 !important;
+}
+
+.clean-guide-table tr:hover td{
+  background:#f1f7f3 !important;
+}
+
+/* Nội dung bên trong ô */
+.clean-guide-table p,
+.clean-guide-table div,
+.clean-guide-table span{
+  margin:0 !important;
+  padding:0 !important;
+  line-height:1.55 !important;
+}
+
+.clean-guide-table strong,
+.clean-guide-table b{
+  color:#1b5943 !important;
+  font-weight:700 !important;
+}
+
+.clean-guide-table a{
+  color:#176c51 !important;
+  text-decoration:none !important;
+  border-bottom:1px dashed #82aa99 !important;
+}
+
+.clean-guide-table img{
+  max-width:100% !important;
+  height:auto !important;
+}
+
+/* Bảng ít cột: cho rộng thoáng hơn */
+.clean-guide-table tr > *:first-child{
+  border-left:0 !important;
+}
+.clean-guide-table tr > *:last-child{
+  border-right:0 !important;
+}
+.clean-guide-table tr:first-child > *{
+  border-top:0 !important;
+}
+.clean-guide-table tr:last-child > *{
+  border-bottom:0 !important;
+}
+
+/* Ẩn hoàn toàn kiểu bảng Notion cũ nếu còn sót */
+.notion-table-row,
+.notion-table-cell{
+  box-sizing:border-box !important;
+}
+
+/* Mobile */
+@media(max-width:760px){
+  .clean-table-wrap{
+    margin:14px -6px 20px !important;
+    width:calc(100% + 12px) !important;
+    border-radius:10px !important;
+  }
+
+  .clean-guide-table{
+    min-width:620px !important;
+    font-size:13.5px !important;
+  }
+
+  .clean-guide-table th,
+  .clean-guide-table td{
+    padding:9px 10px !important;
+    min-width:100px !important;
+  }
+}
+
+
+.da-tau-section{
+  margin:30px 0 10px !important;
+  padding-top:4px !important;
+}
+
+.da-tau-title{
+  margin:0 0 8px !important;
+  padding:11px 14px !important;
+  border-left:4px solid #24715a !important;
+  background:linear-gradient(90deg,#edf6f0,#fbfdfb) !important;
+  color:#185541 !important;
+  font-size:20px !important;
+  font-weight:800 !important;
+  border-radius:0 9px 9px 0 !important;
+}
+
+.da-tau-desc{
+  margin:0 0 14px !important;
+  color:#66776d !important;
+}
+
+.da-tau-table{
+  min-width:560px !important;
+}
+
+.da-tau-table th:first-child,
+.da-tau-table td:first-child{
+  width:150px !important;
+  text-align:center !important;
+  font-weight:700 !important;
+}
+
+.da-tau-table td:nth-child(2){
+  font-weight:500 !important;
+}
+
+/* Mốc quan trọng */
+.da-tau-special td{
+  background:#fff5dc !important;
+  color:#704d10 !important;
+  font-weight:800 !important;
+}
+
+.da-tau-special td:first-child{
+  color:#9a6110 !important;
+}
+
+/* Mốc Tiên Đơn */
+.da-tau-milestone td{
+  background:#edf7f1 !important;
+  color:#185541 !important;
+  font-weight:800 !important;
+  border-top:2px solid #9bbbaa !important;
+  border-bottom:2px solid #9bbbaa !important;
+}
+
+.da-tau-milestone-final td{
+  background:linear-gradient(90deg,#fff1c9,#fff8e8) !important;
+  color:#7a4f08 !important;
+  font-weight:900 !important;
+  border-top:2px solid #c99b43 !important;
+  border-bottom:2px solid #c99b43 !important;
+}
+
+@media(max-width:700px){
+  .da-tau-table{min-width:500px !important;}
+}
+
+
+/* ===== LOẠI BỎ CÁC VẠCH DỌC TRANG TRÍ THỪA ===== */
+
+/* Bỏ vạch dọc ở toàn bộ tiêu đề và khối nội dung */
+.article-content .notion-sub_header-block,
+.article-content .notion-sub_sub_header-block,
+.article-content .notion-header_4-block,
+.topic-card > .notion-sub_header-block,
+.topic-card > .notion-sub_sub_header-block,
+.topic-card > .notion-header_4-block,
+.intro-panel,
+.topic-card,
+.da-tau-title{
+  border-left:0 !important;
+}
+
+/* Tiêu đề mục con: sạch, không đóng khung */
+.article-content .notion-sub_header-block,
+.article-content .notion-sub_sub_header-block,
+.article-content .notion-header_4-block,
+.topic-card > .notion-sub_header-block,
+.topic-card > .notion-sub_sub_header-block,
+.topic-card > .notion-header_4-block{
+  position:relative !important;
+  margin:28px 0 15px !important;
+  padding:0 0 11px !important;
+  border:0 !important;
+  border-bottom:1px solid #e0e8e2 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+
+/* Dấu nhấn nhỏ nằm NGANG dưới tiêu đề thay vì vạch đứng */
+.article-content .notion-sub_header-block::before,
+.article-content .notion-sub_sub_header-block::before,
+.article-content .notion-header_4-block::before,
+.topic-card > .notion-sub_header-block::before,
+.topic-card > .notion-sub_sub_header-block::before,
+.topic-card > .notion-header_4-block::before{
+  content:"" !important;
+  position:absolute !important;
+  left:0 !important;
+  bottom:-1px !important;
+  width:48px !important;
+  height:3px !important;
+  background:#24715a !important;
+  border-radius:3px !important;
+}
+
+.article-content .notion-sub_header-block::after,
+.article-content .notion-sub_sub_header-block::after,
+.article-content .notion-header_4-block::after{
+  display:none !important;
+  content:none !important;
+}
+
+/* Mốc Dã Tẩu đồng bộ với tiêu đề mới */
+.da-tau-title{
+  position:relative !important;
+  margin:28px 0 10px !important;
+  padding:0 0 11px !important;
+  border:0 !important;
+  border-bottom:1px solid #e0e8e2 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  color:#185541 !important;
+}
+
+.da-tau-title::after{
+  content:"" !important;
+  position:absolute !important;
+  left:0 !important;
+  bottom:-1px !important;
+  width:48px !important;
+  height:3px !important;
+  background:#24715a !important;
+  border-radius:3px !important;
+}
+
+/* Intro và section không còn vạch thừa */
+.intro-panel,
+.topic-card{
+  border:0 !important;
+  box-shadow:none !important;
+  background:transparent !important;
+}
+
+/* Nếu còn pseudo-element tạo thanh dọc từ CSS cũ */
+.intro-panel::before,
+.intro-panel::after{
+  display:none !important;
+  content:none !important;
+}
+
+/* Tiêu đề vẫn nổi bật nhưng tự nhiên */
+.article-content .notion-sub_header-block h2,
+.article-content .notion-sub_header-block h3,
+.article-content .notion-sub_sub_header-block h2,
+.article-content .notion-sub_sub_header-block h3,
+.article-content .notion-header_4-block h4{
+  color:#1c5743 !important;
+  font-weight:800 !important;
+  line-height:1.4 !important;
+}
+
+/* Mobile */
+@media(max-width:700px){
+  .article-content .notion-sub_header-block,
+  .article-content .notion-sub_sub_header-block,
+  .article-content .notion-header_4-block{
+    margin-top:22px !important;
+    padding-bottom:9px !important;
+  }
+}
+
+
+#da-tau-milestones{
+  margin:28px 0 14px !important;
+  padding:0 !important;
+  border:1px solid #d6e2d9 !important;
+  border-radius:12px !important;
+  background:#fff !important;
+  overflow:hidden !important;
+}
+
+.da-tau-toggle{
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  width:100% !important;
+  min-height:58px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:18px !important;
+  padding:13px 16px !important;
+  border:0 !important;
+  background:linear-gradient(90deg,#edf6f0,#fafcf9) !important;
+  color:#185541 !important;
+  cursor:pointer !important;
+  text-align:left !important;
+  font-family:inherit !important;
+}
+
+.da-tau-toggle:hover{
+  background:#e8f3ec !important;
+}
+
+.da-tau-toggle-left{
+  display:flex !important;
+  align-items:center !important;
+  gap:10px !important;
+  min-width:0 !important;
+}
+
+.da-tau-toggle-icon{
+  display:inline-grid !important;
+  place-items:center !important;
+  width:24px !important;
+  height:24px !important;
+  flex:0 0 24px !important;
+  border-radius:50% !important;
+  background:#24715a !important;
+  color:#fff !important;
+  font-size:13px !important;
+  line-height:1 !important;
+  transition:transform .2s ease !important;
+}
+
+.da-tau-toggle[aria-expanded="true"] .da-tau-toggle-icon{
+  transform:rotate(90deg) !important;
+}
+
+.da-tau-toggle-label{
+  font-size:17px !important;
+  font-weight:800 !important;
+  color:#185541 !important;
+}
+
+.da-tau-toggle-badge{
+  padding:3px 8px !important;
+  border-radius:999px !important;
+  background:#fff !important;
+  border:1px solid #cbdcd1 !important;
+  color:#5c7467 !important;
+  font-size:11px !important;
+  font-weight:700 !important;
+  white-space:nowrap !important;
+}
+
+.da-tau-toggle-hint{
+  color:#718178 !important;
+  font-size:12px !important;
+  font-weight:600 !important;
+  white-space:nowrap !important;
+}
+
+.da-tau-collapse-body{
+  padding:17px 16px 18px !important;
+  border-top:1px solid #dce6df !important;
+}
+
+.da-tau-collapse-body[hidden]{
+  display:none !important;
+}
+
+.da-tau-collapse-body .da-tau-desc{
+  margin-top:0 !important;
+}
+
+.da-tau-collapse-body .da-tau-table-wrap{
+  margin-bottom:0 !important;
+}
+
+@media(max-width:700px){
+  .da-tau-toggle{
+    padding:12px 13px !important;
+  }
+  .da-tau-toggle-label{
+    font-size:15px !important;
+  }
+  .da-tau-toggle-hint{
+    display:none !important;
+  }
+  .da-tau-toggle-badge{
+    font-size:10px !important;
+  }
+  .da-tau-collapse-body{
+    padding:12px 10px 14px !important;
+  }
+}
+
+
+.cms-btn-public{
+  background:#1f5f89 !important;
+  border-color:#1f5f89 !important;
+  color:#fff !important;
+}
+.cms-btn-public:hover{
+  background:#174c70 !important;
+}
+.cms-export-note{
+  position:sticky;
+  top:50px;
+  z-index:99999;
+  padding:5px 12px;
+  background:#f7faf8;
+  border-bottom:1px solid #e0e8e2;
+  color:#69786f;
+  font:600 11px/1.3 "Be Vietnam Pro","Segoe UI",Arial,sans-serif;
+  text-align:right;
+}
+@media(max-width:900px){
+  .cms-export-note{
+    position:relative;
+    top:auto;
+    text-align:left;
+  }
+}
+
+
+.guide-search-results{
+  display:none; position:absolute; z-index:99990; width:min(680px,calc(100vw - 32px));
+  max-height:65vh; overflow:auto; margin-top:6px; padding:7px;
+  background:#fff; border:1px solid #d9e4dc; border-radius:12px;
+  box-shadow:0 16px 40px rgba(31,63,46,.16);
+}
+.guide-search-results.open{display:block}
+.guide-search-result{
+  display:block; width:100%; text-align:left; border:0; background:#fff; cursor:pointer;
+  padding:10px 12px; border-radius:8px; color:#26362d;
+}
+.guide-search-result:hover{background:#eef6f1}
+.guide-search-result strong{display:block;color:#185541;font-size:13px;margin-bottom:3px}
+.guide-search-result span{display:block;color:#68776e;font-size:12px;line-height:1.45}
+.guide-search-empty{padding:12px;color:#718078;font-size:13px}
+.guide-search-hit{
+  animation:guideHit 1.5s ease;
+  outline:2px solid #d3a647 !important;
+  outline-offset:4px;
+}
+@keyframes guideHit{0%,100%{background:transparent}30%{background:#fff5c8}}
+
+
+.guide-search-results{
+  pointer-events:auto !important;
+}
+.guide-search-result{
+  pointer-events:auto !important;
+  position:relative !important;
+  z-index:1 !important;
+}
+.guide-search-result *{
+  pointer-events:none !important;
+}
+
+
+.rework-video-box{
+  margin:18px 0 26px;padding:14px;border:1px solid #d6e3da;
+  border-radius:14px;background:#f8fbf9
+}
+.rework-video-title{
+  margin-bottom:10px;color:#185541;font-size:17px;font-weight:800
+}
+.rework-video-preview{
+  position:relative;display:block;width:100%;aspect-ratio:16/9;
+  overflow:hidden;border-radius:12px;background:#101010;text-decoration:none!important
+}
+.rework-video-preview img{
+  width:100%!important;height:100%!important;max-width:none!important;
+  object-fit:cover!important;display:block;transition:transform .25s ease,opacity .25s ease
+}
+.rework-video-preview::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(0,0,0,.68),rgba(0,0,0,.04) 58%);
+}
+.rework-video-preview:hover img{transform:scale(1.015);opacity:.92}
+.rework-video-play{
+  position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);
+  display:grid;place-items:center;width:76px;height:54px;border-radius:14px;
+  background:#ff0033;color:#fff;font-size:27px;line-height:1;
+  box-shadow:0 8px 30px rgba(0,0,0,.28)
+}
+.rework-video-label{
+  position:absolute;z-index:2;left:22px;bottom:18px;color:#fff;
+  font-size:16px;font-weight:800;text-shadow:0 2px 8px rgba(0,0,0,.7)
+}
+.rework-video-fallback{margin:10px 2px 0;color:#69796f;font-size:12px}
+.rework-video-fallback a{color:#176c51;font-weight:700}
+
+/* Public CMS v4 shell */
+body{margin:0}
+.v4-app{display:grid;grid-template-columns:300px minmax(0,1fr);min-height:100vh}
+.v4-sidebar{position:sticky;top:0;height:100vh;overflow:auto;background:#fff;border-right:1px solid #d9e4dc;padding:18px 14px;z-index:10}
+.v4-brand{padding:8px 8px 16px}.v4-brand h2{margin:0;color:#174f3c}.v4-brand small{color:#728078}
+.v4-search{width:100%;padding:10px 12px;border:1px solid #d9e4dc;border-radius:10px;margin-bottom:12px}
+.v4-nav{display:flex;flex-direction:column;gap:4px}.v4-nav button{border:0;background:transparent;padding:9px 10px;border-radius:9px;text-align:left;cursor:pointer;color:#44564c}
+.v4-nav button.active,.v4-nav button:hover{background:#edf6f1;color:#185541;font-weight:700}
+.v4-main{min-width:0;padding:28px clamp(14px,3vw,44px) 60px}.v4-hero{max-width:1180px;margin:0 auto 20px;padding:20px 24px;border:1px solid #dbe7df;border-radius:18px;background:linear-gradient(125deg,#fff,#f2f8f4)}
+.v4-hero h1{margin:0;color:#174f3c}.v4-hero p{margin:6px 0 0;color:#718078}
+.v4-article{display:none;max-width:1180px;margin:0 auto}.v4-article.active{display:block}
+.v4-card{background:#fff;border-radius:18px;padding:clamp(18px,3vw,34px);box-shadow:0 12px 34px rgba(45,70,54,.08)}
+.v4-title{margin:0 0 18px;padding-bottom:12px;border-bottom:1px solid #e0e8e2;color:#174f3c}
+.v4-admin{position:fixed;right:14px;bottom:14px;padding:7px 10px;border:1px solid #d2ded5;border-radius:999px;background:#fff;color:#68796f;text-decoration:none;font-size:11px;font-weight:700;opacity:.65}
+.v4-admin:hover{opacity:1;color:#185541}
+.v4-results{display:none}.v4-results.open{display:block}.v4-result{display:block;width:100%;border:0;background:#f7faf8;padding:8px 10px;margin:3px 0;border-radius:8px;text-align:left;cursor:pointer}
+@media(max-width:850px){.v4-app{grid-template-columns:1fr}.v4-sidebar{position:relative;height:auto}.v4-main{padding:18px 10px 45px}}
