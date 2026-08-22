@@ -276,9 +276,9 @@ button,input,textarea,select{font:inherit}
 <span class="sep"></span>
 <button id="sourceBtn">&lt;/&gt; HTML</button><button data-cmd="removeFormat">⌫ Format</button>
 </div>
-<div class="editor" contenteditable="true" id="editor"></div><div class="public-live-wrap" id="publicLiveWrap"><div class="preview-badge">PUBLIC ARTICLE • đang chỉnh</div><iframe id="publicLiveFrame" title="Trang Public thật"></iframe></div>
+<div class="editor" contenteditable="true" id="editor"></div><div class="public-live-wrap" id="publicLiveWrap"><div class="preview-badge">PUBLIC ARTICLE • body edit</div><iframe id="publicLiveFrame" title="Trang Public thật"></iframe></div>
 <textarea class="source" id="sourceEditor" spellcheck="false"></textarea>
-<div class="help">V14: chỉ hiển thị nội dung bài Public trong editor; menu, header, tìm kiếm và nút Public đã được ẩn để Admin gọn hơn.</div>
+<div class="help">V15: Admin chỉ sửa phần thân bài. Header/hero Public được giữ nguyên nên không còn lặp tiêu đề như “Cơ Bản” hai lần.</div>
 </div>
 </section>
 <section class="settings-panel hidden" id="settingsPanel">
@@ -342,8 +342,23 @@ function selectedPublicSection(){
 function editablePublicNode(){
   const sec=selectedPublicSection();
   if(!sec)return null;
-  return sec.querySelector(".article-content,.page-body,.content-body,.content")
+  return sec.querySelector(".article-content,.page-body,.content-body,.content,.article-body,.section-body")
       || sec;
+}
+function extractEditableHTMLFromStored(){
+  const raw=currentData?.section_html||currentData?.body_html||"";
+  if(!raw)return "";
+
+  // Parse stored HTML and extract only the article body when possible.
+  // This prevents public hero/title blocks from being inserted twice.
+  const tmp=document.createElement("div");
+  tmp.innerHTML=raw;
+
+  const body=tmp.querySelector(".article-content,.page-body,.content-body,.content,.article-body,.section-body");
+  if(body)return body.innerHTML;
+
+  // Fallback: if stored HTML itself is already only body content, use it as-is.
+  return raw;
 }
 function getVisualHTML(){
   const node=editablePublicNode();
@@ -414,7 +429,7 @@ function ensurePublicEditMode(){
   const node=editablePublicNode();
   if(!node)return false;
 
-  const html=currentData.section_html||currentData.body_html||"";
+  const html=extractEditableHTMLFromStored();
   if(node.innerHTML!==html)node.innerHTML=html;
 
   node.setAttribute("contenteditable","true");
@@ -545,7 +560,7 @@ function openArticle(name){
   $("#orderInput").value=currentData.order||1;
   $("#visibleInput").checked=currentData.visible!==false;
 
-  const html=currentData.section_html||currentData.body_html||"";
+  const html=extractEditableHTMLFromStored();
   $("#editor").innerHTML=html;
   $("#sourceEditor").value=html;
 
@@ -563,9 +578,23 @@ function collectArticle(){
   currentData.icon=$("#iconInput").value.trim();
   currentData.order=Number($("#orderInput").value||1);
   currentData.visible=$("#visibleInput").checked;
-  const html=sourceMode?$("#sourceEditor").value:getVisualHTML();
-  if("section_html" in currentData)currentData.section_html=html;
-  else currentData.body_html=html;
+
+  const edited=sourceMode?$("#sourceEditor").value:getVisualHTML();
+
+  if("section_html" in currentData){
+    // Preserve the original public hero/header and only replace its editable body.
+    const tmp=document.createElement("div");
+    tmp.innerHTML=currentData.section_html||"";
+    const body=tmp.querySelector(".article-content,.page-body,.content-body,.content,.article-body,.section-body");
+    if(body){
+      body.innerHTML=edited;
+      currentData.section_html=tmp.innerHTML;
+    }else{
+      currentData.section_html=edited;
+    }
+  }else{
+    currentData.body_html=edited;
+  }
   return currentData;
 }
 

@@ -1,11 +1,10 @@
-# CMS v14 — Admin gọn gàng
+# CMS v15 — Không trùng tiêu đề Public
 
-Sửa giao diện v13:
-- Không còn lặp sidebar/header/search của trang Public bên trong Admin.
-- Khung edit chỉ hiển thị đúng bài đang chọn.
-- Vẫn dùng chính DOM/CSS của Public nên bài nhìn gần giống trang ngoài.
-- Toolbar Admin vẫn sticky phía trên.
-- PAT, GitHub API, HTML mode, upload ảnh, Lưu & Commit giữ nguyên.
+Sửa lỗi v14:
+- `section_html` có cả hero/header và body.
+- Admin trước đây chèn toàn bộ `section_html` vào body của trang Public -> header bị lặp.
+- V15 chỉ lấy nội dung của `.article-content/.page-body/...` để chỉnh.
+- Khi Lưu & Commit, V15 ghép body đã sửa ngược trở lại `section_html` gốc.
+- Hero/header/icon/layout Public được giữ nguyên đúng một lần.
 
-Cập nhật:
-copy đè repo -> Commit -> Push -> chờ Actions xanh -> Ctrl+F5 /admin/.
+PAT, GitHub API, toolbar, HTML mode, upload ảnh và GitHub Pages giữ nguyên.
