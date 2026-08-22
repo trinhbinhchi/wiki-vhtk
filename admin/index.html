@@ -116,49 +116,84 @@ button,input,textarea,select{font:inherit}
   .meta{grid-template-columns:1fr 1fr}.main{padding:12px}.topbar{margin:-12px -12px 12px}.toolbar{top:55px}
 }
 </style>
-<style id="v12-isolated-editor-style">
-/* V12: public styling is isolated inside iframe, Admin layout remains untouched */
-.editor{
-  display:none!important;
-}
-.public-frame-wrap{
-  background:#f7f8f3;
-  padding:14px;
-  border-top:1px solid var(--line);
-}
-#publicEditorFrame{
-  display:block;
-  width:100%;
-  height:760px;
-  min-height:680px;
-  border:0;
-  border-radius:10px;
+<style id="v13-real-public-editor-style">
+/* ===== V13: Admin keeps its own layout; preview is the REAL public page ===== */
+.editor{display:none!important}
+
+.editor-wrap{
+  max-width:1580px;
+  margin:0 auto;
+  overflow:visible!important;
   background:#fff;
 }
+
+.meta{
+  max-width:1580px;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+.main{
+  padding-left:16px!important;
+  padding-right:16px!important;
+}
+
+/* Toolbar is independent from preview and never drops into the content. */
+.toolbar{
+  position:sticky!important;
+  top:52px!important;
+  z-index:1000!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+  border-bottom:1px solid var(--line)!important;
+  box-shadow:0 3px 10px rgba(30,60,43,.06);
+  background:#f5f9f6!important;
+}
+
+/* The preview always occupies a stable viewport. */
+.public-live-wrap{
+  position:relative;
+  width:100%;
+  height:calc(100vh - 205px);
+  min-height:720px;
+  background:#eef2ee;
+  border-top:1px solid var(--line);
+  overflow:hidden;
+}
+
+#publicLiveFrame{
+  display:block;
+  width:100%;
+  height:100%;
+  border:0;
+  background:#fff;
+}
+
+/* Source mode */
 .source{
   min-height:760px!important;
-  max-height:none!important;
+  max-height:calc(100vh - 205px)!important;
 }
-.editor-wrap{
-  max-width:1480px;
-  margin-left:auto;
-  margin-right:auto;
+
+/* floating helper over the preview */
+.preview-badge{
+  position:absolute;
+  right:12px;
+  top:12px;
+  z-index:8;
+  padding:6px 9px;
+  border-radius:999px;
+  background:rgba(23,79,60,.92);
+  color:#fff;
+  font-size:11px;
+  font-weight:700;
+  pointer-events:none;
+  box-shadow:0 5px 15px rgba(0,0,0,.12);
 }
-.meta{
-  max-width:1480px;
-  margin-left:auto;
-  margin-right:auto;
-}
-.main{
-  padding-left:18px!important;
-  padding-right:18px!important;
-}
-.toolbar{
-  top:55px!important;
-  z-index:120!important;
-}
+
 @media(max-width:900px){
-  #publicEditorFrame{height:650px}
+  .public-live-wrap{height:680px;min-height:620px}
+  .toolbar{top:52px!important}
 }
 </style></head>
 <body>
@@ -226,9 +261,9 @@ button,input,textarea,select{font:inherit}
 <span class="sep"></span>
 <button id="sourceBtn">&lt;/&gt; HTML</button><button data-cmd="removeFormat">⌫ Format</button>
 </div>
-<div class="editor" contenteditable="true" id="editor"></div><div class="public-frame-wrap"><iframe id="publicEditorFrame" title="Trình soạn thảo giống Public"></iframe></div>
+<div class="editor" contenteditable="true" id="editor"></div><div class="public-live-wrap" id="publicLiveWrap"><div class="preview-badge">LIVE PUBLIC • đang chỉnh sửa</div><iframe id="publicLiveFrame" title="Trang Public thật"></iframe></div>
 <textarea class="source" id="sourceEditor" spellcheck="false"></textarea>
-<div class="help">V12: giao diện Admin và CSS Public được tách riêng. Khung bài dùng CSS Public trong iframe nên không còn làm vỡ bố cục Admin.</div>
+<div class="help">V13: khung dưới là chính trang Public thật đang được bật contenteditable trên bài hiện tại. Toolbar được cố định riêng phía trên.</div>
 </div>
 </section>
 <section class="settings-panel hidden" id="settingsPanel">
@@ -269,73 +304,117 @@ let currentData=null;
 let settingsSha=null;
 
 let sourceMode=false;
-let frameReady=false;
+let publicFrameLoaded=false;
+let pendingPublicEdit=null;
 
-function frameDoc(){
-  return $("#publicEditorFrame")?.contentDocument || null;
+function publicFrame(){
+  return $("#publicLiveFrame");
 }
-function frameBody(){
-  const d=frameDoc();
-  return d ? d.querySelector("#publicEditable") : null;
+function publicDoc(){
+  const fr=publicFrame();
+  try{return fr && fr.contentDocument ? fr.contentDocument : null}catch(e){return null}
 }
-function buildFrame(html, data){
-  const fr=$("#publicEditorFrame");
-  const secId=(data?.section_id||"admin-preview").replace(/"/g,"&quot;");
-  const secClass=(data?.section_class||"article").replace(/"/g,"&quot;");
-  const doc=`<!doctype html>
-<html lang="vi">
-<head>
-<meta charset="utf-8">
-<base href="${location.origin}/wiki-vhtk/">
-<link rel="stylesheet" href="../assets/site.css">
-<style>
-html,body{margin:0!important;padding:0!important;background:#f7f8f3!important}
-body{overflow:auto!important}
-#editorStage{padding:18px}
-#editorStage section{
-  display:block!important;visibility:visible!important;opacity:1!important;
-  position:relative!important;margin:0 auto!important;
+function publicWin(){
+  const fr=publicFrame();
+  try{return fr && fr.contentWindow ? fr.contentWindow : null}catch(e){return null}
 }
-#publicEditable{outline:none!important;min-height:650px}
-#publicEditable:focus{box-shadow:0 0 0 2px rgba(32,107,81,.14)!important;border-radius:8px}
-#publicEditable img{max-width:100%!important;height:auto!important}
-#publicEditable iframe{max-width:100%!important}
-</style>
-</head>
-<body>
-<div id="editorStage">
-<section id="${secId}" class="${secClass} active">
-<div id="publicEditable" contenteditable="true">${html||""}</div>
-</section>
-</div>
-<script>
-const ed=document.getElementById("publicEditable");
-ed.addEventListener("input",()=>parent.postMessage({type:"vhtk-editor-input",html:ed.innerHTML},"*"));
-ed.addEventListener("blur",()=>parent.postMessage({type:"vhtk-editor-input",html:ed.innerHTML},"*"));
-<\/script>
-</body>
-</html>`;
-  fr.srcdoc=doc;
-  frameReady=false;
-  fr.onload=()=>{frameReady=true};
+function selectedPublicSection(){
+  const d=publicDoc();
+  if(!d || !currentData)return null;
+  const id=currentData.section_id;
+  return id ? d.getElementById(id) : null;
+}
+function editablePublicNode(){
+  const sec=selectedPublicSection();
+  if(!sec)return null;
+  return sec.querySelector(".article-content,.page-body,.content-body,.content")
+      || sec;
 }
 function getVisualHTML(){
-  const b=frameBody();
-  return b ? b.innerHTML : ($("#editor").innerHTML||"");
+  const node=editablePublicNode();
+  return node ? node.innerHTML : ($("#editor").innerHTML||"");
 }
-function setVisualHTML(html){
-  const b=frameBody();
-  if(b)b.innerHTML=html||"";
-  $("#editor").innerHTML=html||"";
+function syncFromPublic(){
+  const html=getVisualHTML();
+  $("#editor").innerHTML=html;
+  if(!sourceMode)$("#sourceEditor").value=html;
 }
-window.addEventListener("message",e=>{
-  if(e.data && e.data.type==="vhtk-editor-input"){
-    $("#editor").innerHTML=e.data.html||"";
-    if(!sourceMode)$("#sourceEditor").value=e.data.html||"";
+function ensurePublicEditMode(){
+  const d=publicDoc();
+  if(!d || !currentData)return false;
+
+  // Open the selected article using the public site's own navigation if possible.
+  const sec=d.getElementById(currentData.section_id);
+  const nav=d.querySelector('.nav-item[data-target="'+CSS.escape(currentData.section_id||"")+'"]');
+
+  if(nav){
+    try{nav.click()}catch(e){}
   }
-});
 
+  // Fallback: force the selected section visible while leaving public layout intact.
+  d.querySelectorAll("section[id]").forEach(s=>{
+    if(s===sec){
+      s.style.removeProperty("display");
+      s.classList.add("active");
+    }
+  });
 
+  if(!sec)return false;
+
+  const node=editablePublicNode();
+  if(!node)return false;
+
+  // Inject the current GitHub article HTML into the REAL public section.
+  const html=currentData.section_html||currentData.body_html||"";
+  if(node.innerHTML!==html)node.innerHTML=html;
+
+  node.setAttribute("contenteditable","true");
+  node.setAttribute("spellcheck","false");
+  node.style.outline="none";
+  node.dataset.vhtkAdminEditing="1";
+
+  node.addEventListener("input",syncFromPublic);
+  node.addEventListener("blur",syncFromPublic);
+
+  // Distinguish editing without changing layout.
+  const marker=d.createElement("style");
+  marker.id="vhtk-admin-live-style";
+  marker.textContent=`
+    [data-vhtk-admin-editing="1"]:focus{
+      box-shadow:0 0 0 2px rgba(32,107,81,.18)!important;
+      border-radius:8px!important;
+    }
+  `;
+  if(!d.getElementById("vhtk-admin-live-style"))d.head.appendChild(marker);
+
+  // Scroll article into view inside the public page.
+  setTimeout(()=>sec.scrollIntoView({behavior:"auto",block:"start"}),50);
+
+  publicFrameLoaded=true;
+  syncFromPublic();
+  setStatus("Đã tải • đang chỉnh trực tiếp trên trang Public thật","ok");
+  return true;
+}
+function loadPublicForEditing(){
+  const fr=publicFrame();
+  if(!fr || !currentData)return;
+  publicFrameLoaded=false;
+  fr.onload=()=>{
+    // Public page itself loads site.json asynchronously; wait until section HTML exists.
+    let tries=0;
+    const timer=setInterval(()=>{
+      tries++;
+      const sec=selectedPublicSection();
+      const hasContent=sec && (sec.innerHTML||"").trim().length>20;
+      if(hasContent || tries>80){
+        clearInterval(timer);
+        ensurePublicEditMode();
+      }
+    },100);
+  };
+  // Always reload the real public page to reproduce exact public DOM/CSS/JS state.
+  fr.src="../?admin_edit="+Date.now();
+}
 const $=s=>document.querySelector(s);
 const enc=s=>encodeURIComponent(s).replace(/%2F/g,"/");
 function b64EncodeUnicode(str){return btoa(unescape(encodeURIComponent(str)))}
@@ -415,12 +494,17 @@ function openArticle(name){
   $("#iconInput").value=currentData.icon||"";
   $("#orderInput").value=currentData.order||1;
   $("#visibleInput").checked=currentData.visible!==false;
+
   const html=currentData.section_html||currentData.body_html||"";
   $("#editor").innerHTML=html;
   $("#sourceEditor").value=html;
-  buildFrame(html,currentData);
-  sourceMode=false;updateSourceMode();
-  renderArticleList();setStatus("Đã tải • Preview Public biệt lập","ok");
+
+  sourceMode=false;
+  updateSourceMode();
+  loadPublicForEditing();
+
+  renderArticleList();
+  setStatus("Đang mở trang Public thật...");
 }
 
 function collectArticle(){
@@ -504,25 +588,19 @@ async function newArticle(){
 }
 
 function exec(cmd,arg=null){
-  const d=frameDoc(),b=frameBody();
-  if(d&&b){
-    b.focus();
+  const d=publicDoc(),node=editablePublicNode();
+  if(d&&node){
+    node.focus();
     d.execCommand(cmd,false,arg);
-    $("#editor").innerHTML=b.innerHTML;
-    syncEditors();
+    syncFromPublic();
   }
 }
 function syncEditors(){
-  if(!sourceMode){
-    const html=getVisualHTML();
-    $("#editor").innerHTML=html;
-    $("#sourceEditor").value=html;
-  }
+  if(!sourceMode)syncFromPublic();
 }
 function updateSourceMode(){
   $("#sourceEditor").classList.toggle("active",sourceMode);
-  const fr=$("#publicEditorFrame");
-  if(fr)fr.parentElement.classList.toggle("hidden",sourceMode);
+  $("#publicLiveWrap").classList.toggle("hidden",sourceMode);
   $("#sourceBtn").textContent=sourceMode?"👁 Trực quan":"</> HTML";
 }
 function toggleSource(){
@@ -532,7 +610,11 @@ function toggleSource(){
   }else{
     const html=$("#sourceEditor").value;
     $("#editor").innerHTML=html;
-    buildFrame(html,currentData);
+    if(currentData){
+      if("section_html" in currentData)currentData.section_html=html;
+      else currentData.body_html=html;
+    }
+    ensurePublicEditMode();
   }
   updateSourceMode();
 }
@@ -590,7 +672,7 @@ document.querySelectorAll("[data-cmd]").forEach(b=>b.onclick=()=>exec(b.dataset.
 $("#blockSelect").onchange=e=>{if(e.target.value)exec("formatBlock",e.target.value)};
 $("#fontSizeSelect").onchange=e=>{if(e.target.value)exec("fontSize",e.target.value)};
 $("#foreColor").onchange=e=>exec("foreColor",e.target.value);$("#backColor").onchange=e=>exec("hiliteColor",e.target.value);
-/* iframe editor syncs via postMessage */$("#sourceEditor").oninput=()=>{if(sourceMode){}};
+/* V13 syncs directly from same-origin Public iframe */$("#sourceEditor").oninput=()=>{if(sourceMode){}};
 
 // Auto-login from stored token.
 (async()=>{

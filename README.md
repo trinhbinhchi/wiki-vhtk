@@ -1,12 +1,12 @@
-# CMS v12 — Admin ổn định + Preview Public biệt lập
+# CMS v13 — Admin chỉnh trực tiếp trên trang Public thật
 
-Sửa lỗi v11:
-- KHÔNG nạp CSS Public vào toàn trang Admin.
-- Admin giữ nguyên layout/CSS riêng.
-- Chỉ vùng bài viết nằm trong iframe biệt lập và nạp `assets/site.css`.
-- Toolbar thao tác trực tiếp vào contenteditable bên trong iframe.
-- HTML mode, PAT, GitHub API, Lưu & Commit giữ nguyên.
-- CSS Public không thể đè sidebar/topbar/form Admin nữa.
+Sửa 2 lỗi của v12:
+- Preview không còn là HTML/CSS mô phỏng. Admin iframe mở trực tiếp `../` — chính trang Public thật.
+- Sau khi Public tải xong, Admin tìm đúng `section_id`, chèn nội dung bài hiện tại và bật `contenteditable`.
+- Vì là cùng origin GitHub Pages, toolbar Admin thao tác trực tiếp vào DOM của trang Public.
+- Toolbar được `position: sticky` riêng, không trôi xuống theo iframe/nội dung.
+
+PAT, GitHub API, HTML mode, upload ảnh, Lưu & Commit vẫn giữ nguyên.
 
 Cập nhật:
-copy đè repo -> Commit -> Push -> chờ GitHub Actions xanh -> Ctrl+F5 /admin/.
+copy đè repo -> Commit -> Push -> chờ Actions xanh -> Ctrl+F5 /admin/.
