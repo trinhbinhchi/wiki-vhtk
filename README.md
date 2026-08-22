@@ -1,19 +1,10 @@
-# CMS v20 — Safe JSON
+# CMS v21 — bỏ ghi chú thừa
 
-Sửa lỗi build:
-`SyntaxError: Expected ',' or '}' after property value in JSON`
+Đã xóa hoàn toàn khỏi Public:
+- Nội dung được làm sạch và trình bày lại từ bản lưu Notion.
+- Website hoạt động độc lập, không cần giao diện Notion.
 
-Nguyên nhân:
-- `content/articles/ky-nang-90-rework.json` bị hỏng cú pháp JSON sau khi lưu HTML/video phức tạp.
-
-V20:
-- Sửa lại `ky-nang-90-rework.json` thành JSON hợp lệ.
-- Canonicalize toàn bộ `content/articles/*.json`.
-- Admin dùng `safeJSONStringify()` = `JSON.stringify(obj, null, 2)` cho:
-  - lưu bài
-  - tạo bài
-  - lưu settings
-- Tự `JSON.parse()` kiểm tra lại payload trước khi PUT lên GitHub.
-- 409 hiển thị thông báo rõ: tải lại rồi lưu lại.
-
-Sau khi copy đè repo và Push, GitHub Actions phải qua bước `Build CMS content`.
+Đồng thời:
+- Bỏ hai trường Ghi chú nguồn / Ghi chú hoạt động khỏi Admin -> Cài đặt website.
+- Xóa hai key tương ứng khỏi settings.json/site.json.
+- Giữ nguyên editor, PAT, GitHub API, video, search, Dã Tẩu và Safe JSON của v20.
