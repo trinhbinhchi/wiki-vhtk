@@ -8,6 +8,7 @@ const sections=fs.readdirSync(dir).filter(f=>f.endsWith(".json")).map(file=>{
   return {
     id:"article-"+file.replace(/\.json$/,""),
     title:d.title||file,
+    hero_subtitle:d.hero_subtitle||"",
     icon:d.icon||"✦",
     icon_html:d.icon_html||"",
     order:Number(d.order||999),
