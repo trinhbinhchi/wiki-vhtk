@@ -1,8 +1,9 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="vi">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>VHTK Admin - GitHub</title>
 <style>
 :root{
@@ -115,107 +116,182 @@ button,input,textarea,select{font:inherit}
   .meta{grid-template-columns:1fr 1fr}.main{padding:12px}.topbar{margin:-12px -12px 12px}.toolbar{top:55px}
 }
 </style>
-</head>
+<link href="../assets/site.css" rel="stylesheet"/><style id="v11-public-wysiwyg-style">
+/* ===== V11: Admin editor renders with public-site wrappers/CSS ===== */
+.public-editor-stage{
+  background:#f7f8f3;
+  padding:18px;
+  border-top:1px solid var(--line,#d8e3db);
+}
+.public-editor-shell{
+  width:100%;
+  max-width:1180px;
+  margin:0 auto;
+}
+
+/* The wrapper receives the actual public section id/classes. */
+.public-editor-shell > section{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  position:relative !important;
+  width:100% !important;
+  max-width:none !important;
+  margin:0 !important;
+}
+
+/* Never let public navigation/layout rules hide editor content. */
+.public-editor-shell .article,
+.public-editor-shell .page,
+.public-editor-shell section{
+  display:block !important;
+}
+
+/* Contenteditable surface: keep exact inner HTML, no artificial typography. */
+#editor{
+  min-height:780px !important;
+  max-height:calc(100vh - 220px) !important;
+  overflow:auto !important;
+  padding:0 !important;
+  background:transparent !important;
+  outline:none !important;
+  font:inherit !important;
+  color:inherit !important;
+}
+
+/* Public wrappers often own padding/background; do not duplicate it on editor itself. */
+#editor:focus{
+  box-shadow:0 0 0 2px rgba(32,107,81,.14) !important;
+  border-radius:10px;
+}
+
+/* Keep images/tables governed primarily by public CSS. */
+#editor img{max-width:100%}
+#editor iframe{max-width:100%}
+
+/* Toolbar stays Admin-only and does not affect public rendering. */
+.editor-wrap{
+  overflow:visible !important;
+  background:#fff;
+}
+.toolbar{
+  top:55px !important;
+  z-index:300 !important;
+}
+
+/* Give the page realistic room on wide desktop. */
+.main{padding-left:18px !important;padding-right:18px !important}
+.meta{max-width:1480px;margin-left:auto;margin-right:auto}
+.editor-wrap{max-width:1480px;margin-left:auto;margin-right:auto}
+
+/* Source mode remains full width. */
+.source{
+  min-height:780px !important;
+  max-height:calc(100vh - 220px) !important;
+}
+
+/* Some public rules target body/.main and should not shrink the embedded public article. */
+.public-editor-shell .main,
+.public-editor-shell .app{
+  width:100% !important;
+  max-width:none !important;
+  margin:0 !important;
+  padding:0 !important;
+  display:block !important;
+}
+</style></head>
 <body>
-
-<div id="loginView" class="login">
-  <div class="login-card">
-    <h1>🔐 VHTK Admin</h1>
-    <p>Đăng nhập bằng GitHub Fine-grained Personal Access Token.</p>
-    <input id="tokenInput" type="password" placeholder="github_pat_..." autocomplete="off">
-    <div class="login-actions">
-      <button id="loginBtn" class="btn btn-primary">Đăng nhập</button>
-      <label style="font-size:12px;color:#6f7d75"><input id="rememberToken" type="checkbox"> Nhớ trên máy này</label>
-    </div>
-    <div id="loginError" class="error"></div>
-    <div class="note">Token chỉ được lưu trong trình duyệt của bạn nếu bật “Nhớ trên máy này”. Không ghi token vào repository.</div>
-  </div>
+<div class="login" id="loginView">
+<div class="login-card">
+<h1>🔐 VHTK Admin</h1>
+<p>Đăng nhập bằng GitHub Fine-grained Personal Access Token.</p>
+<input autocomplete="off" id="tokenInput" placeholder="github_pat_..." type="password"/>
+<div class="login-actions">
+<button class="btn btn-primary" id="loginBtn">Đăng nhập</button>
+<label style="font-size:12px;color:#6f7d75"><input id="rememberToken" type="checkbox"/> Nhớ trên máy này</label>
 </div>
-
-<div id="appView" class="app hidden">
-  <aside class="sidebar">
-    <div class="brand"><h2>VHTK Admin</h2><small>GitHub API • repo trinhbinhchi/wiki-vhtk</small></div>
-    <div class="side-actions">
-      <button id="newArticleBtn" class="btn">＋ Bài mới</button>
-      <button id="settingsBtn" class="btn">⚙ Cài đặt</button>
-    </div>
-    <input id="articleSearch" class="search" placeholder="Tìm bài viết...">
-    <div id="articleList" class="article-list"></div>
-    <div class="sidebar-foot">
-      <div id="whoami"></div>
-      <button id="logoutBtn" class="btn btn-danger" style="width:100%;margin-top:8px">Đăng xuất</button>
-    </div>
-  </aside>
-
-  <main class="main">
-    <div class="topbar">
-      <div class="topbar-left">
-        <strong id="currentTitle">Chọn một bài viết</strong>
-        <span id="status" class="status"></span>
-      </div>
-      <div class="topbar-right">
-        <a class="btn" href="../" target="_blank" rel="noopener">👁 Xem website</a>
-        <button id="reloadBtn" class="btn">↻ Tải lại</button>
-        <button id="saveBtn" class="btn btn-primary">💾 Lưu & Commit</button>
-      </div>
-    </div>
-
-    <section id="articlePanel" class="hidden">
-      <div class="meta">
-        <div class="field"><label>Tên bài viết</label><input id="titleInput" type="text"></div>
-        <div class="field"><label>Icon</label><input id="iconInput" type="text"></div>
-        <div class="field"><label>Thứ tự</label><input id="orderInput" type="number" min="1"></div>
-        <div class="field switch-field"><label>Hiển thị</label><input id="visibleInput" type="checkbox"></div>
-      </div>
-
-      <div class="editor-wrap">
-        <div class="toolbar">
-          <button data-cmd="undo">↶</button><button data-cmd="redo">↷</button><span class="sep"></span>
-          <button data-cmd="bold">B</button><button data-cmd="italic">I</button><button data-cmd="underline">U</button><button data-cmd="strikeThrough">S</button>
-          <span class="sep"></span>
-          <select id="blockSelect"><option value="">Đoạn</option><option value="p">Paragraph</option><option value="h2">H2</option><option value="h3">H3</option><option value="h4">H4</option><option value="blockquote">Quote</option></select>
-          <select id="fontSizeSelect"><option value="">Cỡ chữ</option><option value="1">Rất nhỏ</option><option value="2">Nhỏ</option><option value="3">Bình thường</option><option value="4">Lớn</option><option value="5">Rất lớn</option><option value="6">Tiêu đề</option></select>
-          <label title="Màu chữ">A <input id="foreColor" type="color" value="#26372d"></label>
-          <label title="Màu nền">▧ <input id="backColor" type="color" value="#fff4b8"></label>
-          <span class="sep"></span>
-          <button data-cmd="justifyLeft">≡ Trái</button><button data-cmd="justifyCenter">≡ Giữa</button><button data-cmd="justifyRight">≡ Phải</button>
-          <span class="sep"></span>
-          <button data-cmd="insertUnorderedList">• List</button><button data-cmd="insertOrderedList">1. List</button><button data-cmd="outdent">↤</button><button data-cmd="indent">↦</button>
-          <span class="sep"></span>
-          <button id="linkBtn">🔗</button><button id="imageBtn">🖼 Ảnh</button><button id="videoBtn">▶ Video</button><button id="tableBtn">▦ Bảng</button><button data-cmd="insertHorizontalRule">―</button>
-          <span class="sep"></span>
-          <button id="sourceBtn">&lt;/&gt; HTML</button><button data-cmd="removeFormat">⌫ Format</button>
-        </div>
-        <div id="editor" class="editor" contenteditable="true"></div>
-        <textarea id="sourceEditor" class="source" spellcheck="false"></textarea>
-        <div class="help">Sửa trực quan hoặc chuyển sang HTML. Bấm “Lưu & Commit” để ghi trực tiếp vào GitHub.</div>
-      </div>
-    </section>
-
-    <section id="settingsPanel" class="settings-panel hidden">
-      <h2>⚙ Cài đặt website</h2>
-      <div class="field"><label>Tên cẩm nang</label><input id="setTitle" type="text"></div>
-      <div class="field"><label>Dòng phụ</label><input id="setSubtitle" type="text"></div>
-      <div class="field"><label>Giới thiệu</label><textarea id="setIntro"></textarea></div>
-      <div class="field"><label>Ghi chú nguồn</label><textarea id="setSourceNote"></textarea></div>
-      <div class="field"><label>Ghi chú hoạt động</label><textarea id="setIndependentNote"></textarea></div>
-      <button id="saveSettingsBtn" class="btn btn-primary">💾 Lưu cài đặt</button>
-    </section>
-  </main>
+<div class="error" id="loginError"></div>
+<div class="note">Token chỉ được lưu trong trình duyệt của bạn nếu bật “Nhớ trên máy này”. Không ghi token vào repository.</div>
 </div>
-
-<div id="mediaModal" class="modal hidden">
-  <div class="modal-card">
-    <h3>🖼 Quản lý ảnh</h3>
-    <div class="upload-row">
-      <input id="uploadInput" type="file" accept="image/*">
-      <button id="uploadBtn" class="btn btn-primary">Tải ảnh lên GitHub</button>
-      <button id="closeMediaBtn" class="btn">Đóng</button>
-    </div>
-    <div id="mediaList" class="media-list"></div>
-  </div>
 </div>
-
+<div class="app hidden" id="appView">
+<aside class="sidebar">
+<div class="brand"><h2>VHTK Admin</h2><small>GitHub API • repo trinhbinhchi/wiki-vhtk</small></div>
+<div class="side-actions">
+<button class="btn" id="newArticleBtn">＋ Bài mới</button>
+<button class="btn" id="settingsBtn">⚙ Cài đặt</button>
+</div>
+<input class="search" id="articleSearch" placeholder="Tìm bài viết..."/>
+<div class="article-list" id="articleList"></div>
+<div class="sidebar-foot">
+<div id="whoami"></div>
+<button class="btn btn-danger" id="logoutBtn" style="width:100%;margin-top:8px">Đăng xuất</button>
+</div>
+</aside>
+<main class="main">
+<div class="topbar">
+<div class="topbar-left">
+<strong id="currentTitle">Chọn một bài viết</strong>
+<span class="status" id="status"></span>
+</div>
+<div class="topbar-right">
+<a class="btn" href="../" rel="noopener" target="_blank">👁 Xem website</a>
+<button class="btn" id="reloadBtn">↻ Tải lại</button>
+<button class="btn btn-primary" id="saveBtn">💾 Lưu &amp; Commit</button>
+</div>
+</div>
+<section class="hidden" id="articlePanel">
+<div class="meta">
+<div class="field"><label>Tên bài viết</label><input id="titleInput" type="text"/></div>
+<div class="field"><label>Icon</label><input id="iconInput" type="text"/></div>
+<div class="field"><label>Thứ tự</label><input id="orderInput" min="1" type="number"/></div>
+<div class="field switch-field"><label>Hiển thị</label><input id="visibleInput" type="checkbox"/></div>
+</div>
+<div class="editor-wrap">
+<div class="toolbar">
+<button data-cmd="undo">↶</button><button data-cmd="redo">↷</button><span class="sep"></span>
+<button data-cmd="bold">B</button><button data-cmd="italic">I</button><button data-cmd="underline">U</button><button data-cmd="strikeThrough">S</button>
+<span class="sep"></span>
+<select id="blockSelect"><option value="">Đoạn</option><option value="p">Paragraph</option><option value="h2">H2</option><option value="h3">H3</option><option value="h4">H4</option><option value="blockquote">Quote</option></select>
+<select id="fontSizeSelect"><option value="">Cỡ chữ</option><option value="1">Rất nhỏ</option><option value="2">Nhỏ</option><option value="3">Bình thường</option><option value="4">Lớn</option><option value="5">Rất lớn</option><option value="6">Tiêu đề</option></select>
+<label title="Màu chữ">A <input id="foreColor" type="color" value="#26372d"/></label>
+<label title="Màu nền">▧ <input id="backColor" type="color" value="#fff4b8"/></label>
+<span class="sep"></span>
+<button data-cmd="justifyLeft">≡ Trái</button><button data-cmd="justifyCenter">≡ Giữa</button><button data-cmd="justifyRight">≡ Phải</button>
+<span class="sep"></span>
+<button data-cmd="insertUnorderedList">• List</button><button data-cmd="insertOrderedList">1. List</button><button data-cmd="outdent">↤</button><button data-cmd="indent">↦</button>
+<span class="sep"></span>
+<button id="linkBtn">🔗</button><button id="imageBtn">🖼 Ảnh</button><button id="videoBtn">▶ Video</button><button id="tableBtn">▦ Bảng</button><button data-cmd="insertHorizontalRule">―</button>
+<span class="sep"></span>
+<button id="sourceBtn">&lt;/&gt; HTML</button><button data-cmd="removeFormat">⌫ Format</button>
+</div>
+<div class="public-editor-stage"><div class="public-editor-shell" id="publicEditorShell"><section class="article" id="publicEditorSection"><div class="editor" contenteditable="true" id="editor"></div></section></div></div>
+<textarea class="source" id="sourceEditor" spellcheck="false"></textarea>
+<div class="help">V11: vùng soạn thảo dùng chính CSS + section wrapper của trang Public. Nội dung bạn thấy trong Admin sẽ sát trang ngoài hơn; vẫn có thể chuyển sang HTML.</div>
+</div>
+</section>
+<section class="settings-panel hidden" id="settingsPanel">
+<h2>⚙ Cài đặt website</h2>
+<div class="field"><label>Tên cẩm nang</label><input id="setTitle" type="text"/></div>
+<div class="field"><label>Dòng phụ</label><input id="setSubtitle" type="text"/></div>
+<div class="field"><label>Giới thiệu</label><textarea id="setIntro"></textarea></div>
+<div class="field"><label>Ghi chú nguồn</label><textarea id="setSourceNote"></textarea></div>
+<div class="field"><label>Ghi chú hoạt động</label><textarea id="setIndependentNote"></textarea></div>
+<button class="btn btn-primary" id="saveSettingsBtn">💾 Lưu cài đặt</button>
+</section>
+</main>
+</div>
+<div class="modal hidden" id="mediaModal">
+<div class="modal-card">
+<h3>🖼 Quản lý ảnh</h3>
+<div class="upload-row">
+<input accept="image/*" id="uploadInput" type="file"/>
+<button class="btn btn-primary" id="uploadBtn">Tải ảnh lên GitHub</button>
+<button class="btn" id="closeMediaBtn">Đóng</button>
+</div>
+<div class="media-list" id="mediaList"></div>
+</div>
+</div>
 <script>
 const OWNER="trinhbinhchi";
 const REPO="wiki-vhtk";
@@ -311,10 +387,22 @@ function openArticle(name){
   $("#iconInput").value=currentData.icon||"";
   $("#orderInput").value=currentData.order||1;
   $("#visibleInput").checked=currentData.visible!==false;
+
   const html=currentData.section_html||currentData.body_html||"";
-  $("#editor").innerHTML=html;$("#sourceEditor").value=html;
+
+  // Recreate the same section context used on the public page.
+  const shell=$("#publicEditorSection");
+  shell.id=currentData.section_id||("article-"+name.replace(/\.json$/,""));
+  shell.className=(currentData.section_class||"article").trim()||"article";
+  shell.style.display="block";
+
+  $("#editor").innerHTML=html;
+  $("#sourceEditor").value=html;
   sourceMode=false;updateSourceMode();
-  renderArticleList();setStatus("Đã tải","ok");
+
+  // Public CSS may initially hide non-active article classes.
+  shell.classList.add("active");
+  renderArticleList();setStatus("Đã tải • chế độ hiển thị giống Public","ok");
 }
 
 function collectArticle(){
@@ -400,7 +488,8 @@ async function newArticle(){
 function exec(cmd,arg=null){$("#editor").focus();document.execCommand(cmd,false,arg);syncEditors()}
 function syncEditors(){if(!sourceMode)$("#sourceEditor").value=$("#editor").innerHTML}
 function updateSourceMode(){
-  $("#sourceEditor").classList.toggle("active",sourceMode);$("#editor").classList.toggle("source-hidden",sourceMode);
+  $("#sourceEditor").classList.toggle("active",sourceMode);
+  $("#publicEditorShell").classList.toggle("hidden",sourceMode);
   $("#sourceBtn").textContent=sourceMode?"👁 Trực quan":"</> HTML";
 }
 function toggleSource(){

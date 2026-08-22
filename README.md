@@ -1,26 +1,15 @@
-# CMS v10 — GitHub Pages + GitHub API + Fine-grained PAT
+# CMS v11 — Admin WYSIWYG giống Public
 
-Không dùng Decap, Netlify hay Cloudflare.
+Thay đổi chính:
+- Admin nạp trực tiếp `../assets/site.css` của website Public.
+- Vùng editor được đặt trong chính wrapper `<section>` với `section_id` và `section_class` của bài thật.
+- Không áp font/padding giả lên nội dung; CSS Public quyết định cách hiển thị.
+- Public CSS có rule ẩn article thì Admin ép section hiện và thêm class `active`.
+- Toolbar/PAT/GitHub API/Lưu & Commit giữ nguyên.
+- Chế độ HTML giữ nguyên.
 
-## Luồng
-1. Mở `/admin/`
-2. Nhập GitHub Fine-grained PAT
-3. Admin đọc/sửa `content/articles/*.json` bằng GitHub REST API
-4. Bấm `Lưu & Commit`
-5. GitHub commit trực tiếp vào `main`
-6. Workflow GitHub Pages tự build/deploy
-
-## Token
-Tạo Fine-grained PAT chỉ cho repository `wiki-vhtk`.
-Quyền tối thiểu:
-- Repository access: Only selected repositories -> `wiki-vhtk`
-- Contents: Read and write
-- Metadata: Read-only (GitHub cấp mặc định)
-
-Không bao giờ ghi token vào source code hoặc commit lên repo.
-
-## Admin
-https://trinhbinhchi.github.io/wiki-vhtk/admin/
-
-## Website
-https://trinhbinhchi.github.io/wiki-vhtk/
+Cập nhật:
+1. Copy đè package vào repo `wiki-vhtk`.
+2. Commit + Push.
+3. Chờ GitHub Actions deploy xanh.
+4. Mở `/wiki-vhtk/admin/` và Ctrl+F5.
