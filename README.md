@@ -1,15 +1,12 @@
-# CMS v11 — Admin WYSIWYG giống Public
+# CMS v12 — Admin ổn định + Preview Public biệt lập
 
-Thay đổi chính:
-- Admin nạp trực tiếp `../assets/site.css` của website Public.
-- Vùng editor được đặt trong chính wrapper `<section>` với `section_id` và `section_class` của bài thật.
-- Không áp font/padding giả lên nội dung; CSS Public quyết định cách hiển thị.
-- Public CSS có rule ẩn article thì Admin ép section hiện và thêm class `active`.
-- Toolbar/PAT/GitHub API/Lưu & Commit giữ nguyên.
-- Chế độ HTML giữ nguyên.
+Sửa lỗi v11:
+- KHÔNG nạp CSS Public vào toàn trang Admin.
+- Admin giữ nguyên layout/CSS riêng.
+- Chỉ vùng bài viết nằm trong iframe biệt lập và nạp `assets/site.css`.
+- Toolbar thao tác trực tiếp vào contenteditable bên trong iframe.
+- HTML mode, PAT, GitHub API, Lưu & Commit giữ nguyên.
+- CSS Public không thể đè sidebar/topbar/form Admin nữa.
 
 Cập nhật:
-1. Copy đè package vào repo `wiki-vhtk`.
-2. Commit + Push.
-3. Chờ GitHub Actions deploy xanh.
-4. Mở `/wiki-vhtk/admin/` và Ctrl+F5.
+copy đè repo -> Commit -> Push -> chờ GitHub Actions xanh -> Ctrl+F5 /admin/.

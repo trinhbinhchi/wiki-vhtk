@@ -116,88 +116,49 @@ button,input,textarea,select{font:inherit}
   .meta{grid-template-columns:1fr 1fr}.main{padding:12px}.topbar{margin:-12px -12px 12px}.toolbar{top:55px}
 }
 </style>
-<link href="../assets/site.css" rel="stylesheet"/><style id="v11-public-wysiwyg-style">
-/* ===== V11: Admin editor renders with public-site wrappers/CSS ===== */
-.public-editor-stage{
+<style id="v12-isolated-editor-style">
+/* V12: public styling is isolated inside iframe, Admin layout remains untouched */
+.editor{
+  display:none!important;
+}
+.public-frame-wrap{
   background:#f7f8f3;
-  padding:18px;
-  border-top:1px solid var(--line,#d8e3db);
+  padding:14px;
+  border-top:1px solid var(--line);
 }
-.public-editor-shell{
+#publicEditorFrame{
+  display:block;
   width:100%;
-  max-width:1180px;
-  margin:0 auto;
-}
-
-/* The wrapper receives the actual public section id/classes. */
-.public-editor-shell > section{
-  display:block !important;
-  visibility:visible !important;
-  opacity:1 !important;
-  position:relative !important;
-  width:100% !important;
-  max-width:none !important;
-  margin:0 !important;
-}
-
-/* Never let public navigation/layout rules hide editor content. */
-.public-editor-shell .article,
-.public-editor-shell .page,
-.public-editor-shell section{
-  display:block !important;
-}
-
-/* Contenteditable surface: keep exact inner HTML, no artificial typography. */
-#editor{
-  min-height:780px !important;
-  max-height:calc(100vh - 220px) !important;
-  overflow:auto !important;
-  padding:0 !important;
-  background:transparent !important;
-  outline:none !important;
-  font:inherit !important;
-  color:inherit !important;
-}
-
-/* Public wrappers often own padding/background; do not duplicate it on editor itself. */
-#editor:focus{
-  box-shadow:0 0 0 2px rgba(32,107,81,.14) !important;
+  height:760px;
+  min-height:680px;
+  border:0;
   border-radius:10px;
-}
-
-/* Keep images/tables governed primarily by public CSS. */
-#editor img{max-width:100%}
-#editor iframe{max-width:100%}
-
-/* Toolbar stays Admin-only and does not affect public rendering. */
-.editor-wrap{
-  overflow:visible !important;
   background:#fff;
 }
-.toolbar{
-  top:55px !important;
-  z-index:300 !important;
-}
-
-/* Give the page realistic room on wide desktop. */
-.main{padding-left:18px !important;padding-right:18px !important}
-.meta{max-width:1480px;margin-left:auto;margin-right:auto}
-.editor-wrap{max-width:1480px;margin-left:auto;margin-right:auto}
-
-/* Source mode remains full width. */
 .source{
-  min-height:780px !important;
-  max-height:calc(100vh - 220px) !important;
+  min-height:760px!important;
+  max-height:none!important;
 }
-
-/* Some public rules target body/.main and should not shrink the embedded public article. */
-.public-editor-shell .main,
-.public-editor-shell .app{
-  width:100% !important;
-  max-width:none !important;
-  margin:0 !important;
-  padding:0 !important;
-  display:block !important;
+.editor-wrap{
+  max-width:1480px;
+  margin-left:auto;
+  margin-right:auto;
+}
+.meta{
+  max-width:1480px;
+  margin-left:auto;
+  margin-right:auto;
+}
+.main{
+  padding-left:18px!important;
+  padding-right:18px!important;
+}
+.toolbar{
+  top:55px!important;
+  z-index:120!important;
+}
+@media(max-width:900px){
+  #publicEditorFrame{height:650px}
 }
 </style></head>
 <body>
@@ -265,9 +226,9 @@ button,input,textarea,select{font:inherit}
 <span class="sep"></span>
 <button id="sourceBtn">&lt;/&gt; HTML</button><button data-cmd="removeFormat">⌫ Format</button>
 </div>
-<div class="public-editor-stage"><div class="public-editor-shell" id="publicEditorShell"><section class="article" id="publicEditorSection"><div class="editor" contenteditable="true" id="editor"></div></section></div></div>
+<div class="editor" contenteditable="true" id="editor"></div><div class="public-frame-wrap"><iframe id="publicEditorFrame" title="Trình soạn thảo giống Public"></iframe></div>
 <textarea class="source" id="sourceEditor" spellcheck="false"></textarea>
-<div class="help">V11: vùng soạn thảo dùng chính CSS + section wrapper của trang Public. Nội dung bạn thấy trong Admin sẽ sát trang ngoài hơn; vẫn có thể chuyển sang HTML.</div>
+<div class="help">V12: giao diện Admin và CSS Public được tách riêng. Khung bài dùng CSS Public trong iframe nên không còn làm vỡ bố cục Admin.</div>
 </div>
 </section>
 <section class="settings-panel hidden" id="settingsPanel">
@@ -306,7 +267,74 @@ let currentFile=null;
 let currentSha=null;
 let currentData=null;
 let settingsSha=null;
+
 let sourceMode=false;
+let frameReady=false;
+
+function frameDoc(){
+  return $("#publicEditorFrame")?.contentDocument || null;
+}
+function frameBody(){
+  const d=frameDoc();
+  return d ? d.querySelector("#publicEditable") : null;
+}
+function buildFrame(html, data){
+  const fr=$("#publicEditorFrame");
+  const secId=(data?.section_id||"admin-preview").replace(/"/g,"&quot;");
+  const secClass=(data?.section_class||"article").replace(/"/g,"&quot;");
+  const doc=`<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<base href="${location.origin}/wiki-vhtk/">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+html,body{margin:0!important;padding:0!important;background:#f7f8f3!important}
+body{overflow:auto!important}
+#editorStage{padding:18px}
+#editorStage section{
+  display:block!important;visibility:visible!important;opacity:1!important;
+  position:relative!important;margin:0 auto!important;
+}
+#publicEditable{outline:none!important;min-height:650px}
+#publicEditable:focus{box-shadow:0 0 0 2px rgba(32,107,81,.14)!important;border-radius:8px}
+#publicEditable img{max-width:100%!important;height:auto!important}
+#publicEditable iframe{max-width:100%!important}
+</style>
+</head>
+<body>
+<div id="editorStage">
+<section id="${secId}" class="${secClass} active">
+<div id="publicEditable" contenteditable="true">${html||""}</div>
+</section>
+</div>
+<script>
+const ed=document.getElementById("publicEditable");
+ed.addEventListener("input",()=>parent.postMessage({type:"vhtk-editor-input",html:ed.innerHTML},"*"));
+ed.addEventListener("blur",()=>parent.postMessage({type:"vhtk-editor-input",html:ed.innerHTML},"*"));
+<\/script>
+</body>
+</html>`;
+  fr.srcdoc=doc;
+  frameReady=false;
+  fr.onload=()=>{frameReady=true};
+}
+function getVisualHTML(){
+  const b=frameBody();
+  return b ? b.innerHTML : ($("#editor").innerHTML||"");
+}
+function setVisualHTML(html){
+  const b=frameBody();
+  if(b)b.innerHTML=html||"";
+  $("#editor").innerHTML=html||"";
+}
+window.addEventListener("message",e=>{
+  if(e.data && e.data.type==="vhtk-editor-input"){
+    $("#editor").innerHTML=e.data.html||"";
+    if(!sourceMode)$("#sourceEditor").value=e.data.html||"";
+  }
+});
+
 
 const $=s=>document.querySelector(s);
 const enc=s=>encodeURIComponent(s).replace(/%2F/g,"/");
@@ -387,22 +415,12 @@ function openArticle(name){
   $("#iconInput").value=currentData.icon||"";
   $("#orderInput").value=currentData.order||1;
   $("#visibleInput").checked=currentData.visible!==false;
-
   const html=currentData.section_html||currentData.body_html||"";
-
-  // Recreate the same section context used on the public page.
-  const shell=$("#publicEditorSection");
-  shell.id=currentData.section_id||("article-"+name.replace(/\.json$/,""));
-  shell.className=(currentData.section_class||"article").trim()||"article";
-  shell.style.display="block";
-
   $("#editor").innerHTML=html;
   $("#sourceEditor").value=html;
+  buildFrame(html,currentData);
   sourceMode=false;updateSourceMode();
-
-  // Public CSS may initially hide non-active article classes.
-  shell.classList.add("active");
-  renderArticleList();setStatus("Đã tải • chế độ hiển thị giống Public","ok");
+  renderArticleList();setStatus("Đã tải • Preview Public biệt lập","ok");
 }
 
 function collectArticle(){
@@ -411,7 +429,7 @@ function collectArticle(){
   currentData.icon=$("#iconInput").value.trim();
   currentData.order=Number($("#orderInput").value||1);
   currentData.visible=$("#visibleInput").checked;
-  const html=sourceMode?$("#sourceEditor").value:$("#editor").innerHTML;
+  const html=sourceMode?$("#sourceEditor").value:getVisualHTML();
   if("section_html" in currentData)currentData.section_html=html;
   else currentData.body_html=html;
   return currentData;
@@ -485,17 +503,37 @@ async function newArticle(){
   }catch(e){alert("Không tạo được bài: "+e.message)}
 }
 
-function exec(cmd,arg=null){$("#editor").focus();document.execCommand(cmd,false,arg);syncEditors()}
-function syncEditors(){if(!sourceMode)$("#sourceEditor").value=$("#editor").innerHTML}
+function exec(cmd,arg=null){
+  const d=frameDoc(),b=frameBody();
+  if(d&&b){
+    b.focus();
+    d.execCommand(cmd,false,arg);
+    $("#editor").innerHTML=b.innerHTML;
+    syncEditors();
+  }
+}
+function syncEditors(){
+  if(!sourceMode){
+    const html=getVisualHTML();
+    $("#editor").innerHTML=html;
+    $("#sourceEditor").value=html;
+  }
+}
 function updateSourceMode(){
   $("#sourceEditor").classList.toggle("active",sourceMode);
-  $("#publicEditorShell").classList.toggle("hidden",sourceMode);
+  const fr=$("#publicEditorFrame");
+  if(fr)fr.parentElement.classList.toggle("hidden",sourceMode);
   $("#sourceBtn").textContent=sourceMode?"👁 Trực quan":"</> HTML";
 }
 function toggleSource(){
   sourceMode=!sourceMode;
-  if(sourceMode)$("#sourceEditor").value=$("#editor").innerHTML;
-  else $("#editor").innerHTML=$("#sourceEditor").value;
+  if(sourceMode){
+    $("#sourceEditor").value=getVisualHTML();
+  }else{
+    const html=$("#sourceEditor").value;
+    $("#editor").innerHTML=html;
+    buildFrame(html,currentData);
+  }
   updateSourceMode();
 }
 function addLink(){const u=prompt("URL liên kết:");if(u)exec("createLink",u)}
@@ -552,7 +590,7 @@ document.querySelectorAll("[data-cmd]").forEach(b=>b.onclick=()=>exec(b.dataset.
 $("#blockSelect").onchange=e=>{if(e.target.value)exec("formatBlock",e.target.value)};
 $("#fontSizeSelect").onchange=e=>{if(e.target.value)exec("fontSize",e.target.value)};
 $("#foreColor").onchange=e=>exec("foreColor",e.target.value);$("#backColor").onchange=e=>exec("hiliteColor",e.target.value);
-$("#editor").oninput=syncEditors;$("#sourceEditor").oninput=()=>{if(sourceMode){}};
+/* iframe editor syncs via postMessage */$("#sourceEditor").oninput=()=>{if(sourceMode){}};
 
 // Auto-login from stored token.
 (async()=>{
