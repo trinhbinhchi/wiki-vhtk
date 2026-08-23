@@ -1,6 +1,5 @@
-# CMS v23 — Bản quyền cuối sidebar
+# CMS v24
 
-- Thêm một khối bản quyền duy nhất ở cuối sidebar.
-- Admin -> Cài đặt website có trường Bản quyền / Copyright cuối sidebar.
-- Nếu để trống, khối bản quyền tự ẩn.
-- Giữ nguyên toàn bộ chức năng v22.
+- Bỏ 1 đường gạch ngang thừa ở cuối sidebar.
+- Giữ lại đúng 1 đường phân cách phía trên phần bản quyền.
+- Không thay đổi nội dung hoặc chức năng khác của v23.
