@@ -286,9 +286,7 @@ button,input,textarea,select{font:inherit}
 <div class="field"><label>Tên cẩm nang</label><input id="setTitle" type="text"/></div>
 <div class="field"><label>Dòng phụ</label><input id="setSubtitle" type="text"/></div>
 <div class="field"><label>Giới thiệu ngắn ở sidebar</label><textarea id="setIntro"></textarea></div>
-
-
-<button class="btn btn-primary" id="saveSettingsBtn">💾 Lưu cài đặt</button>
+<div class="field"><label>Bản quyền / Copyright cuối sidebar</label><textarea id="setCopyright"></textarea></div><button class="btn btn-primary" id="saveSettingsBtn">💾 Lưu cài đặt</button>
 </section>
 </main>
 </div>
@@ -602,13 +600,14 @@ async function loadSettings(){
     settingsSha=obj.sha;
     const d=JSON.parse(b64DecodeUnicode(obj.content));
     $("#setTitle").value=d.site_title||"";$("#setSubtitle").value=d.site_subtitle||"";
-    $("#setIntro").value=d.intro||"";setStatus("Đã tải","ok");
+    $("#setIntro").value=d.intro||"";
+    $("#setCopyright").value=d.copyright_text||"";setStatus("Đã tải","ok");
   }catch(e){setStatus("Lỗi: "+e.message,"bad")}
 }
 
 async function saveSettings(){
   const d={
-    site_title:$("#setTitle").value,site_subtitle:$("#setSubtitle").value,intro:$("#setIntro").value
+    site_title:$("#setTitle").value,site_subtitle:$("#setSubtitle").value,intro:$("#setIntro").value,copyright_text:$("#setCopyright").value
   };
   setStatus("Đang commit...");
   try{

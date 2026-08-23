@@ -1,7 +1,6 @@
-# CMS v22 — Khôi phục nội dung + bỏ ghi chú thừa an toàn
+# CMS v23 — Bản quyền cuối sidebar
 
-Sửa lỗi v21:
-- V21 xóa nhầm thẻ đóng của wrapper khi dùng regex, làm phần nội dung chính bên phải biến mất.
-- V22 quay lại nền v20 và xóa 2 ghi chú bằng DOM parser, chỉ xóa đúng element.
-- Giữ nguyên sidebar, main content, sections, editor, PAT, GitHub API, search, video, Dã Tẩu và Safe JSON.
-- Bỏ 2 trường Ghi chú nguồn / Ghi chú hoạt động khỏi Admin vì không còn dùng.
+- Thêm một khối bản quyền duy nhất ở cuối sidebar.
+- Admin -> Cài đặt website có trường Bản quyền / Copyright cuối sidebar.
+- Nếu để trống, khối bản quyền tự ẩn.
+- Giữ nguyên toàn bộ chức năng v22.
