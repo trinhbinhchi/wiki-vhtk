@@ -19,6 +19,10 @@ function renderBlock(b){
   if(b.type==="paragraph")return `<p${cls}${sty}${attrs}>${b.html||""}</p>`;
   if(b.type==="list"){const t=b.ordered?"ol":"ul";return `<${t}${cls}${sty}${attrs}>${(b.items||[]).map(x=>`<li>${x}</li>`).join("")}</${t}>`}
   if(b.type==="callout")return `<div${cls||' class="guide-callout"'}${sty}${attrs}>${b.html||""}</div>`;
+  if(b.type==="container"){
+    const tag=(b.tag||"div").toLowerCase();
+    return `<${tag}${cls}${sty}${attrs}>${b.html||""}</${tag}>`;
+  }
   if(b.type==="image")return `<img src="${escAttr(b.src||"")}" alt="${escAttr(b.alt||"")}"${cls}${sty}${attrs}>`;
   if(b.type==="video"){if(b.tag==="video")return `<video src="${escAttr(b.src||"")}" controls${cls}${sty}${attrs}></video>`;return `<iframe src="${escAttr(b.src||"")}" title="${escAttr(b.title||"")}" allowfullscreen${cls}${sty}${attrs}></iframe>`}
   return b.html||"";
@@ -37,4 +41,4 @@ const sections=fs.readdirSync(a).filter(f=>f.endsWith(".json")).map(file=>{
  return {id:"article-"+file.replace(/\.json$/,""),...d,section_html:(d.blocks&&d.blocks.length)?renderBlocks(d):(d.section_html||d.body_html||"")};
 }).sort((x,y)=>(x.order||999)-(y.order||999));
 fs.writeFileSync(path.join(c,"site.json"),JSON.stringify({...settings,sections},null,2),"utf8");
-console.log("Built",sections.length,"structured articles with preserved templates");
+console.log("Built",sections.length,"structured articles v48");

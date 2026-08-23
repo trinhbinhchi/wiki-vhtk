@@ -1038,6 +1038,47 @@ button,input,textarea,select{font:inherit}
   line-height:1.45;
 }
 </style>
+
+<style id="v48-scroll-fullcontent-fix">
+#v42Shell{
+  height:calc(100vh - 150px)!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+#v42Main{
+  min-height:0!important;
+  overflow:hidden!important;
+}
+#v42Top{
+  flex:0 0 40px!important;
+}
+#v42Canvas{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  height:0!important;
+  overflow-y:auto!important;
+  overflow-x:auto!important;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+}
+#v42Preview{
+  min-height:max-content!important;
+  padding-bottom:80px!important;
+}
+#v42Side{
+  min-height:0!important;
+  overflow-y:auto!important;
+}
+.v48-full-content-note{
+  margin:8px 10px;
+  padding:7px 8px;
+  border-radius:8px;
+  background:#eef6f1;
+  color:#315d4a;
+  font-size:10px;
+  line-height:1.45;
+}
+</style>
 </head>
 <body>
 <div class="login" id="loginView">
@@ -8575,6 +8616,7 @@ function v37CanvasCss(){
 
 
 
+
 function escAttr(s){return String(s??"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
 function renderAttrs(attrs){
   if(!attrs)return "";
@@ -8594,6 +8636,10 @@ function renderBlock(b){
   if(b.type==="paragraph")return `<p${cls}${sty}${attrs}>${b.html||""}</p>`;
   if(b.type==="list"){const t=b.ordered?"ol":"ul";return `<${t}${cls}${sty}${attrs}>${(b.items||[]).map(x=>`<li>${x}</li>`).join("")}</${t}>`}
   if(b.type==="callout")return `<div${cls||' class="guide-callout"'}${sty}${attrs}>${b.html||""}</div>`;
+  if(b.type==="container"){
+    const tag=(b.tag||"div").toLowerCase();
+    return `<${tag}${cls}${sty}${attrs}>${b.html||""}</${tag}>`;
+  }
   if(b.type==="image")return `<img src="${escAttr(b.src||"")}" alt="${escAttr(b.alt||"")}"${cls}${sty}${attrs}>`;
   if(b.type==="video"){if(b.tag==="video")return `<video src="${escAttr(b.src||"")}" controls${cls}${sty}${attrs}></video>`;return `<iframe src="${escAttr(b.src||"")}" title="${escAttr(b.title||"")}" allowfullscreen${cls}${sty}${attrs}></iframe>`}
   return b.html||"";
@@ -11511,9 +11557,7 @@ function v47MakeEditable(render,b,index){
 
     el.addEventListener("input",()=>{
       clearTimeout(timer);
-      timer=setTimeout(()=>{
-        v47SyncEditable(render,b,index);
-      },250);
+      timer=setTimeout(()=>v47SyncEditable(render,b,index),250);
     });
 
     el.addEventListener("blur",()=>{
@@ -11528,16 +11572,15 @@ function v47MakeEditable(render,b,index){
     mark(render.querySelector("p"),"paragraph");
   }else if(b.type==="list"){
     render.querySelectorAll("li").forEach(li=>mark(li,"list-item"));
-  }else if(b.type==="callout"){
-    // Callout nội dung được edit trực tiếp từng text-bearing child.
-    render.querySelectorAll("h1,h2,h3,h4,h5,h6,p,li,a,strong,em,span").forEach(el=>{
-      if(!el.querySelector("h1,h2,h3,h4,h5,h6,p,li"))mark(el,"callout-content");
+  }else if(["callout","container"].includes(b.type)){
+    render.querySelectorAll("h1,h2,h3,h4,h5,h6,p,li,a,strong,em,span,td,th").forEach(el=>{
+      if(!el.querySelector("h1,h2,h3,h4,h5,h6,p,li,td,th"))mark(el,"container-content");
     });
   }else if(b.type==="raw_html"){
-    const badge=document.createElement("span");
-    badge.className="v47-raw-badge";
-    badge.textContent="Raw HTML • chỉnh nâng cao ở panel phải";
-    render.insertBefore(badge,render.firstChild);
+    // Keep complex HTML visible. Allow editing safe text-bearing descendants.
+    render.querySelectorAll("h1,h2,h3,h4,h5,h6,p,li,a,strong,em,span,td,th").forEach(el=>{
+      if(!el.querySelector("h1,h2,h3,h4,h5,h6,p,li,td,th"))mark(el,"raw-content");
+    });
   }
 }
 
@@ -11547,18 +11590,20 @@ function v47SyncEditable(render,b,index){
 
   if(b.type==="heading"){
     const el=render.querySelector("h1,h2,h3,h4,h5,h6");
-    if(el){
-      b.html=el.innerHTML;
-      b.text=el.textContent||"";
-    }
+    if(el){b.html=el.innerHTML;b.text=el.textContent||""}
   }else if(b.type==="paragraph"){
     const el=render.querySelector("p");
     if(el)b.html=el.innerHTML;
   }else if(b.type==="list"){
     b.items=[...render.querySelectorAll("li")].map(li=>li.innerHTML);
-  }else if(b.type==="callout"){
+  }else if(["callout","container"].includes(b.type)){
     const outer=render.firstElementChild;
     if(outer)b.html=outer.innerHTML;
+  }else if(b.type==="raw_html"){
+    // Rebuild raw_html from the rendered top-level content, excluding editor UI.
+    const clone=render.cloneNode(true);
+    clone.querySelectorAll(".v47-raw-badge").forEach(x=>x.remove());
+    b.html=clone.innerHTML;
   }
 
   currentData.section_html=renderBlocks(currentData);
@@ -11571,11 +11616,11 @@ function v42Props(){
   const b=v42Blocks()[v42Selected],e=$("#v42Empty"),p=$("#v42Props");if(!b){e.style.display="";p.style.display="none";return}e.style.display="none";p.style.display="";
   $("#v42Type").value=b.type||"";$("#v42LevelWrap").style.display=b.type==="heading"?"":"none";$("#v42Level").value=b.level||3;
   $("#v42TextWrap").style.display=b.type==="heading"?"":"none";$("#v42Text").value=(b.html??b.text??"").replace(/<[^>]+>/g,"");
-  const hs=["paragraph","callout","video_box","table","accordion","raw_html"];$("#v42HtmlWrap").style.display=hs.includes(b.type)?"":"none";$("#v42Html").value=b.html||"";
+  const hs=["paragraph","callout","container","video_box","table","accordion","raw_html"];$("#v42HtmlWrap").style.display=hs.includes(b.type)?"":"none";$("#v42Html").value=b.html||"";
   $("#v42ItemsWrap").style.display=b.type==="list"?"":"none";$("#v42Items").value=(b.items||[]).map(x=>x.replace(/<[^>]+>/g,"")).join("\n");
   $("#v42Class").value=b.class||"";$("#v42Style").value=b.style||"";$("#v42SrcWrap").style.display=["image","video"].includes(b.type)?"":"none";$("#v42Src").value=b.src||"";$("#v42AltWrap").style.display=b.type==="image"?"":"none";$("#v42Alt").value=b.alt||"";
 }
-function v42Apply(){const b=v42Blocks()[v42Selected];if(!b)return;v42Snapshot();b.class=$("#v42Class").value;b.style=$("#v42Style").value;if(b.type==="heading"){b.level=Number($("#v42Level").value||3);b.html=$("#v42Text").value;b.text=$("#v42Text").value}if(["paragraph","callout","video_box","table","accordion","raw_html"].includes(b.type))b.html=$("#v42Html").value;if(b.type==="list")b.items=$("#v42Items").value.split("\n").filter(Boolean);if(["image","video"].includes(b.type))b.src=$("#v42Src").value;if(b.type==="image")b.alt=$("#v42Alt").value;v42Render()}
+function v42Apply(){const b=v42Blocks()[v42Selected];if(!b)return;v42Snapshot();b.class=$("#v42Class").value;b.style=$("#v42Style").value;if(b.type==="heading"){b.level=Number($("#v42Level").value||3);b.html=$("#v42Text").value;b.text=$("#v42Text").value}if(["paragraph","callout","container","video_box","table","accordion","raw_html"].includes(b.type))b.html=$("#v42Html").value;if(b.type==="list")b.items=$("#v42Items").value.split("\n").filter(Boolean);if(["image","video"].includes(b.type))b.src=$("#v42Src").value;if(b.type==="image")b.alt=$("#v42Alt").value;v42Render()}
 function v42Default(t){if(t==="paragraph")return{type:"paragraph",html:"Nhập nội dung...",class:"",style:"",attrs:{}};if(t==="heading")return{type:"heading",level:3,text:"Tiêu đề mới",html:"Tiêu đề mới",class:"",style:"",attrs:{}};if(t==="list")return{type:"list",ordered:false,items:["Mục 1","Mục 2"],class:"",style:"",attrs:{}};if(t==="callout")return{type:"callout",class:"guide-callout",html:"<h3>Tiêu đề khung</h3><p>Nội dung...</p>"};if(t==="image")return{type:"image",src:"assets/uploads/",alt:"Ảnh"};if(t==="video")return{type:"video",tag:"iframe",src:"",title:"Video"};if(t==="table")return{type:"table",html:"<table><tr><th>Tiêu đề</th><th>Tiêu đề</th></tr><tr><td>Nội dung</td><td>Nội dung</td></tr></table>"};if(t==="accordion")return{type:"accordion",html:"<div class='da-tau-section'><button class='da-tau-toggle'>Phần mở rộng</button><div class='da-tau-collapse-body'><p>Nội dung...</p></div></div>"};return{type:"paragraph",html:""}}
 function v42Insert(i,t="paragraph"){v42Snapshot();v42Blocks().splice(i,0,v42Default(t));v42Selected=i;v42Render()}
 function v42Add(t){v42Insert(v42Selected>=0?v42Selected+1:v42Blocks().length,t)}
