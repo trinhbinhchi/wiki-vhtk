@@ -1277,6 +1277,63 @@ button,input,textarea,select{font:inherit}
 }
 #v53CopyToast.show{display:block}
 </style>
+
+<style id="v54-marker-insert-style">
+.v54-li-marker{
+  display:inline!important;
+  user-select:text!important;
+  -webkit-user-select:text!important;
+  cursor:text!important;
+  margin-right:.45em!important;
+  white-space:pre!important;
+}
+.v54-editor-li{
+  list-style:none!important;
+}
+.v54-insert-gap{
+  position:relative!important;
+  height:18px!important;
+  min-height:18px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  z-index:2147480000!important;
+}
+.v54-insert-gap button{
+  opacity:.08!important;
+  transition:opacity .15s ease!important;
+  border:1px solid #9fb5a9!important;
+  border-radius:999px!important;
+  background:#fff!important;
+  color:#2f6f54!important;
+  padding:1px 9px!important;
+  height:18px!important;
+  font:800 10px/1 "Segoe UI",Arial,sans-serif!important;
+  cursor:pointer!important;
+}
+.v54-insert-gap:hover button{opacity:1!important}
+.v54-insert-menu{
+  position:fixed;
+  z-index:530000;
+  display:none;
+  min-width:180px;
+  padding:6px;
+  border:1px solid #d4dfd8;
+  border-radius:9px;
+  background:#fff;
+  box-shadow:0 12px 28px rgba(20,45,33,.18);
+}
+.v54-insert-menu.show{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.v54-insert-menu button{
+  border:1px solid #d7e0da;border-radius:6px;background:#fff;color:#355044;
+  padding:7px 6px;font-size:10px;font-weight:800;cursor:pointer
+}
+.v54-insert-menu button:hover{background:#edf6f1}
+</style>
 </head>
 <body>
 <div class="login" id="loginView">
@@ -14625,6 +14682,195 @@ function v49CleanEditorAttrs(root){
 
 
 
+
+let v54InsertAfterEl=null;
+
+function v54MarkerText(li){
+  try{
+    const type=v51Win.getComputedStyle(li).listStyleType || "";
+    if(type.includes("circle"))return "○";
+    if(type.includes("square"))return "▪";
+    if(type.includes("decimal")){
+      const parent=li.parentElement;
+      const items=[...parent.children].filter(x=>x.tagName==="LI");
+      return String(items.indexOf(li)+1)+".";
+    }
+  }catch(e){}
+  return "•";
+}
+
+function v54InstallRealMarkers(){
+  if(!v51Doc)return;
+  const article=v51Doc.querySelector("article.article");
+  if(!article)return;
+
+  article.querySelectorAll("li").forEach(li=>{
+    if(li.querySelector(":scope > .v54-li-marker"))return;
+
+    const marker=v51Doc.createElement("span");
+    marker.className="v54-li-marker";
+    marker.dataset.v54EditorOnly="1";
+    marker.textContent=v54MarkerText(li)+" ";
+    marker.contentEditable="false";
+
+    li.classList.add("v54-editor-li");
+    li.insertBefore(marker,li.firstChild);
+  });
+}
+
+function v54MakeElement(type){
+  if(!v51Doc)return null;
+  const d=v51Doc;let el=null;
+
+  if(type==="p"){
+    el=d.createElement("p");
+    el.textContent="Nhập nội dung...";
+  }else if(type==="h3"){
+    el=d.createElement("h3");
+    el.textContent="Tiêu đề mới";
+  }else if(type==="ul"){
+    el=d.createElement("ul");
+    el.innerHTML="<li>Mục 1</li><li>Mục 2</li>";
+  }else if(type==="box"){
+    el=d.createElement("div");
+    el.className="guide-callout";
+    el.innerHTML="<h3>Tiêu đề khung</h3><p>Nội dung...</p>";
+  }else if(type==="img"){
+    el=d.createElement("img");
+    el.src="assets/uploads/";
+    el.alt="Ảnh";
+  }else if(type==="table"){
+    el=d.createElement("table");
+    el.innerHTML="<tr><th>Tiêu đề</th><th>Tiêu đề</th></tr><tr><td>Nội dung</td><td>Nội dung</td></tr>";
+  }
+  return el;
+}
+
+function v54OpenInsertMenu(afterEl,buttonEl){
+  v54InsertAfterEl=afterEl||null;
+  const m=$("#v54InsertMenu");
+  if(!m)return;
+  const frame=$("#v51PublicFrame");
+  const fr=frame?.getBoundingClientRect();
+  const r=buttonEl?.getBoundingClientRect();
+  if(fr&&r){
+    m.style.left=Math.min(window.innerWidth-190,fr.left+r.left-75)+"px";
+    m.style.top=Math.min(window.innerHeight-180,fr.top+r.bottom+4)+"px";
+  }
+  m.classList.add("show");
+}
+
+function v54InsertAtGap(type){
+  const el=v54MakeElement(type);
+  if(!el||!v51Doc)return;
+  const content=v51Doc.querySelector(".article-content")||v51Doc.querySelector("article.article");
+
+  if(v54InsertAfterEl && v54InsertAfterEl.parentNode){
+    v54InsertAfterEl.parentNode.insertBefore(el,v54InsertAfterEl.nextSibling);
+  }else{
+    content.appendChild(el);
+  }
+
+  $("#v54InsertMenu")?.classList.remove("show");
+  v52SyncHtml(true);
+  v52RenderPublic();
+}
+
+function v54InstallInsertGaps(){
+  if(!v51Doc)return;
+  const content=v51Doc.querySelector(".article-content");
+  if(!content)return;
+
+  content.querySelectorAll(":scope > .v54-insert-gap").forEach(x=>x.remove());
+
+  const blocks=[...content.children].filter(x=>!x.classList.contains("v54-insert-gap"));
+  const make=(afterEl)=>{
+    const gap=v51Doc.createElement("div");
+    gap.className="v54-insert-gap";
+    gap.dataset.v54EditorOnly="1";
+    gap.contentEditable="false";
+    gap.innerHTML="<button type='button'>＋</button>";
+    const btn=gap.querySelector("button");
+    btn.addEventListener("mousedown",e=>{e.preventDefault();e.stopPropagation()});
+    btn.addEventListener("click",e=>{
+      e.preventDefault();e.stopPropagation();
+      v54OpenInsertMenu(afterEl,btn);
+    });
+    return gap;
+  };
+
+  if(!blocks.length){
+    content.appendChild(make(null));
+    return;
+  }
+
+  content.insertBefore(make(null),blocks[0]);
+  blocks.forEach(block=>block.insertAdjacentElement("afterend",make(block)));
+}
+
+function v54InstallEnterBehavior(){
+  if(!v51Doc)return;
+  const article=v51Doc.querySelector("article.article");
+  if(!article)return;
+
+  article.addEventListener("keydown",e=>{
+    if(e.key!=="Enter")return;
+    const active=v51Doc.activeElement;
+    if(!active || !active.isContentEditable)return;
+
+    // Shift+Enter = explicit line break exactly at caret.
+    if(e.shiftKey){
+      e.preventDefault();
+      try{
+        v51Doc.execCommand("insertLineBreak",false,null);
+      }catch(err){
+        v51Doc.execCommand("insertHTML",false,"<br>");
+      }
+      v52ScheduleSync();
+      return;
+    }
+
+    // Enter at paragraph/heading creates a new paragraph after current block.
+    const base=active.closest("p,h1,h2,h3,h4,h5,h6");
+    if(base && !active.closest("li")){
+      e.preventDefault();
+      const p=v51Doc.createElement("p");
+      p.innerHTML="<br>";
+      base.parentNode.insertBefore(p,base.nextSibling);
+      p.contentEditable="true";
+      p.spellcheck=false;
+      p.dataset.v51Editable="1";
+
+      // Place caret inside new paragraph.
+      const range=v51Doc.createRange();
+      range.selectNodeContents(p);
+      range.collapse(true);
+      const sel=v51Win.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      p.focus();
+
+      v52SyncHtml(true);
+      v54InstallInsertGaps();
+      return;
+    }
+
+    // In list item: native Enter behavior is useful; sync after browser modifies DOM.
+    if(active.closest("li")){
+      setTimeout(()=>{
+        v54InstallRealMarkers();
+        v52SyncHtml(true);
+      },0);
+    }
+  },true);
+}
+
+function v54AfterFrameReady(){
+  v54InstallRealMarkers();
+  v54InstallInsertGaps();
+  v54InstallEnterBehavior();
+}
+
 let v53BlockClipboardHtml="";
 let v53PropsTarget=null;
 
@@ -14640,10 +14886,21 @@ function v53ShowToast(text){
 function v53CleanOuterHtml(el){
   if(!el)return "";
   const clone=el.cloneNode(true);
-  v52CleanEditorArtifacts(clone);
-  clone.classList.remove("v53-block-selected","v53-block-hover");
-  clone.querySelectorAll(".v53-block-selected,.v53-block-hover").forEach(x=>{
-    x.classList.remove("v53-block-selected","v53-block-hover");
+
+  // For clipboard: convert editor marker span into real text so the copied
+  // fragment visibly contains the bullet/number even outside this website.
+  clone.querySelectorAll(".v54-li-marker").forEach(marker=>{
+    marker.replaceWith(marker.textContent||"• ");
+  });
+  clone.querySelectorAll(".v54-insert-gap,.v51-block-handle").forEach(x=>x.remove());
+  clone.querySelectorAll("[contenteditable]").forEach(x=>x.removeAttribute("contenteditable"));
+  clone.querySelectorAll("[data-v51-editable],[data-v54-editor-only]").forEach(x=>{
+    x.removeAttribute("data-v51-editable");
+    x.removeAttribute("data-v54-editor-only");
+  });
+  clone.classList.remove("v51-selected","v53-block-selected","v53-block-hover","v54-editor-li");
+  clone.querySelectorAll(".v51-selected,.v53-block-selected,.v53-block-hover,.v54-editor-li").forEach(x=>{
+    x.classList.remove("v51-selected","v53-block-selected","v53-block-hover","v54-editor-li");
   });
   return clone.outerHTML;
 }
@@ -14819,6 +15076,7 @@ function v53BindEditorShortcuts(){
 function v53AfterFrameReady(){
   v53MarkHoverBlocks();
   v53BindEditorShortcuts();
+  v54AfterFrameReady();
 }
 
 let v52SelectedEl=null;
@@ -14832,6 +15090,9 @@ function v52CurrentHtml(){
 
 function v52CleanEditorArtifacts(root){
   if(!root)return root;
+  root.querySelectorAll(".v54-li-marker,.v54-insert-gap").forEach(x=>x.remove());
+  root.querySelectorAll(".v54-editor-li").forEach(x=>x.classList.remove("v54-editor-li"));
+  root.querySelectorAll("[data-v54-editor-only]").forEach(x=>x.removeAttribute("data-v54-editor-only"));
   root.querySelectorAll(".v51-block-handle,.v52-insert-handle").forEach(x=>x.remove());
   root.querySelectorAll("[data-v51-block-index],[data-v52-selected]").forEach(x=>{
     x.removeAttribute("data-v51-block-index");
@@ -16950,6 +17211,26 @@ document.addEventListener("DOMContentLoaded",()=>{
   $("#v50PropsBtn").onclick=v53OpenProps;
   $("#v53ApplyProps").onclick=v53ApplyProps;
   $("#v53CloseProps").onclick=()=>$("#v53PropsPopup").classList.remove("show");
+});
+</script>
+<div id="v54InsertMenu" class="v54-insert-menu">
+  <button data-v54insert="p">✎ Văn bản</button>
+  <button data-v54insert="h3">H Tiêu đề</button>
+  <button data-v54insert="ul">• Danh sách</button>
+  <button data-v54insert="box">▣ Khung</button>
+  <button data-v54insert="img">▧ Ảnh</button>
+  <button data-v54insert="table">▦ Bảng</button>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded",()=>{
+  document.querySelectorAll("[data-v54insert]").forEach(b=>{
+    b.onclick=()=>v54InsertAtGap(b.dataset.v54insert);
+  });
+  document.addEventListener("mousedown",e=>{
+    if(!e.target.closest("#v54InsertMenu")&&!e.target.closest(".v54-insert-gap")){
+      $("#v54InsertMenu")?.classList.remove("show");
+    }
+  });
 });
 </script></body>
 </html>
