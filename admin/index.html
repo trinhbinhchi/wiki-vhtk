@@ -243,6 +243,33 @@ button,input,textarea,select{font:inherit}
   font-weight:700;
 }
 </style>
+
+<style id="v33-visual-block-controls-style">
+.v33-block-toolbar{
+  position:absolute;
+  z-index:99999;
+  display:none;
+  gap:4px;
+  padding:5px;
+  border:1px solid rgba(50,80,63,.18);
+  border-radius:9px;
+  background:rgba(255,255,255,.97);
+  box-shadow:0 6px 20px rgba(0,0,0,.10);
+  font-family:"Segoe UI",Arial,sans-serif;
+}
+.v33-block-toolbar button{
+  border:1px solid #d6e0d9;
+  border-radius:6px;
+  background:#fff;
+  color:#355044;
+  padding:4px 7px;
+  font-size:11px;
+  font-weight:700;
+  cursor:pointer;
+}
+.v33-block-toolbar button:hover{background:#edf6f1}
+.v33-block-toolbar .danger{color:#a5453e}
+</style>
 </head>
 <body>
 <div class="login" id="loginView">
@@ -311,7 +338,7 @@ button,input,textarea,select{font:inherit}
 <span class="v26-mode-indicator" id="v26ModeIndicator">Chế độ: Trực quan</span></div>
 <div class="editor" contenteditable="true" id="editor"></div><div class="public-live-wrap" id="publicLiveWrap"><div class="preview-badge">PUBLIC ARTICLE • sửa trực tiếp</div><iframe id="publicLiveFrame" title="Trang Public thật"></iframe></div>
 <textarea class="source" id="sourceEditor" spellcheck="false"></textarea>
-<div class="help">V32: tô chọn trực quan thông minh. Nếu tô hết một block hoặc nhiều block, Ctrl+C sẽ copy nguyên outerHTML kèm class/style/wrapper; tô một phần text thì vẫn copy đúng phần text đã chọn. Paste giữ HTML.</div>
+<div class="help">V33: click vào một khối lớn để hiện thanh thao tác ngay trên khối: ＋ Trên, ＋ Dưới, ⧉ Sao chép, 🗑 Xóa. Muốn viết giữa hai box chỉ cần chọn box rồi bấm ＋ Trên/＋ Dưới. Sao chép lấy nguyên outerHTML nên giữ toàn bộ thuộc tính.</div>
 </div>
 </section>
 <section class="settings-panel hidden" id="settingsPanel">
@@ -376,10 +403,21 @@ function editablePublicNode(){
 
 function getVisualHTML(){
   const sec=selectedPublicSection();
-  return sec ? sec.innerHTML : ($("#editor").innerHTML||"");
+  if(!sec)return $("#editor").innerHTML||"";
+  const clone=sec.cloneNode(true);
+  v33CleanEditorUIFromClone(clone);
+  return clone.innerHTML;
 }
 function syncFromPublic(){
-  const html=getVisualHTML();
+  const sec=selectedPublicSection();
+  let html="";
+  if(sec){
+    const clone=sec.cloneNode(true);
+    v33CleanEditorUIFromClone(clone);
+    html=clone.innerHTML;
+  }else{
+    html=$("#editor").innerHTML||"";
+  }
   $("#editor").innerHTML=html;
   if(!sourceMode)$("#sourceEditor").value=html;
 }
@@ -616,6 +654,204 @@ function installSmartSelectionCopy(d,root){
     }
   },true);
 }
+
+let v33ActiveBlock=null;
+let v33Toolbar=null;
+
+function v33IsEditorUI(el){
+  return !!(el && el.closest && el.closest(".v33-block-toolbar"));
+}
+
+function v33SemanticBlock(node,root){
+  if(!node)return null;
+  if(node.nodeType===3)node=node.parentElement;
+  if(!node || !node.closest)return null;
+
+  /* Prefer large visual boxes first. */
+  const selectors=[
+    ".notice-box",".info-box",".warning-box",".success-box",
+    ".callout",".quote-box",".guide-box",".content-box",".section-block",
+    ".clean-table-wrap",".rework-video-box",".da-tau-section",
+    ".notion-callout",".notion-text-block",
+    ".article-card",".feature-card",".reward-card",
+    "section > div",
+    "li","p","blockquote","table","figure","div"
+  ];
+
+  for(const sel of selectors){
+    let el=null;
+    try{el=node.closest(sel)}catch(e){}
+    if(el && root.contains(el) && el!==root){
+      /* climb to a direct-ish large visual block when nested */
+      let cur=el;
+      while(cur.parentElement && cur.parentElement!==root){
+        const p=cur.parentElement;
+        if(p.matches && p.matches(
+          ".notice-box,.info-box,.warning-box,.success-box,.callout,.quote-box,.guide-box,.content-box,.section-block,.clean-table-wrap,.rework-video-box,.da-tau-section,.notion-callout,.notion-text-block"
+        )){
+          cur=p;
+        }else break;
+      }
+      return cur;
+    }
+  }
+  return null;
+}
+
+function v33CreateToolbar(d){
+  const bar=d.createElement("div");
+  bar.className="v33-block-toolbar";
+  bar.dataset.vhtkEditorOnly="1";
+  bar.innerHTML=`
+    <button type="button" data-act="before">＋ Trên</button>
+    <button type="button" data-act="after">＋ Dưới</button>
+    <button type="button" data-act="copy">⧉ Sao chép</button>
+    <button type="button" data-act="delete" class="danger">🗑 Xóa</button>
+  `;
+  d.body.appendChild(bar);
+
+  bar.addEventListener("mousedown",e=>e.preventDefault());
+  bar.addEventListener("click",e=>{
+    const btn=e.target.closest("button[data-act]");
+    if(!btn || !v33ActiveBlock)return;
+    const act=btn.dataset.act;
+
+    if(act==="before")v33InsertParagraph(v33ActiveBlock,-1);
+    if(act==="after")v33InsertParagraph(v33ActiveBlock,1);
+    if(act==="copy")v33DuplicateBlock(v33ActiveBlock);
+    if(act==="delete")v33DeleteBlock(v33ActiveBlock);
+  });
+
+  return bar;
+}
+
+function v33PositionToolbar(block){
+  const d=publicDoc();
+  if(!d || !block)return;
+  if(!v33Toolbar)v33Toolbar=v33CreateToolbar(d);
+
+  const r=block.getBoundingClientRect();
+  const x=Math.max(8,r.left + d.defaultView.scrollX);
+  const y=Math.max(8,r.top + d.defaultView.scrollY - 34);
+
+  v33Toolbar.style.left=x+"px";
+  v33Toolbar.style.top=y+"px";
+  v33Toolbar.style.display="flex";
+}
+
+function v33SelectBlock(block){
+  const root=selectedPublicSection();
+  if(!root || !block)return;
+
+  if(v33ActiveBlock && v33ActiveBlock!==block){
+    try{
+      v33ActiveBlock.style.removeProperty("outline");
+      v33ActiveBlock.style.removeProperty("outline-offset");
+    }catch(e){}
+  }
+
+  v33ActiveBlock=block;
+  block.style.setProperty("outline","2px solid rgba(32,107,81,.22)","important");
+  block.style.setProperty("outline-offset","3px","important");
+  v33PositionToolbar(block);
+
+  const st=$("#v32CopyStatus");
+  if(st)st.textContent="Khối: đã chọn";
+}
+
+function v33InsertParagraph(block,direction){
+  const d=publicDoc();
+  if(!d || !block || !block.parentNode)return;
+
+  const p=d.createElement("p");
+  p.innerHTML="<br>";
+
+  if(direction<0)block.parentNode.insertBefore(p,block);
+  else block.parentNode.insertBefore(p,block.nextSibling);
+
+  const sel=d.getSelection();
+  const range=d.createRange();
+  range.selectNodeContents(p);
+  range.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(range);
+  p.focus();
+
+  syncFromPublic();
+  saveV31Selection && saveV31Selection();
+  setStatus(direction<0 ? "Đã thêm dòng phía trên" : "Đã thêm dòng phía dưới","ok");
+}
+
+function v33DuplicateBlock(block){
+  const d=publicDoc();
+  if(!d || !block || !block.parentNode)return;
+
+  const clone=block.cloneNode(true);
+  clone.style.removeProperty("outline");
+  clone.style.removeProperty("outline-offset");
+  block.parentNode.insertBefore(clone,block.nextSibling);
+
+  v33SelectBlock(clone);
+  syncFromPublic();
+  setStatus("Đã sao chép nguyên khối, giữ toàn bộ class/style/HTML","ok");
+}
+
+function v33DeleteBlock(block){
+  if(!block || !block.parentNode)return;
+  const next=block.nextElementSibling || block.previousElementSibling || null;
+  block.remove();
+  v33ActiveBlock=null;
+  if(v33Toolbar)v33Toolbar.style.display="none";
+  if(next)v33SelectBlock(next);
+  syncFromPublic();
+  setStatus("Đã xóa nguyên khối","ok");
+}
+
+function installVisualBlockControls(d,root){
+  if(!d || !root || root.dataset.v33ControlsInstalled==="1")return;
+  root.dataset.v33ControlsInstalled="1";
+
+  if(!v33Toolbar)v33Toolbar=v33CreateToolbar(d);
+
+  root.addEventListener("click",e=>{
+    if(v33IsEditorUI(e.target))return;
+
+    const block=v33SemanticBlock(e.target,root);
+    if(block)v33SelectBlock(block);
+  },true);
+
+  root.addEventListener("contextmenu",e=>{
+    const block=v33SemanticBlock(e.target,root);
+    if(block){
+      e.preventDefault();
+      v33SelectBlock(block);
+    }
+  },true);
+
+  d.addEventListener("scroll",()=>{
+    if(v33ActiveBlock)v33PositionToolbar(v33ActiveBlock);
+  },true);
+
+  d.defaultView.addEventListener("resize",()=>{
+    if(v33ActiveBlock)v33PositionToolbar(v33ActiveBlock);
+  });
+}
+
+/* Never save the editor-only floating toolbar. */
+function v33CleanEditorUIFromClone(clone){
+  if(!clone)return clone;
+  clone.querySelectorAll(".v33-block-toolbar,[data-vhtk-editor-only='1']").forEach(el=>el.remove());
+  clone.querySelectorAll("[style]").forEach(el=>{
+    const style=el.getAttribute("style")||"";
+    const clean=style
+      .replace(/outline\s*:[^;]+;?/gi,"")
+      .replace(/outline-offset\s*:[^;]+;?/gi,"")
+      .trim();
+    if(clean)el.setAttribute("style",clean);
+    else el.removeAttribute("style");
+  });
+  return clone;
+}
 function ensurePublicEditMode(){
   const d=publicDoc();
   if(!d || !currentData)return false;
@@ -680,6 +916,7 @@ function ensurePublicEditMode(){
   sec.addEventListener("blur",syncFromPublic);
   enableSimpleVisualEditor(d,sec);
   installSmartSelectionCopy(d,sec);
+  installVisualBlockControls(d,sec);
 
   if(!d.getElementById("vhtk-admin-live-style")){
     const marker=d.createElement("style");

@@ -1,14 +1,26 @@
-# CMS v32 — Smart Selection
+# CMS v33 — Visual Block Controls
 
-Giải quyết đúng vấn đề tô chọn không lấy được thuộc tính cha.
+Giải quyết 2 nhu cầu chính:
+1. Viết nội dung giữa hai khối lớn.
+2. Sao chép nguyên khối giữ toàn bộ thuộc tính.
 
-- Tô gần như toàn bộ nội dung của 1 block:
-  Ctrl+C -> copy nguyên outerHTML của block.
-- Tô nhiều block:
-  Ctrl+C -> copy outerHTML của từng block.
-- Tô một phần text:
-  Ctrl+C -> copy đúng fragment được chọn.
-- Paste ưu tiên HTML và giữ class/style/wrapper.
-- Nếu paste cùng loại block (LI/P/TR/DIV), editor ưu tiên chèn cùng cấp thay vì lồng vào nhau.
+## Cách dùng
+- Click vào một box/khối.
+- Thanh nhỏ xuất hiện trên khối:
+  - + Trên
+  - + Dưới
+  - Sao chép
+  - Xóa
 
-Như vậy vẫn thao tác bằng tô chọn trực quan, không cần chuyển sang HTML.
+## Thêm giữa hai khối
+- Chọn khối dưới -> + Trên
+hoặc
+- Chọn khối trên -> + Dưới
+=> xuất hiện paragraph mới và con trỏ được đặt sẵn để gõ.
+
+## Sao chép khối
+- Chọn box như “Giới Hạn Vật Phẩm”
+- Bấm Sao chép
+=> clone nguyên outerHTML, giữ class/style/wrapper/list.
+
+Toolbar này chỉ tồn tại trong editor và bị loại bỏ trước khi Save/Commit.
