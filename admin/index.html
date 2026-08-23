@@ -1079,6 +1079,44 @@ button,input,textarea,select{font:inherit}
   line-height:1.45;
 }
 </style>
+
+<style id="v49-header-alltext-style">
+#v49HeaderPreview{
+  max-width:1120px;
+  margin:0 auto 12px;
+}
+#v49HeaderPreview:empty{display:none}
+#v49HeaderPreview .article-head{
+  margin-bottom:12px!important;
+}
+#v49HeaderPreview .v49-header-editable{
+  cursor:text!important;
+}
+#v49HeaderPreview .v49-header-editable:focus{
+  outline:1px dashed rgba(36,111,82,.4)!important;
+  outline-offset:2px!important;
+}
+.v49-direct-text{
+  cursor:text!important;
+}
+.v49-direct-text:focus{
+  outline:1px dashed rgba(36,111,82,.4)!important;
+  outline-offset:2px!important;
+}
+.v49-direct-text[data-v49-editable="1"]{
+  user-select:text!important;
+  -webkit-user-select:text!important;
+}
+.v49-note{
+  margin:8px 10px;
+  padding:7px 8px;
+  border-radius:8px;
+  background:#eaf5ef;
+  color:#315d4a;
+  font-size:10px;
+  line-height:1.45;
+}
+</style>
 </head>
 <body>
 <div class="login" id="loginView">
@@ -1151,7 +1189,7 @@ button,input,textarea,select{font:inherit}
 
 <div id="v42Shell"><section id="v42Main">
 <div id="v42Top"><button id="v42Undo">↶ Undo</button><button id="v42Redo">↷ Redo</button><button id="v42Duplicate">⧉ Nhân bản</button><button id="v42Delete">🗑 Xóa</button><button id="v42Up">↑ Lên</button><button id="v42Down">↓ Xuống</button><span id="v42State">Structured CMS</span></div>
-<div id="v42Canvas"><div id="v42Preview"></div></div></section>
+<div id="v42Canvas"><div id="v49HeaderPreview"></div><div id="v42Preview"></div></div></section>
 <aside id="v42Side"><div class="v42-head">✦ Structured CMS</div>
 <div class="v42-sec"><h4>Thêm block</h4><div class="v42-grid2">
 <button data-v42add="paragraph">✎ Văn bản</button><button data-v42add="heading">H Tiêu đề</button><button data-v42add="list">• Danh sách</button><button data-v42add="callout">▣ Khung</button><button data-v42add="image">▧ Ảnh</button><button data-v42add="video">▶ Video</button><button data-v42add="table">▦ Bảng</button><button data-v42add="accordion">⌄ Accordion</button>
@@ -11481,7 +11519,121 @@ input[type="search"]{
 let v42Selected=-1,v42History=[],v42Future=[];
 function v42Blocks(){return currentData&&Array.isArray(currentData.blocks)?currentData.blocks:[]}
 function v42Snapshot(){const s=JSON.stringify(v42Blocks());if(v42History[v42History.length-1]!==s){v42History.push(s);if(v42History.length>100)v42History.shift()}v42Future=[]}
+
+function v49RenderHeader(){
+  const box=$("#v49HeaderPreview");
+  if(!box||!currentData)return;
+  box.innerHTML=currentData.structured_header_html||"";
+
+  const head=box.querySelector(".article-head")||box.querySelector("header");
+  if(!head)return;
+
+  const candidates=[...head.querySelectorAll("h1,h2,h3,p,.kicker,.article-subtitle,.subtitle,span")];
+  candidates.forEach(el=>{
+    if(el.querySelector("h1,h2,h3,p,.kicker,.article-subtitle,.subtitle"))return;
+    el.contentEditable="true";
+    el.spellcheck=false;
+    el.classList.add("v49-header-editable");
+  });
+
+  let timer=null;
+  head.addEventListener("input",()=>{
+    clearTimeout(timer);
+    timer=setTimeout(v49SyncHeader,220);
+  },true);
+  head.addEventListener("blur",()=>v49SyncHeader(),true);
+}
+
+function v49SyncHeader(){
+  const box=$("#v49HeaderPreview");
+  if(!box||!currentData)return;
+  const head=box.querySelector(".article-head")||box.querySelector("header");
+  if(!head)return;
+
+  const clone=head.cloneNode(true);
+  clone.querySelectorAll("[contenteditable]").forEach(x=>x.removeAttribute("contenteditable"));
+  clone.querySelectorAll(".v49-header-editable").forEach(x=>x.classList.remove("v49-header-editable"));
+  currentData.structured_header_html=clone.outerHTML;
+
+  // Keep main metadata title in sync with visible article h1 when available.
+  const h1=clone.querySelector("h1");
+  if(h1){
+    const titleText=(h1.textContent||"").trim();
+    if(titleText){
+      currentData.title=titleText;
+      const titleInput=$("#title");
+      if(titleInput)titleInput.value=titleText;
+    }
+  }
+
+  v49PatchTemplateHeader();
+  currentData.section_html=renderBlocks(currentData);
+  setStatus("Đã cập nhật tiêu đề/header trực quan","ok");
+}
+
+function v49PatchTemplateHeader(){
+  if(!currentData||!currentData.structured_template_html||!currentData.structured_header_html)return;
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(currentData.structured_template_html,"text/html");
+  const old=doc.querySelector(".article-head")||doc.querySelector("header");
+  if(!old)return;
+
+  const holder=document.createElement("div");
+  holder.innerHTML=currentData.structured_header_html;
+  const fresh=holder.firstElementChild;
+  if(!fresh)return;
+
+  old.replaceWith(fresh);
+
+  // DOMParser adds html/body wrappers; recover body innerHTML which corresponds to original fragment.
+  currentData.structured_template_html=doc.body.innerHTML;
+}
+
+function v49HasDirectText(el){
+  if(!el||!el.childNodes)return false;
+  return [...el.childNodes].some(n=>n.nodeType===Node.TEXT_NODE && (n.nodeValue||"").trim().length>0);
+}
+
+function v49MarkGenericText(render,b,index,mark){
+  const all=[...render.querySelectorAll("*")];
+
+  all.forEach(el=>{
+    if(el.closest(".v47-raw-badge"))return;
+    if(el.matches("script,style,iframe,video,img,table,tbody,thead,tr,ul,ol"))return;
+
+    // Existing semantic editables are handled elsewhere.
+    if(el.matches("h1,h2,h3,h4,h5,h6,p,li,a,strong,em,span,td,th"))return;
+
+    // Allow DIV and other wrappers that contain their own direct visible text.
+    if(v49HasDirectText(el)){
+      mark(el,"generic-direct-text");
+      el.classList.add("v49-direct-text");
+      el.dataset.v49Editable="1";
+    }
+  });
+
+  // Edge case: rendered top-level element itself contains direct text.
+  const top=render.firstElementChild;
+  if(top && !top.matches("script,style,iframe,video,img,table,ul,ol") && v49HasDirectText(top)){
+    if(!top.isContentEditable){
+      mark(top,"generic-direct-text");
+      top.classList.add("v49-direct-text");
+      top.dataset.v49Editable="1";
+    }
+  }
+}
+
+function v49CleanEditorAttrs(root){
+  if(!root)return root;
+  root.querySelectorAll("[contenteditable]").forEach(x=>x.removeAttribute("contenteditable"));
+  root.querySelectorAll("[data-v49-editable]").forEach(x=>x.removeAttribute("data-v49-editable"));
+  root.querySelectorAll(".v49-direct-text,.v49-header-editable").forEach(x=>{
+    x.classList.remove("v49-direct-text","v49-header-editable");
+  });
+  return root;
+}
 function v42Render(){
+  v49RenderHeader();
   const w=$("#v42Preview");
   if(!w||!currentData)return;
   w.innerHTML="";
@@ -11582,6 +11734,7 @@ function v47MakeEditable(render,b,index){
       if(!el.querySelector("h1,h2,h3,h4,h5,h6,p,li,td,th"))mark(el,"raw-content");
     });
   }
+  v49MarkGenericText(render,b,index,mark);
 }
 
 function v47SyncEditable(render,b,index){
@@ -11590,19 +11743,37 @@ function v47SyncEditable(render,b,index){
 
   if(b.type==="heading"){
     const el=render.querySelector("h1,h2,h3,h4,h5,h6");
-    if(el){b.html=el.innerHTML;b.text=el.textContent||""}
+    if(el){
+      const clone=el.cloneNode(true);
+      v49CleanEditorAttrs(clone);
+      b.html=clone.innerHTML;
+      b.text=clone.textContent||"";
+    }
   }else if(b.type==="paragraph"){
     const el=render.querySelector("p");
-    if(el)b.html=el.innerHTML;
+    if(el){
+      const clone=el.cloneNode(true);
+      v49CleanEditorAttrs(clone);
+      b.html=clone.innerHTML;
+    }
   }else if(b.type==="list"){
-    b.items=[...render.querySelectorAll("li")].map(li=>li.innerHTML);
+    b.items=[...render.querySelectorAll("li")].map(li=>{
+      const clone=li.cloneNode(true);
+      v49CleanEditorAttrs(clone);
+      return clone.innerHTML;
+    });
   }else if(["callout","container"].includes(b.type)){
     const outer=render.firstElementChild;
-    if(outer)b.html=outer.innerHTML;
+    if(outer){
+      const clone=outer.cloneNode(true);
+      v49CleanEditorAttrs(clone);
+      b.html=clone.innerHTML;
+    }
   }else if(b.type==="raw_html"){
     // Rebuild raw_html from the rendered top-level content, excluding editor UI.
     const clone=render.cloneNode(true);
     clone.querySelectorAll(".v47-raw-badge").forEach(x=>x.remove());
+    v49CleanEditorAttrs(clone);
     b.html=clone.innerHTML;
   }
 
@@ -12516,6 +12687,7 @@ function collectArticle(){
 
 async function saveArticle(){
   if(!currentFile)return;
+  v49SyncHeader();
   if(currentData&&currentData.blocks)currentData.section_html=renderBlocks(currentData);
   
   
