@@ -8749,37 +8749,7 @@ html,body{margin:0;min-height:100%;background:#f7f4ea}body{padding:24px 30px 80p
 .v40-block:hover>.v40-handle,.v40-selected>.v40-handle{opacity:1}.v40-selected{outline:3px solid rgba(34,110,79,.45)!important;outline-offset:3px!important}
 .v40-insert{height:18px;display:flex;align-items:center;justify-content:center}.v40-insert button{opacity:.12;transition:.15s;border:1px solid #9db4a8;border-radius:999px;background:#fff;color:#2f6b51;padding:1px 8px;font:800 10px Arial;cursor:pointer}.v40-insert:hover button,.v40-insert.over button{opacity:1}
 [contenteditable=true]{cursor:text!important;user-select:text!important;-webkit-user-select:text!important}
-[contenteditable=true]:focus{outline:1px dashed rgba(36,104,78,.28)}</style></head><body><div id="v40Root">${h}</div><script>
-document.addEventListener("DOMContentLoaded",()=>{
-  if(!window.$) return;
-
-  // Alias common legacy login field IDs so v44 login works across previous layouts.
-  if(!$("#tokenInput")){
-    const legacy=document.querySelector("#token,#githubToken,#patToken,input[type=password]");
-    if(legacy) legacy.id="tokenInput";
-  }
-  if(!$("#rememberToken")){
-    const legacy=document.querySelector("#remember,#rememberMe,input[type=checkbox]");
-    if(legacy) legacy.id="rememberToken";
-  }
-  if(!$("#loginBtn")){
-    const legacy=[...document.querySelectorAll("button")].find(b=>/đăng nhập/i.test(b.textContent||""));
-    if(legacy) legacy.id="loginBtn";
-  }
-
-  const saved=localStorage.getItem("vhtk_github_token") || sessionStorage.getItem("vhtk_github_token");
-  if(saved && $("#tokenInput") && !$("#tokenInput").value){
-    $("#tokenInput").value=saved;
-  }
-
-  if($("#loginBtn")){
-    $("#loginBtn").onclick=(e)=>{
-      e.preventDefault();
-      login();
-    };
-  }
-});
-</script></body></html>`}
+[contenteditable=true]:focus{outline:1px dashed rgba(36,104,78,.28)}</style></head><body><div id="v40Root">${h}</div></body></html>`}
 function v40Load(){
   const f=$("#v40Frame");
   if(!f||!currentData)return;
@@ -9514,7 +9484,8 @@ function collectArticle(){
 }
 
 async function saveArticle(){
-  if(!currentFile)return;\n  if(currentData&&currentData.blocks)currentData.section_html=renderBlocks(currentData);
+  if(!currentFile)return;
+  if(currentData&&currentData.blocks)currentData.section_html=renderBlocks(currentData);
   
   
   
@@ -9815,5 +9786,21 @@ document.addEventListener("keydown",e=>{
   </div>
 </div>
 <script src="https://unpkg.com/grapesjs@0.22.12/dist/grapes.min.js"></script>
+<script id="v45-login-binder">
+document.addEventListener("DOMContentLoaded",()=>{
+  const byId=id=>document.getElementById(id);
+  const tokenEl=byId("tokenInput") || document.querySelector("#token,#githubToken,#patToken,input[type=password]");
+  if(tokenEl && !tokenEl.id) tokenEl.id="tokenInput";
+  const rememberEl=byId("rememberToken") || document.querySelector("#remember,#rememberMe,input[type=checkbox]");
+  if(rememberEl && !rememberEl.id) rememberEl.id="rememberToken";
+  const loginButton=byId("loginBtn") || [...document.querySelectorAll("button")].find(b=>/đăng nhập/i.test(b.textContent||""));
+  if(loginButton){
+    loginButton.id="loginBtn";
+    loginButton.onclick=e=>{e.preventDefault();login();};
+  }
+  const saved=localStorage.getItem("vhtk_github_token") || sessionStorage.getItem("vhtk_github_token");
+  if(saved && tokenEl && !tokenEl.value) tokenEl.value=saved;
+});
+</script>
 </body>
 </html>
