@@ -1,8 +1,8 @@
-# CMS v42 — Structured CMS
+# CMS v43 — Fix Login + Preserve Layout
 
-- Đã migrate 14 bài sang `blocks[]`.
-- Các block nhận diện được: {'raw_html': 25, 'callout': 104, 'accordion': 1}
-- HTML phức tạp chưa nhận diện chắc chắn được giữ dưới dạng `raw_html`.
-- `legacy_section_html` giữ nguyên bản cũ để dự phòng.
-- `build.js` render blocks -> section_html -> site.json.
-- Admin chỉnh block thay vì chỉnh cả chuỗi HTML.
+- Sửa đăng nhập: `async function login()` được khôi phục.
+- Structured renderer không tự dựng lại layout.
+- Mỗi bài có `structured_template_html` lấy từ HTML gốc 1:1.
+- Renderer chỉ thay đúng nội dung bên trong `.intro-panel` hoặc `.article-content`.
+- Hero/header/article-content/wrapper cũ được giữ nguyên.
+- `legacy_section_html` vẫn giữ để rollback.

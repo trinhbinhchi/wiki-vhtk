@@ -8425,24 +8425,35 @@ function v37CanvasCss(){
 
 
 
+
 function escAttr(s){return String(s??"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function renderAttrs(attrs){
+  if(!attrs)return "";
+  return Object.entries(attrs).map(([k,v])=>{
+    if(v===null||v===false)return "";
+    if(v===true||v==="")return ` ${k}`;
+    const val=Array.isArray(v)?v.join(" "):v;
+    return ` ${k}="${escAttr(val)}"`;
+  }).join("");
+}
 function renderBlock(b){
   if(!b)return "";
   const cls=b.class?` class="${escAttr(b.class)}"`:"";
   const sty=b.style?` style="${escAttr(b.style)}"`:"";
-  if(b.type==="heading"){const l=Math.max(1,Math.min(6,Number(b.level||3)));return `<h${l}${cls}${sty}>${b.text||""}</h${l}>`}
-  if(b.type==="paragraph")return `<p${cls}${sty}>${b.html||""}</p>`;
-  if(b.type==="list"){const t=b.ordered?"ol":"ul";return `<${t}${cls}${sty}>${(b.items||[]).map(x=>`<li>${x}</li>`).join("")}</${t}>`}
-  if(b.type==="callout")return `<div${cls||' class="guide-callout"'}${sty}>${b.html||""}</div>`;
-  if(b.type==="image")return `<img src="${escAttr(b.src||"")}" alt="${escAttr(b.alt||"")}"${cls}${sty}>`;
-  if(b.type==="video"){if(b.tag==="video")return `<video src="${escAttr(b.src||"")}" controls${cls}></video>`;return `<iframe src="${escAttr(b.src||"")}" title="${escAttr(b.title||"")}" allowfullscreen${cls}></iframe>`}
-  if(b.type==="video_box")return `<div${cls||' class="rework-video-box"'}>${b.html||""}</div>`;
+  const attrs=renderAttrs(b.attrs);
+  if(b.type==="heading"){const l=Math.max(1,Math.min(6,Number(b.level||3)));return `<h${l}${cls}${sty}${attrs}>${b.html??b.text??""}</h${l}>`}
+  if(b.type==="paragraph")return `<p${cls}${sty}${attrs}>${b.html||""}</p>`;
+  if(b.type==="list"){const t=b.ordered?"ol":"ul";return `<${t}${cls}${sty}${attrs}>${(b.items||[]).map(x=>`<li>${x}</li>`).join("")}</${t}>`}
+  if(b.type==="callout")return `<div${cls||' class="guide-callout"'}${sty}${attrs}>${b.html||""}</div>`;
+  if(b.type==="image")return `<img src="${escAttr(b.src||"")}" alt="${escAttr(b.alt||"")}"${cls}${sty}${attrs}>`;
+  if(b.type==="video"){if(b.tag==="video")return `<video src="${escAttr(b.src||"")}" controls${cls}${sty}${attrs}></video>`;return `<iframe src="${escAttr(b.src||"")}" title="${escAttr(b.title||"")}" allowfullscreen${cls}${sty}${attrs}></iframe>`}
   return b.html||"";
 }
 function renderBlocks(d){
-  const a=d.blocks||[],p=a.filter(b=>b.role==="prefix").map(renderBlock).join(""),body=a.filter(b=>b.role!=="prefix").map(renderBlock).join("\n");
-  const m=d.block_meta||{},tag=m.container_tag||"div",cls=m.container_class||"article-content";
-  return p+`<${tag} class="${escAttr(cls)}">${body}</${tag}>`;
+  const body=(d.blocks||[]).map(renderBlock).join("\n");
+  const tpl=d.structured_template_html||"__VHTK_BLOCKS_PLACEHOLDER__";
+  if(tpl.includes("__VHTK_BLOCKS_PLACEHOLDER__"))return tpl.replace("__VHTK_BLOCKS_PLACEHOLDER__",body);
+  return d.legacy_section_html||d.section_html||body;
 }
 
 let v42Selected=-1,v42History=[],v42Future=[];
@@ -8461,13 +8472,13 @@ function v42Select(i){v42Selected=i;v42Render()}
 function v42Props(){
   const b=v42Blocks()[v42Selected],e=$("#v42Empty"),p=$("#v42Props");if(!b){e.style.display="";p.style.display="none";return}e.style.display="none";p.style.display="";
   $("#v42Type").value=b.type||"";$("#v42LevelWrap").style.display=b.type==="heading"?"":"none";$("#v42Level").value=b.level||3;
-  $("#v42TextWrap").style.display=b.type==="heading"?"":"none";$("#v42Text").value=b.text||"";
+  $("#v42TextWrap").style.display=b.type==="heading"?"":"none";$("#v42Text").value=(b.html??b.text??"").replace(/<[^>]+>/g,"");
   const hs=["paragraph","callout","video_box","table","accordion","raw_html"];$("#v42HtmlWrap").style.display=hs.includes(b.type)?"":"none";$("#v42Html").value=b.html||"";
   $("#v42ItemsWrap").style.display=b.type==="list"?"":"none";$("#v42Items").value=(b.items||[]).map(x=>x.replace(/<[^>]+>/g,"")).join("\n");
   $("#v42Class").value=b.class||"";$("#v42Style").value=b.style||"";$("#v42SrcWrap").style.display=["image","video"].includes(b.type)?"":"none";$("#v42Src").value=b.src||"";$("#v42AltWrap").style.display=b.type==="image"?"":"none";$("#v42Alt").value=b.alt||"";
 }
-function v42Apply(){const b=v42Blocks()[v42Selected];if(!b)return;v42Snapshot();b.class=$("#v42Class").value;b.style=$("#v42Style").value;if(b.type==="heading"){b.level=Number($("#v42Level").value||3);b.text=$("#v42Text").value}if(["paragraph","callout","video_box","table","accordion","raw_html"].includes(b.type))b.html=$("#v42Html").value;if(b.type==="list")b.items=$("#v42Items").value.split("\n").filter(Boolean);if(["image","video"].includes(b.type))b.src=$("#v42Src").value;if(b.type==="image")b.alt=$("#v42Alt").value;v42Render()}
-function v42Default(t){if(t==="paragraph")return{type:"paragraph",html:"Nhập nội dung..."};if(t==="heading")return{type:"heading",level:3,text:"Tiêu đề mới"};if(t==="list")return{type:"list",ordered:false,items:["Mục 1","Mục 2"]};if(t==="callout")return{type:"callout",class:"guide-callout",html:"<h3>Tiêu đề khung</h3><p>Nội dung...</p>"};if(t==="image")return{type:"image",src:"assets/uploads/",alt:"Ảnh"};if(t==="video")return{type:"video",tag:"iframe",src:"",title:"Video"};if(t==="table")return{type:"table",html:"<table><tr><th>Tiêu đề</th><th>Tiêu đề</th></tr><tr><td>Nội dung</td><td>Nội dung</td></tr></table>"};if(t==="accordion")return{type:"accordion",html:"<div class='da-tau-section'><button class='da-tau-toggle'>Phần mở rộng</button><div class='da-tau-collapse-body'><p>Nội dung...</p></div></div>"};return{type:"paragraph",html:""}}
+function v42Apply(){const b=v42Blocks()[v42Selected];if(!b)return;v42Snapshot();b.class=$("#v42Class").value;b.style=$("#v42Style").value;if(b.type==="heading"){b.level=Number($("#v42Level").value||3);b.html=$("#v42Text").value;b.text=$("#v42Text").value}if(["paragraph","callout","video_box","table","accordion","raw_html"].includes(b.type))b.html=$("#v42Html").value;if(b.type==="list")b.items=$("#v42Items").value.split("\n").filter(Boolean);if(["image","video"].includes(b.type))b.src=$("#v42Src").value;if(b.type==="image")b.alt=$("#v42Alt").value;v42Render()}
+function v42Default(t){if(t==="paragraph")return{type:"paragraph",html:"Nhập nội dung...",class:"",style:"",attrs:{}};if(t==="heading")return{type:"heading",level:3,text:"Tiêu đề mới",html:"Tiêu đề mới",class:"",style:"",attrs:{}};if(t==="list")return{type:"list",ordered:false,items:["Mục 1","Mục 2"],class:"",style:"",attrs:{}};if(t==="callout")return{type:"callout",class:"guide-callout",html:"<h3>Tiêu đề khung</h3><p>Nội dung...</p>"};if(t==="image")return{type:"image",src:"assets/uploads/",alt:"Ảnh"};if(t==="video")return{type:"video",tag:"iframe",src:"",title:"Video"};if(t==="table")return{type:"table",html:"<table><tr><th>Tiêu đề</th><th>Tiêu đề</th></tr><tr><td>Nội dung</td><td>Nội dung</td></tr></table>"};if(t==="accordion")return{type:"accordion",html:"<div class='da-tau-section'><button class='da-tau-toggle'>Phần mở rộng</button><div class='da-tau-collapse-body'><p>Nội dung...</p></div></div>"};return{type:"paragraph",html:""}}
 function v42Insert(i,t="paragraph"){v42Snapshot();v42Blocks().splice(i,0,v42Default(t));v42Selected=i;v42Render()}
 function v42Add(t){v42Insert(v42Selected>=0?v42Selected+1:v42Blocks().length,t)}
 function v42Duplicate(){if(v42Selected<0)return;v42Snapshot();v42Blocks().splice(v42Selected+1,0,JSON.parse(JSON.stringify(v42Blocks()[v42Selected])));v42Selected++;v42Render()}
