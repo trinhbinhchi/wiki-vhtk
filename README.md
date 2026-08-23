@@ -1,20 +1,32 @@
-# CMS v35 — sửa đúng cấu trúc HTML thật
+# CMS v36 — Visual Inspector
 
-Lỗi v34:
-- Các box hiện tại thực tế dùng `.guide-callout` / `.notion-callout-block`.
-- Chúng nằm trong `.article-content > .intro-panel`.
-- V34 không nhận đúng class và đặt dấu + sai cấp DOM.
+Không cố biến mọi thao tác thành selection/block magic nữa.
 
-V35:
-- Nhận đúng `.guide-callout`.
-- Hover mỗi box sẽ thấy `☰ Khối`.
-- Click `☰ Khối` = chọn nguyên box chắc chắn.
-- Alt+click bên trong box cũng chọn nguyên box.
-- Sau khi chọn:
-  - Copy
-  - Nhân bản
-  - + Trên
-  - + Dưới
-  - Xóa
-- `+ Thêm nội dung` nằm giữa từng child của `.intro-panel`, đúng vị trí giữa các box.
-- Editor UI bị strip hoàn toàn trước Save/Commit.
+## Chế độ thường
+- Sửa text trực tiếp như WYSIWYG.
+
+## Inspector
+- Bấm `🔎 Inspector`.
+- Click phần tử trong bài.
+- Panel bên phải cho sửa:
+  - text
+  - class
+  - id
+  - style
+  - href (link)
+  - src (img/iframe/video/source)
+
+## Điều hướng cấu trúc
+- Chọn cha
+- Phần tử trước
+- Phần tử sau
+- Nhân bản
+- Xóa
+
+## Style
+- Copy style = class + inline style
+- Paste style = áp class + inline style sang phần tử khác
+
+## An toàn khi lưu
+- class chọn của Inspector bị loại bỏ trước Save/Commit.
+- UI editor không đi vào HTML public.

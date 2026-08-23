@@ -417,6 +417,104 @@ button,input,textarea,select{font:inherit}
 .v35-actionbar button:hover{background:#edf6f1}
 .v35-actionbar .danger{color:#a5453e}
 </style>
+
+<style id="v36-inspector-style">
+.v36-inspector{
+  position:fixed;
+  top:62px;
+  right:12px;
+  z-index:200000;
+  width:320px;
+  max-height:calc(100vh - 82px);
+  overflow:auto;
+  box-sizing:border-box;
+  padding:12px;
+  border:1px solid #d7e1da;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 14px 38px rgba(0,0,0,.16);
+  font-family:"Segoe UI",Arial,sans-serif;
+  color:#30473c;
+}
+.v36-inspector.hidden{display:none!important}
+.v36-inspector-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:9px;
+}
+.v36-inspector-head button{
+  border:0;background:transparent;cursor:pointer;font-size:15px;color:#69786f
+}
+.v36-inspector label{
+  display:block;
+  margin:8px 0;
+  font-size:11px;
+  font-weight:700;
+  color:#617168;
+}
+.v36-inspector input,.v36-inspector textarea{
+  width:100%;
+  box-sizing:border-box;
+  margin-top:4px;
+  padding:7px 8px;
+  border:1px solid #d8e1db;
+  border-radius:7px;
+  background:#fbfcfb;
+  color:#263b31;
+  font:12px/1.4 Consolas,"Segoe UI",Arial,sans-serif;
+}
+.v36-path{
+  padding:7px 8px;
+  border-radius:7px;
+  background:#eef6f1;
+  color:#315d4a;
+  font:700 11px/1.4 Consolas,monospace;
+  word-break:break-all;
+}
+.v36-grid2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-top:10px;
+}
+.v36-grid2 button,.v36-style-actions button{
+  border:1px solid #d4dfd8;
+  border-radius:7px;
+  background:#fff;
+  color:#355044;
+  padding:7px 8px;
+  font-size:11px;
+  font-weight:700;
+  cursor:pointer;
+}
+.v36-grid2 button:hover,.v36-style-actions button:hover{background:#edf6f1}
+.v36-grid2 .danger{color:#a5453e}
+.v36-style-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-top:6px;
+}
+.v36-tip{
+  margin-top:10px;
+  padding:8px;
+  border-radius:7px;
+  background:#fff8ea;
+  color:#75623d;
+  font-size:10px;
+  line-height:1.45;
+}
+.v36-inspector-picked{
+  outline:3px solid rgba(38,111,82,.45)!important;
+  outline-offset:2px!important;
+}
+#inspectorToggleBtn.active{
+  background:#dff1e8!important;
+  border-color:#8ab7a0!important;
+  color:#1f6248!important;
+}
+</style>
 </head>
 <body>
 <div class="login" id="loginView">
@@ -481,11 +579,11 @@ button,input,textarea,select{font:inherit}
 <span class="sep"></span>
 <button id="linkBtn">🔗</button><button id="imageBtn">🖼 Ảnh</button><button id="videoBtn">▶ Video</button><button id="tableBtn">▦ Bảng</button><button data-cmd="insertHorizontalRule">―</button>
 <span class="sep"></span>
-<button id="sourceBtn">&lt;/&gt; HTML</button><button data-cmd="removeFormat">⌫ Format</button>
+<button id="inspectorToggleBtn" title="Bật/tắt Visual Inspector">🔎 Inspector</button><button id="sourceBtn">&lt;/&gt; HTML</button><button data-cmd="removeFormat">⌫ Format</button>
 <span class="v26-mode-indicator" id="v26ModeIndicator">Chế độ: Trực quan</span></div>
 <div class="editor" contenteditable="true" id="editor"></div><div class="public-live-wrap" id="publicLiveWrap"><div class="preview-badge">PUBLIC ARTICLE • sửa trực tiếp</div><iframe id="publicLiveFrame" title="Trang Public thật"></iframe></div>
 <textarea class="source" id="sourceEditor" spellcheck="false"></textarea>
-<div class="help">V35: mỗi box thật (.guide-callout) có nút ☰ Khối ở góc phải khi rê chuột. Bấm nút để chọn nguyên box. Dấu “+ Thêm nội dung” nằm thật giữa từng box trong intro-panel. Alt+click cũng chọn nguyên box.</div>
+<div class="help">V36: sửa chữ trực tiếp như cũ. Khi cần sửa thuộc tính, bật 🔎 Inspector rồi click phần tử. Panel bên phải cho sửa text/class/id/style/href/src, chọn cha, phần tử trước/sau, copy/paste style, nhân bản và xóa.</div>
 </div>
 </section>
 <section class="settings-panel hidden" id="settingsPanel">
@@ -552,7 +650,8 @@ function getVisualHTML(){
   const sec=selectedPublicSection();
   if(!sec)return $("#editor").innerHTML||"";
   const clone=sec.cloneNode(true);
-  v35StripEditorUI(clone);
+  if(typeof v35StripEditorUI==="function")v35StripEditorUI(clone);
+  v36CleanInspectorArtifacts(clone);
   return clone.innerHTML;
 }
 function syncFromPublic(){
@@ -560,7 +659,8 @@ function syncFromPublic(){
   let html="";
   if(sec){
     const clone=sec.cloneNode(true);
-    v35StripEditorUI(clone);
+    if(typeof v35StripEditorUI==="function")v35StripEditorUI(clone);
+    v36CleanInspectorArtifacts(clone);
     html=clone.innerHTML;
   }else{
     html=$("#editor").innerHTML||"";
@@ -1637,6 +1737,194 @@ function installV35Editor(d,root){
     if(v35Selected)v35PositionActionbar(v35Selected);
   },true);
 }
+
+let v36InspectorEnabled=false;
+let v36SelectedElement=null;
+let v36CopiedStyle=null;
+
+function v36Panel(){ return $("#visualInspectorPanel"); }
+
+function v36ElementPath(el,root){
+  if(!el || !root)return "";
+  const parts=[];
+  let cur=el;
+  while(cur && cur!==root && parts.length<6){
+    let s=(cur.tagName||"").toLowerCase();
+    if(cur.id)s+="#"+cur.id;
+    if(cur.className && typeof cur.className==="string"){
+      const cls=cur.className.trim().split(/\s+/).filter(Boolean).slice(0,2);
+      if(cls.length)s+="."+cls.join(".");
+    }
+    parts.unshift(s);
+    cur=cur.parentElement;
+  }
+  return parts.join(" > ");
+}
+
+function v36ClearPicked(){
+  if(v36SelectedElement){
+    v36SelectedElement.classList.remove("v36-inspector-picked");
+  }
+}
+
+function v36SelectElement(el){
+  const root=selectedPublicSection();
+  if(!root || !el || !root.contains(el))return;
+
+  v36ClearPicked();
+  v36SelectedElement=el;
+  el.classList.add("v36-inspector-picked");
+
+  $("#inspTag").value=(el.tagName||"").toLowerCase();
+  $("#inspText").value=el.children.length ? "" : (el.textContent||"");
+  $("#inspClass").value=(el.getAttribute("class")||"").replace(/\bv36-inspector-picked\b/g,"").trim();
+  $("#inspId").value=el.id||"";
+  $("#inspStyle").value=el.getAttribute("style")||"";
+
+  const tag=(el.tagName||"").toLowerCase();
+
+  $("#inspHrefWrap").classList.toggle("hidden",tag!=="a");
+  $("#inspSrcWrap").classList.toggle("hidden",!["img","iframe","video","source"].includes(tag));
+
+  $("#inspHref").value=tag==="a" ? (el.getAttribute("href")||"") : "";
+  $("#inspSrc").value=["img","iframe","video","source"].includes(tag) ? (el.getAttribute("src")||"") : "";
+
+  $("#inspectorPath").textContent=v36ElementPath(el,root)||tag;
+  v36Panel().classList.remove("hidden");
+}
+
+function v36ApplyInspector(){
+  const el=v36SelectedElement;
+  if(!el)return;
+
+  if(!el.children.length){
+    el.textContent=$("#inspText").value;
+  }
+
+  const cls=$("#inspClass").value.trim();
+  const id=$("#inspId").value.trim();
+  const sty=$("#inspStyle").value.trim();
+  const tag=(el.tagName||"").toLowerCase();
+
+  if(cls)el.setAttribute("class",cls+" v36-inspector-picked");
+  else el.setAttribute("class","v36-inspector-picked");
+
+  if(id)el.id=id; else el.removeAttribute("id");
+  if(sty)el.setAttribute("style",sty); else el.removeAttribute("style");
+
+  if(tag==="a"){
+    const href=$("#inspHref").value.trim();
+    if(href)el.setAttribute("href",href); else el.removeAttribute("href");
+  }
+
+  if(["img","iframe","video","source"].includes(tag)){
+    const src=$("#inspSrc").value.trim();
+    if(src)el.setAttribute("src",src); else el.removeAttribute("src");
+  }
+
+  syncFromPublic();
+  v36SelectElement(el);
+  setStatus("Đã áp dụng thuộc tính trực quan","ok");
+}
+
+function v36SelectParent(){
+  const root=selectedPublicSection();
+  if(!v36SelectedElement || !root)return;
+  const p=v36SelectedElement.parentElement;
+  if(p && p!==root)v36SelectElement(p);
+}
+
+function v36SelectSibling(direction){
+  if(!v36SelectedElement)return;
+  let el=direction<0 ? v36SelectedElement.previousElementSibling : v36SelectedElement.nextElementSibling;
+  if(el)v36SelectElement(el);
+}
+
+function v36Duplicate(){
+  if(!v36SelectedElement || !v36SelectedElement.parentNode)return;
+  const clone=v36SelectedElement.cloneNode(true);
+  clone.classList.remove("v36-inspector-picked");
+  v36SelectedElement.parentNode.insertBefore(clone,v36SelectedElement.nextSibling);
+  syncFromPublic();
+  v36SelectElement(clone);
+  setStatus("Đã nhân bản phần tử","ok");
+}
+
+function v36Delete(){
+  if(!v36SelectedElement || !v36SelectedElement.parentNode)return;
+  const next=v36SelectedElement.nextElementSibling || v36SelectedElement.previousElementSibling || null;
+  const old=v36SelectedElement;
+  v36SelectedElement=null;
+  old.remove();
+  syncFromPublic();
+  if(next)v36SelectElement(next);
+  else $("#inspectorPath").textContent="Chưa chọn phần tử";
+  setStatus("Đã xóa phần tử","ok");
+}
+
+function v36CopyStyle(){
+  if(!v36SelectedElement)return;
+  v36CopiedStyle={
+    className:(v36SelectedElement.getAttribute("class")||"").replace(/\bv36-inspector-picked\b/g,"").trim(),
+    style:v36SelectedElement.getAttribute("style")||""
+  };
+  setStatus("Đã copy class + style","ok");
+}
+
+function v36PasteStyle(){
+  if(!v36SelectedElement || !v36CopiedStyle)return;
+  const keepPicked=" v36-inspector-picked";
+  if(v36CopiedStyle.className)v36SelectedElement.setAttribute("class",v36CopiedStyle.className+keepPicked);
+  else v36SelectedElement.setAttribute("class","v36-inspector-picked");
+
+  if(v36CopiedStyle.style)v36SelectedElement.setAttribute("style",v36CopiedStyle.style);
+  else v36SelectedElement.removeAttribute("style");
+
+  syncFromPublic();
+  v36SelectElement(v36SelectedElement);
+  setStatus("Đã paste class + style","ok");
+}
+
+function v36SetInspectorEnabled(on){
+  v36InspectorEnabled=!!on;
+  const btn=$("#inspectorToggleBtn");
+  if(btn)btn.classList.toggle("active",v36InspectorEnabled);
+
+  if(!v36InspectorEnabled){
+    v36ClearPicked();
+    v36SelectedElement=null;
+    v36Panel().classList.add("hidden");
+    setStatus("Đã tắt Inspector • quay lại sửa chữ trực tiếp","ok");
+  }else{
+    v36Panel().classList.remove("hidden");
+    setStatus("Inspector đang bật • click phần tử để sửa thuộc tính","ok");
+  }
+}
+
+function installVisualInspector(d,root){
+  if(!d || !root || root.dataset.v36InspectorInstalled==="1")return;
+  root.dataset.v36InspectorInstalled="1";
+
+  root.addEventListener("mousedown",e=>{
+    if(!v36InspectorEnabled)return;
+    if(e.target.closest("[data-vhtk-editor-only='1'],.v35-block-handle,.v35-actionbar,.v35-insert-rail"))return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    v36SelectElement(e.target);
+  },true);
+}
+
+function v36CleanInspectorArtifacts(clone){
+  if(!clone)return clone;
+  clone.querySelectorAll(".v36-inspector-picked").forEach(el=>{
+    el.classList.remove("v36-inspector-picked");
+  });
+  clone.querySelectorAll("[data-v36-inspector-installed]").forEach(el=>{
+    el.removeAttribute("data-v36-inspector-installed");
+  });
+  return clone;
+}
 function ensurePublicEditMode(){
   const d=publicDoc();
   if(!d || !currentData)return false;
@@ -1702,6 +1990,7 @@ function ensurePublicEditMode(){
   enableSimpleVisualEditor(d,sec);
   installSmartSelectionCopy(d,sec);
   installV35Editor(d,sec);
+  installVisualInspector(d,sec);
 
   if(!d.getElementById("vhtk-admin-live-style")){
     const marker=d.createElement("style");
@@ -2031,6 +2320,18 @@ async function uploadImage(){
 $("#loginBtn").onclick=login;$("#logoutBtn").onclick=logout;$("#reloadBtn").onclick=()=>loadArticles();
 $("#saveBtn").onclick=saveArticle;$("#settingsBtn").onclick=loadSettings;$("#saveSettingsBtn").onclick=saveSettings;
 $("#newArticleBtn").onclick=newArticle;$("#articleSearch").oninput=renderArticleList;
+
+$("#inspectorToggleBtn").onclick=()=>v36SetInspectorEnabled(!v36InspectorEnabled);
+$("#inspectorCloseBtn").onclick=()=>v36SetInspectorEnabled(false);
+$("#inspApplyBtn").onclick=v36ApplyInspector;
+$("#inspParentBtn").onclick=v36SelectParent;
+$("#inspPrevBtn").onclick=()=>v36SelectSibling(-1);
+$("#inspNextBtn").onclick=()=>v36SelectSibling(1);
+$("#inspDuplicateBtn").onclick=v36Duplicate;
+$("#inspDeleteBtn").onclick=v36Delete;
+$("#inspCopyStyleBtn").onclick=v36CopyStyle;
+$("#inspPasteStyleBtn").onclick=v36PasteStyle;
+
 $("#sourceBtn").onclick=toggleSource;$("#linkBtn").onclick=addLink;$("#videoBtn").onclick=addVideo;$("#tableBtn").onclick=addTable;
 $("#imageBtn").onclick=openMedia;$("#closeMediaBtn").onclick=()=>$("#mediaModal").classList.add("hidden");$("#uploadBtn").onclick=uploadImage;
 document.querySelectorAll(".toolbar button").forEach(b=>{
@@ -2084,5 +2385,64 @@ document.addEventListener("keydown",e=>{
   }
 });
 </script>
+
+<div id="visualInspectorPanel" class="v36-inspector hidden">
+  <div class="v36-inspector-head">
+    <strong>🔎 Visual Inspector</strong>
+    <button id="inspectorCloseBtn" type="button">✕</button>
+  </div>
+
+  <div class="v36-path" id="inspectorPath">Chưa chọn phần tử</div>
+
+  <label>Tag
+    <input id="inspTag" type="text" readonly>
+  </label>
+
+  <label>Nội dung text
+    <textarea id="inspText" rows="3"></textarea>
+  </label>
+
+  <label>Class
+    <input id="inspClass" type="text">
+  </label>
+
+  <label>ID
+    <input id="inspId" type="text">
+  </label>
+
+  <label>Style inline
+    <textarea id="inspStyle" rows="3"></textarea>
+  </label>
+
+  <div id="inspHrefWrap" class="hidden">
+    <label>href
+      <input id="inspHref" type="text">
+    </label>
+  </div>
+
+  <div id="inspSrcWrap" class="hidden">
+    <label>src
+      <input id="inspSrc" type="text">
+    </label>
+  </div>
+
+  <div class="v36-grid2">
+    <button id="inspApplyBtn" type="button">✓ Áp dụng</button>
+    <button id="inspParentBtn" type="button">↑ Chọn cha</button>
+    <button id="inspPrevBtn" type="button">← Trước</button>
+    <button id="inspNextBtn" type="button">Sau →</button>
+    <button id="inspDuplicateBtn" type="button">⧉ Nhân bản</button>
+    <button id="inspDeleteBtn" type="button" class="danger">🗑 Xóa</button>
+  </div>
+
+  <div class="v36-style-actions">
+    <button id="inspCopyStyleBtn" type="button">📋 Copy style</button>
+    <button id="inspPasteStyleBtn" type="button">📥 Paste style</button>
+  </div>
+
+  <div class="v36-tip">
+    Bật Inspector rồi click phần tử trên bài. Tắt Inspector để quay lại sửa chữ trực tiếp.
+  </div>
+</div>
 </body>
 </html>
