@@ -906,7 +906,38 @@ button,input,textarea,select{font:inherit}
 </style>
 <style id="v39-hide-old-tools">
 #visualInspectorPanel{display:none!important}
-</style></head>
+</style>
+<style id="v40-style">
+#v39EditorShell{display:none!important}
+#v40Shell{display:grid;grid-template-columns:minmax(0,1fr) 250px;height:calc(100vh - 148px);min-height:760px;border:1px solid #d8e1da;border-radius:12px;overflow:hidden;background:#f7f4ea}
+#v40Main{display:flex;flex-direction:column;min-width:0;background:#f7f4ea}
+#v40Top{height:38px;flex:0 0 38px;display:flex;align-items:center;gap:6px;padding:0 8px;border-bottom:1px solid #dce4de;background:#fff}
+#v40Top button{border:1px solid #d4ddd7;border-radius:7px;background:#fff;color:#355044;padding:5px 8px;font-size:10px;font-weight:800;cursor:pointer}
+#v40Top button:hover{background:#edf6f1}
+#v40State{margin-left:auto;color:#68776f;font-size:10px;font-weight:700}
+#v40CanvasWrap{flex:1;min-height:0;padding:12px;overflow:hidden;background:#f7f4ea}
+#v40Frame{width:100%;height:100%;border:0;border-radius:10px;background:#f7f4ea}
+#v40Side{overflow:auto;background:#fbfcfa;border-left:1px solid #dce4de}
+.v40-side-head{position:sticky;top:0;z-index:3;padding:10px 11px;background:#fff;border-bottom:1px solid #e0e7e2;color:#315a47;font-size:12px;font-weight:900}
+.v40-side-section{padding:9px 10px;border-bottom:1px solid #e8ece9}
+.v40-side-section h4{margin:0 0 7px;color:#4b5d54;font-size:10px}
+.v40-grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.v40-side-section button{border:1px solid #d4dfd8;border-radius:7px;background:#fff;color:#355044;padding:7px 6px;font-size:10px;font-weight:800;cursor:pointer}
+.v40-side-section button:hover{background:#edf6f1}
+.v40-side-section label{display:block;margin:7px 0;color:#69776f;font-size:10px;font-weight:800}
+.v40-side-section input,.v40-side-section textarea{width:100%;box-sizing:border-box;margin-top:4px;padding:7px 8px;border:1px solid #d9e1dc;border-radius:7px;background:#fff;color:#2c4036;font:11px/1.4 "Segoe UI",Arial,sans-serif}
+.v40-tip{padding:8px;border-radius:8px;background:#fff8e9;color:#75613d;font-size:10px;line-height:1.45}
+#v40HtmlModal{position:fixed;inset:0;z-index:350000;display:none;align-items:center;justify-content:center;background:rgba(20,28,24,.55)}
+#v40HtmlModal.show{display:flex}
+#v40HtmlBox{width:min(1100px,92vw);height:min(760px,88vh);display:flex;flex-direction:column;background:#111827;border-radius:12px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.35)}
+#v40HtmlHead,#v40HtmlActions{display:flex;align-items:center;gap:7px;padding:8px;background:#fff}
+#v40HtmlHead{border-bottom:1px solid #ddd}
+#v40HtmlHead button{margin-left:auto}
+#v40HtmlSource{flex:1;width:100%;box-sizing:border-box;resize:none;border:0;outline:none;padding:16px;background:#111827;color:#e5e7eb;font:13px/1.55 Consolas,"Courier New",monospace}
+#v40HtmlActions{justify-content:flex-end}
+#v40HtmlActions button{padding:7px 10px;border:1px solid #d4ddd7;border-radius:7px;background:#fff;font-weight:800;cursor:pointer}
+</style>
+</head>
 <body>
 <div class="login" id="loginView">
 <div class="login-card">
@@ -974,6 +1005,44 @@ button,input,textarea,select{font:inherit}
 <span class="v26-mode-indicator" id="v26ModeIndicator">Chế độ: Trực quan</span></div>
 <div class="editor" contenteditable="true" id="editor"></div>
 
+
+<div id="v40Shell">
+<section id="v40Main">
+<div id="v40Top">
+<button id="v40Undo">↶ Undo</button><button id="v40Redo">↷ Redo</button>
+<button id="v40Duplicate">⧉ Nhân bản</button><button id="v40Delete">🗑 Xóa</button>
+<button id="v40Up">↑ Lên</button><button id="v40Down">↓ Xuống</button>
+<button id="v40Html">&lt;/&gt; HTML</button><span id="v40State">Chưa chọn block</span>
+</div>
+<div id="v40CanvasWrap"><iframe id="v40Frame"></iframe></div>
+</section>
+<aside id="v40Side">
+<div class="v40-side-head">✦ Block Editor</div>
+<div class="v40-side-section"><h4>Thêm block</h4><div class="v40-grid2">
+<button data-v40add="text">✎ Văn bản</button><button data-v40add="heading">H Tiêu đề</button>
+<button data-v40add="list">• Danh sách</button><button data-v40add="box">▣ Khung</button>
+<button data-v40add="image">▧ Ảnh</button><button data-v40add="video">▶ Video</button>
+<button data-v40add="table">▦ Bảng</button><button data-v40add="accordion">⌄ Accordion</button>
+</div></div>
+<div class="v40-side-section"><h4>Block đang chọn</h4>
+<div id="v40Empty" class="v40-tip">Click block hoặc dùng tay cầm ⋮⋮ trong bài để chọn.</div>
+<div id="v40Props" style="display:none">
+<label>Loại<input id="v40Type" readonly></label><label>Class<input id="v40Class"></label>
+<label>Style<textarea id="v40Style" rows="3"></textarea></label>
+<label id="v40TextWrap">Text<textarea id="v40Text" rows="3"></textarea></label>
+<label id="v40HrefWrap" style="display:none">href<input id="v40Href"></label>
+<label id="v40SrcWrap" style="display:none">src<input id="v40Src"></label>
+<button id="v40Apply">✓ Áp dụng</button></div></div>
+<div class="v40-side-section"><h4>Style nhanh</h4><div class="v40-grid2">
+<button id="v40CopyStyle">📋 Copy style</button><button id="v40PasteStyle">📥 Paste style</button>
+<button id="v40Parent">↑ Cha</button><button id="v40Child">↓ Con</button>
+</div></div>
+</aside></div>
+<div id="v40HtmlModal"><div id="v40HtmlBox">
+<div id="v40HtmlHead"><strong>&lt;/&gt; HTML Source</strong><button id="v40HtmlClose">✕</button></div>
+<textarea id="v40HtmlSource"></textarea>
+<div id="v40HtmlActions"><button id="v40HtmlCancel">Hủy</button><button id="v40HtmlApply">✓ Áp dụng HTML</button></div>
+</div></div>
 <div id="v39EditorShell">
   <section id="v39Main">
     <div id="v39Topbar">
@@ -8271,6 +8340,7 @@ input[type="search"]{
   line-height:1.5;
 }
 `;
+let v40Doc=null,v40Selected=null,v40History=[],v40Future=[],v40StyleClipboard=null;
 let v39FrameDoc=null;
 let v39Selected=null;
 let v39UndoStack=[];
@@ -8318,6 +8388,144 @@ function v37CanvasCss(){
 }
 
 
+
+function v40CurrentHtml(){return currentData?(currentData.section_html||currentData.body_html||""):""}
+
+function v40Container(){
+  const r=v40Doc&&v40Doc.querySelector("#v40Root");
+  return r&&(r.querySelector(".article-content .intro-panel")||r.querySelector(".article-content")||r);
+}
+function v40Clean(root){
+  if(!root)return root;
+  root.querySelectorAll(".v40-ui,.v40-insert,[data-v40-editor-only='1']").forEach(x=>x.remove());
+  root.querySelectorAll(".v40-selected,.v40-block").forEach(x=>x.classList.remove("v40-selected","v40-block"));
+  root.querySelectorAll("[contenteditable]").forEach(x=>x.removeAttribute("contenteditable"));
+  root.querySelectorAll("[draggable]").forEach(x=>x.removeAttribute("draggable"));
+  return root;
+}
+function v40GetHtml(){
+  const r=v40Doc&&v40Doc.querySelector("#v40Root"); if(!r)return v40CurrentHtml();
+  const c=r.cloneNode(true);v40Clean(c);return c.innerHTML;
+}
+function v40Snapshot(){
+  const h=v40GetHtml(); if(v40History[v40History.length-1]!==h){v40History.push(h);if(v40History.length>100)v40History.shift()} v40Future=[];
+}
+function v40Kind(el){
+  if(!el)return "";
+  if(el.matches(".guide-callout,.notion-callout-block,.notice-box,.info-box,.warning-box,.success-box"))return "Khung";
+  if(el.matches("h1,h2,h3,h4,h5,h6"))return "Tiêu đề";
+  if(el.matches("p"))return "Văn bản";
+  if(el.matches("ul,ol"))return "Danh sách";
+  if(el.matches("img,figure"))return "Ảnh";
+  if(el.matches(".rework-video-box,iframe,video"))return "Video";
+  if(el.matches("table,.clean-table-wrap"))return "Bảng";
+  if(el.matches(".da-tau-section,.da-tau-collapse-body"))return "Accordion";
+  return (el.tagName||"div").toLowerCase();
+}
+function v40Semantic(node){
+  if(!node||!v40Doc)return null;if(node.nodeType===3)node=node.parentElement;
+  const r=v40Doc.querySelector("#v40Root");if(!node||!node.closest||!r)return null;
+  const sels=[".guide-callout",".notion-callout-block",".notice-box",".info-box",".warning-box",".success-box",".rework-video-box",".da-tau-section",".clean-table-wrap","table","figure","ul","ol","h1","h2","h3","h4","h5","h6","p","img","iframe","video","div"];
+  for(const s of sels){const el=node.closest(s);if(el&&r.contains(el)&&el!==r&&!el.matches(".v40-ui,.v40-insert"))return el}
+  return null;
+}
+function v40MakeHandle(block){
+  const h=v40Doc.createElement("span");h.className="v40-handle v40-ui";h.dataset.v40EditorOnly="1";h.contentEditable="false";h.draggable=true;h.textContent="⋮⋮";
+  h.onclick=e=>{e.preventDefault();e.stopPropagation();v40Select(block)};
+  h.ondragstart=e=>{v40Select(block);e.dataTransfer.setData("application/x-v40-block","1");e.dataTransfer.effectAllowed="move"};
+  return h;
+}
+function v40InstallText(){
+  const r=v40Doc.querySelector("#v40Root");
+  r.querySelectorAll("h1,h2,h3,h4,h5,h6,p,li,td,th,a,span,strong,em").forEach(el=>{
+    if(!el.closest(".v40-ui,.v40-insert")){el.contentEditable="true";el.spellcheck=false}
+  });
+}
+function v40Decorate(){
+  const r=v40Doc.querySelector("#v40Root");r.querySelectorAll(".v40-handle").forEach(x=>x.remove());
+  r.querySelectorAll(".guide-callout,.notion-callout-block,.notice-box,.info-box,.warning-box,.success-box,.rework-video-box,.da-tau-section,.clean-table-wrap,table,figure,ul,ol,h1,h2,h3,h4,p").forEach(b=>{
+    if(b.closest(".v40-ui,.v40-insert"))return;b.classList.add("v40-block");b.style.position=b.style.position||"relative";b.insertBefore(v40MakeHandle(b),b.firstChild)
+  });
+}
+function v40MakeInsert(){
+  const l=v40Doc.createElement("div");l.className="v40-insert";l.dataset.v40EditorOnly="1";l.contentEditable="false";l.innerHTML="<button type='button'>＋</button>";
+  l.querySelector("button").onclick=e=>{e.preventDefault();e.stopPropagation();const p=v40Doc.createElement("p");p.textContent="Nhập nội dung...";l.parentNode.insertBefore(p,l.nextSibling);v40Refresh();v40Select(p);p.focus();v40Snapshot()};
+  l.ondragover=e=>{e.preventDefault();l.classList.add("over")};l.ondragleave=()=>l.classList.remove("over");
+  l.ondrop=e=>{e.preventDefault();l.classList.remove("over");if(v40Selected&&v40Selected.parentNode){l.parentNode.insertBefore(v40Selected,l.nextSibling);v40Refresh();v40Select(v40Selected);v40Snapshot()}};
+  return l;
+}
+function v40RefreshInserts(){
+  const c=v40Container();if(!c)return;c.querySelectorAll(":scope>.v40-insert").forEach(x=>x.remove());
+  const bs=[...c.children].filter(x=>!x.matches(".v40-insert,.v40-ui"));if(!bs.length){c.appendChild(v40MakeInsert());return}
+  c.insertBefore(v40MakeInsert(),bs[0]);bs.forEach(b=>b.insertAdjacentElement("afterend",v40MakeInsert()));
+}
+function v40Refresh(){v40InstallText();v40Decorate();v40RefreshInserts()}
+function v40Select(el){
+  if(!el)return;if(v40Selected)v40Selected.classList.remove("v40-selected");v40Selected=el;el.classList.add("v40-selected");
+  $("#v40State").textContent=v40Kind(el)+" • "+(el.tagName||"").toLowerCase();v40UpdateProps();
+}
+function v40UpdateProps(){
+  const e=$("#v40Empty"),p=$("#v40Props");if(!v40Selected){e.style.display="";p.style.display="none";$("#v40State").textContent="Chưa chọn block";return}
+  e.style.display="none";p.style.display="";$("#v40Type").value=v40Kind(v40Selected);
+  $("#v40Class").value=(v40Selected.getAttribute("class")||"").replace(/\bv40-(selected|block)\b/g,"").trim();$("#v40Style").value=v40Selected.getAttribute("style")||"";
+  const leaf=v40Selected.children.length===0||v40Selected.matches("h1,h2,h3,h4,h5,h6,p,li,a,span,strong,em");$("#v40TextWrap").style.display=leaf?"":"none";$("#v40Text").value=leaf?(v40Selected.textContent||""):"";
+  const t=(v40Selected.tagName||"").toLowerCase();$("#v40HrefWrap").style.display=t==="a"?"":"none";$("#v40Href").value=t==="a"?(v40Selected.getAttribute("href")||""):"";
+  $("#v40SrcWrap").style.display=["img","iframe","video","source"].includes(t)?"":"none";$("#v40Src").value=["img","iframe","video","source"].includes(t)?(v40Selected.getAttribute("src")||""):"";
+}
+function v40Apply(){
+  if(!v40Selected)return;v40Snapshot();
+  let c=$("#v40Class").value.trim();v40Selected.setAttribute("class",(c+" v40-block v40-selected").trim());
+  const s=$("#v40Style").value.trim();if(s)v40Selected.setAttribute("style",s);else v40Selected.removeAttribute("style");
+  const leaf=v40Selected.children.length===0||v40Selected.matches("h1,h2,h3,h4,h5,h6,p,li,a,span,strong,em");if(leaf)v40Selected.textContent=$("#v40Text").value;
+  const t=(v40Selected.tagName||"").toLowerCase();if(t==="a"){const x=$("#v40Href").value.trim();if(x)v40Selected.href=x;else v40Selected.removeAttribute("href")}
+  if(["img","iframe","video","source"].includes(t)){const x=$("#v40Src").value.trim();if(x)v40Selected.src=x;else v40Selected.removeAttribute("src")}
+  v40Refresh();v40Select(v40Selected);
+}
+function v40Add(type){
+  const d=v40Doc;if(!d)return;let el=null;
+  if(type==="text"){el=d.createElement("p");el.textContent="Nhập nội dung..."}
+  else if(type==="heading"){el=d.createElement("h3");el.textContent="Tiêu đề mới"}
+  else if(type==="list"){el=d.createElement("ul");el.innerHTML="<li>Mục 1</li><li>Mục 2</li>"}
+  else if(type==="box"){el=d.createElement("div");el.className="guide-callout";el.innerHTML="<h3>Tiêu đề khung</h3><p>Nội dung...</p>"}
+  else if(type==="image"){el=d.createElement("img");el.src="assets/uploads/";el.alt="Ảnh"}
+  else if(type==="video"){el=d.createElement("div");el.className="rework-video-box";el.innerHTML="<div class='rework-video-title'>Video</div><iframe src='' allowfullscreen></iframe>"}
+  else if(type==="table"){el=d.createElement("table");el.innerHTML="<tr><th>Tiêu đề</th><th>Tiêu đề</th></tr><tr><td>Nội dung</td><td>Nội dung</td></tr>"}
+  else if(type==="accordion"){el=d.createElement("div");el.className="da-tau-section";el.innerHTML="<button class='da-tau-toggle' aria-expanded='false'>Phần mở rộng</button><div class='da-tau-collapse-body' hidden><p>Nội dung...</p></div>"}
+  if(!el)return;v40Snapshot();if(v40Selected&&v40Selected.parentNode)v40Selected.parentNode.insertBefore(el,v40Selected.nextSibling);else(v40Container()||d.querySelector("#v40Root")).appendChild(el);v40Refresh();v40Select(el);
+}
+function v40Duplicate(){if(!v40Selected||!v40Selected.parentNode)return;v40Snapshot();const c=v40Selected.cloneNode(true);v40Clean(c);v40Selected.parentNode.insertBefore(c,v40Selected.nextSibling);v40Refresh();v40Select(c)}
+function v40DeleteBlock(){if(!v40Selected)return;v40Snapshot();const o=v40Selected;v40Selected=null;o.remove();v40Refresh();v40UpdateProps()}
+function v40Move(dir){
+  if(!v40Selected||!v40Selected.parentNode)return;const p=v40Selected.parentNode,s=[...p.children].filter(x=>!x.matches(".v40-insert,.v40-ui")),i=s.indexOf(v40Selected),j=i+dir;if(i<0||j<0||j>=s.length)return;
+  v40Snapshot();if(dir<0)p.insertBefore(v40Selected,s[j]);else p.insertBefore(s[j],v40Selected);v40Refresh();v40Select(v40Selected)
+}
+function v40Parent(){if(!v40Selected)return;const r=v40Doc.querySelector("#v40Root"),p=v40Selected.parentElement;if(p&&p!==r)v40Select(p)}
+function v40Child(){if(v40Selected&&v40Selected.firstElementChild)v40Select(v40Selected.firstElementChild)}
+function v40CopyStyle(){if(v40Selected)v40StyleClipboard={className:(v40Selected.getAttribute("class")||"").replace(/\bv40-(selected|block)\b/g,"").trim(),style:v40Selected.getAttribute("style")||""}}
+function v40PasteStyle(){if(!v40Selected||!v40StyleClipboard)return;v40Snapshot();v40Selected.setAttribute("class",(v40StyleClipboard.className+" v40-block v40-selected").trim());if(v40StyleClipboard.style)v40Selected.setAttribute("style",v40StyleClipboard.style);else v40Selected.removeAttribute("style");v40UpdateProps()}
+function v40ApplyHtml(h,push=true){const r=v40Doc&&v40Doc.querySelector("#v40Root");if(!r)return;r.innerHTML=h;v40Selected=null;v40Refresh();v40UpdateProps();if(push)v40Snapshot()}
+function v40Undo(){if(v40History.length<2)return;const c=v40History.pop();v40Future.push(c);v40ApplyHtml(v40History[v40History.length-1],false)}
+function v40Redo(){if(!v40Future.length)return;const h=v40Future.pop();v40History.push(h);v40ApplyHtml(h,false)}
+function v40OpenHtml(){$("#v40HtmlSource").value=v40GetHtml();$("#v40HtmlModal").classList.add("show")}
+function v40CloseHtml(){$("#v40HtmlModal").classList.remove("show")}
+function v40ApplySource(){v40Snapshot();v40ApplyHtml($("#v40HtmlSource").value,true);v40CloseHtml()}
+function v40DocHtml(h){return `<!doctype html><html><head><meta charset="utf-8"><style>${V39_PUBLIC_CSS}
+html,body{margin:0;min-height:100%;background:#f7f4ea}body{padding:24px 30px 80px;box-sizing:border-box;overflow:auto}*{box-sizing:border-box}#v40Root{max-width:1180px;margin:0 auto}
+.v40-block{position:relative}.v40-handle{position:absolute;left:-24px;top:4px;z-index:99999;width:20px;height:24px;display:flex;align-items:center;justify-content:center;border:1px solid #ccd9d1;border-radius:6px;background:#fff;color:#527061;font:900 14px Arial;cursor:grab;opacity:0;user-select:none}
+.v40-block:hover>.v40-handle,.v40-selected>.v40-handle{opacity:1}.v40-selected{outline:3px solid rgba(34,110,79,.45)!important;outline-offset:3px!important}
+.v40-insert{height:18px;display:flex;align-items:center;justify-content:center}.v40-insert button{opacity:.12;transition:.15s;border:1px solid #9db4a8;border-radius:999px;background:#fff;color:#2f6b51;padding:1px 8px;font:800 10px Arial;cursor:pointer}.v40-insert:hover button,.v40-insert.over button{opacity:1}
+[contenteditable=true]:focus{outline:1px dashed rgba(36,104,78,.28)}</style></head><body><div id="v40Root">${h}</div></body></html>`}
+function v40Load(){
+  const f=$("#v40Frame");if(!f||!currentData)return;f.onload=()=>{v40Doc=f.contentDocument;v40Selected=null;v40History=[];v40Future=[];v40Refresh();const r=v40Doc.querySelector("#v40Root");
+  r.addEventListener("click",e=>{if(e.target.closest(".v40-insert,.v40-handle"))return;const b=v40Semantic(e.target);if(b)v40Select(b)},true);
+  r.addEventListener("focusin",e=>{const b=v40Semantic(e.target);if(b)v40Select(b)},true);r.addEventListener("input",()=>v40UpdateProps(),true);v40Snapshot();v40UpdateProps()};f.srcdoc=v40DocHtml(v40CurrentHtml());
+}
+function v40Bind(){
+  $("#v40Undo").onclick=v40Undo;$("#v40Redo").onclick=v40Redo;$("#v40Duplicate").onclick=v40Duplicate;$("#v40Delete").onclick=v40DeleteBlock;$("#v40Up").onclick=()=>v40Move(-1);$("#v40Down").onclick=()=>v40Move(1);$("#v40Html").onclick=v40OpenHtml;
+  document.querySelectorAll("[data-v40add]").forEach(b=>b.onclick=()=>v40Add(b.dataset.v40add));$("#v40Apply").onclick=v40Apply;$("#v40CopyStyle").onclick=v40CopyStyle;$("#v40PasteStyle").onclick=v40PasteStyle;$("#v40Parent").onclick=v40Parent;$("#v40Child").onclick=v40Child;
+  $("#v40HtmlClose").onclick=v40CloseHtml;$("#v40HtmlCancel").onclick=v40CloseHtml;$("#v40HtmlApply").onclick=v40ApplySource;
+}
+document.addEventListener("DOMContentLoaded",v40Bind);
 function v39CurrentHtml(){
   if(!currentData)return "";
   return currentData.section_html||currentData.body_html||"";
@@ -8963,7 +9171,8 @@ function openArticle(name){
   renderArticleList();
   setStatus("Đang mở trang Public thật...");
   
-  setTimeout(v39LoadCurrent,0);
+  
+  setTimeout(v40Load,0);
 }
 
 function collectArticle(){
@@ -8973,7 +9182,7 @@ function collectArticle(){
   currentData.order=Number($("#orderInput").value||1);
   currentData.visible=$("#visibleInput").checked;
 
-  const edited=v39GetHtml();
+  const edited=v40GetHtml();
 
   if("section_html" in currentData){
     currentData.section_html=edited;
@@ -8986,10 +9195,11 @@ function collectArticle(){
 async function saveArticle(){
   if(!currentFile)return;
   if(currentData){
-    const h=v39GetHtml();
+    const h=v40GetHtml();
     if("section_html" in currentData)currentData.section_html=h;
     else currentData.body_html=h;
   }
+  
   
   if(sourceMode){
     const raw=$("#sourceEditor").value;
