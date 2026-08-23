@@ -1,12 +1,17 @@
-# CMS v44 — Login Fixed
+# CMS v46 — Fix màn hình trắng sau đăng nhập
 
-Sửa lỗi login v43:
-- Xác thực token bằng `GET /user`.
-- Kiểm tra quyền repository bằng `GET /repos/trinhbinhchi/wiki-vhtk`.
-- Timeout 12 giây, không treo vô hạn.
-- Báo rõ 401 / 403 / 404 / network timeout.
-- Khôi phục nút Đăng nhập khi thất bại.
-- Lưu token vào sessionStorage; localStorage chỉ khi chọn "Nhớ trên máy này".
-- Chỉ load dữ liệu Admin sau khi xác thực GitHub thành công.
+Lỗi v45:
+- Login ẩn `#loginView` nhưng tìm nhầm app là `#app` thay vì `#appView`.
+- Không gọi `showApp()`, nên danh sách bài viết không được tải.
+- Token lại được lưu bằng key mới `vhtk_github_token`, trong khi CMS gốc dùng `vhtk_pat`.
 
-Structured CMS + layout-preserving renderer của v43 được giữ nguyên.
+V46:
+- Token hợp lệ -> `token=t` và `user=userData`.
+- Lưu lại bằng key chuẩn `vhtk_pat`.
+- Gọi `await showApp()` đúng luồng gốc.
+- `showApp()` mở `#appView` và chạy `loadArticles()`.
+- Nếu load Admin thất bại, quay lại màn hình login và hiện lỗi, không để trang trắng.
+- Dọn key token thử nghiệm v44/v45.
+- Toàn bộ inline JavaScript đã qua `node --check`.
+
+Structured CMS và renderer bảo toàn layout của v43-v45 được giữ nguyên.

@@ -2671,127 +2671,81 @@ async function login(){
   const input=$("#tokenInput");
   const btn=$("#loginBtn");
   const remember=$("#rememberToken");
-
+  const errBox=$("#loginError");
   const t=(input?.value||"").trim();
+
   if(!t){
-    setStatus("Vui lòng nhập GitHub token","bad");
+    if(errBox)errBox.textContent="Vui lòng nhập GitHub token.";
     return;
   }
 
-  const oldText=btn ? btn.textContent : "";
-  if(btn){
-    btn.disabled=true;
-    btn.textContent="Đang kiểm tra...";
-  }
+  const oldText=btn?.textContent||"Đăng nhập";
+  if(btn){btn.disabled=true;btn.textContent="Đang kiểm tra..."}
+  if(errBox)errBox.textContent="";
 
+  let timer=null;
   try{
     const controller=new AbortController();
-    const timer=setTimeout(()=>controller.abort(),12000);
-
+    timer=setTimeout(()=>controller.abort(),12000);
     const headers={
       "Accept":"application/vnd.github+json",
       "Authorization":"Bearer "+t,
       "X-GitHub-Api-Version":"2022-11-28"
     };
 
-    // 1) Validate token/account.
-    const userRes=await fetch("https://api.github.com/user",{
-      method:"GET",
-      headers,
-      signal:controller.signal
-    });
-
+    const userRes=await fetch("https://api.github.com/user",{headers,signal:controller.signal});
     if(!userRes.ok){
-      clearTimeout(timer);
-      if(userRes.status===401) throw new Error("Token không hợp lệ hoặc đã hết hạn (401)");
-      if(userRes.status===403) throw new Error("GitHub từ chối quyền truy cập (403)");
+      if(userRes.status===401)throw new Error("Token không hợp lệ hoặc đã hết hạn (401).");
+      if(userRes.status===403)throw new Error("GitHub từ chối token hoặc đang giới hạn truy cập (403).");
       throw new Error("Không xác thực được token. HTTP "+userRes.status);
     }
+    const userData=await userRes.json();
 
-    const user=await userRes.json();
-
-    // 2) Validate exact repository access.
-    const repoRes=await fetch("https://api.github.com/repos/trinhbinhchi/wiki-vhtk",{
-      method:"GET",
-      headers,
-      signal:controller.signal
-    });
-
-    clearTimeout(timer);
-
+    const repoRes=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}`,{headers,signal:controller.signal});
     if(!repoRes.ok){
-      if(repoRes.status===404){
-        throw new Error("Token chưa có quyền truy cập repository trinhbinhchi/wiki-vhtk (404)");
-      }
-      if(repoRes.status===403){
-        throw new Error("Token không đủ quyền truy cập repository (403)");
-      }
+      if(repoRes.status===404)throw new Error(`Token chưa có quyền truy cập ${OWNER}/${REPO} (404).`);
+      if(repoRes.status===403)throw new Error("Token không đủ quyền truy cập repository (403).");
       throw new Error("Không truy cập được repository. HTTP "+repoRes.status);
     }
+    const repo=await repoRes.json();
+    if(repo.permissions && repo.permissions.push===false){
+      throw new Error("Token đọc được repository nhưng chưa có quyền ghi Contents.");
+    }
 
+    clearTimeout(timer);timer=null;
+
+    // Quan trọng: cập nhật đúng state mà CMS gốc sử dụng.
     token=t;
+    user=userData;
 
-    if(remember && remember.checked){
-      localStorage.setItem("vhtk_github_token",t);
-    }else{
-      localStorage.removeItem("vhtk_github_token");
-    }
+    // Giữ tương thích với auto-login/logout cũ của CMS.
+    sessionStorage.setItem("vhtk_pat",t);
+    if(remember?.checked)localStorage.setItem("vhtk_pat",t);
+    else localStorage.removeItem("vhtk_pat");
 
-    // Keep token in session for this tab even when 'remember' is off.
-    sessionStorage.setItem("vhtk_github_token",t);
+    // Dọn key thử nghiệm từ v44/v45 để tránh hai luồng token khác nhau.
+    localStorage.removeItem("vhtk_github_token");
+    sessionStorage.removeItem("vhtk_github_token");
 
-    if(btn){
-      btn.textContent="Đăng nhập thành công";
-    }
+    if(btn)btn.textContent="Đang tải Admin...";
 
-    setStatus("Đăng nhập GitHub thành công: "+(user.login||""),"ok");
-
-    // Support both common login/app wrappers used in previous CMS versions.
-    const loginView=$("#loginView") || $("#loginScreen") || $(".login-screen");
-    const appView=$("#app") || $("#adminApp") || $("#mainApp");
-
-    if(loginView) loginView.style.display="none";
-    if(appView) appView.style.display="";
-
-    // Load CMS data only after auth succeeds.
-    if(typeof loadAll==="function"){
-      await loadAll();
-    }else if(typeof loadData==="function"){
-      await loadData();
-    }else if(typeof boot==="function"){
-      await boot();
-    }
+    // Dùng đúng luồng nguyên bản: mở #appView và loadArticles().
+    await showApp();
 
   }catch(err){
     console.error("Login error:",err);
+    let msg=err?.message||"Đăng nhập thất bại.";
+    if(err?.name==="AbortError")msg="Kết nối GitHub quá lâu. Vui lòng thử lại.";
+    if(errBox)errBox.textContent=msg;
 
-    let msg="Đăng nhập thất bại";
-    if(err && err.name==="AbortError"){
-      msg="Kết nối GitHub quá lâu. Vui lòng thử lại.";
-    }else if(err && err.message){
-      msg=err.message;
-    }
-
-    setStatus(msg,"bad");
-
-    // Show error directly on login screen too.
-    let errBox=$("#loginError");
-    if(!errBox){
-      const form=(btn && btn.parentElement) ? btn.parentElement.parentElement : null;
-      if(form){
-        errBox=document.createElement("div");
-        errBox.id="loginError";
-        errBox.style.cssText="margin-top:10px;padding:8px 10px;border-radius:7px;background:#fff1f0;color:#a33;font-size:12px;line-height:1.4";
-        form.appendChild(errBox);
-      }
-    }
-    if(errBox) errBox.textContent=msg;
-
+    // Nếu load Admin lỗi, đảm bảo không để màn hình trắng.
+    const loginView=$("#loginView"), appView=$("#appView");
+    if(loginView)loginView.classList.remove("hidden");
+    if(appView)appView.classList.add("hidden");
+    token="";user=null;
   }finally{
-    if(btn){
-      btn.disabled=false;
-      btn.textContent=oldText || "Đăng nhập";
-    }
+    if(timer)clearTimeout(timer);
+    if(btn){btn.disabled=false;btn.textContent=oldText}
   }
 }
 
@@ -2803,6 +2757,7 @@ async function showApp(){
 
 function logout(){
   localStorage.removeItem("vhtk_pat");sessionStorage.removeItem("vhtk_pat");
+  localStorage.removeItem("vhtk_github_token");sessionStorage.removeItem("vhtk_github_token");
   location.reload();
 }
 
@@ -9798,7 +9753,7 @@ document.addEventListener("DOMContentLoaded",()=>{
     loginButton.id="loginBtn";
     loginButton.onclick=e=>{e.preventDefault();login();};
   }
-  const saved=localStorage.getItem("vhtk_github_token") || sessionStorage.getItem("vhtk_github_token");
+  const saved=localStorage.getItem("vhtk_pat") || sessionStorage.getItem("vhtk_pat");
   if(saved && tokenEl && !tokenEl.value) tokenEl.value=saved;
 });
 </script>
