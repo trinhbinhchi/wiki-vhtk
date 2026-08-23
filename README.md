@@ -1,15 +1,27 @@
-# CMS v27 — Copy/Paste trực quan giữ thuộc tính
+# CMS v28 — Block Editor dễ dùng
 
-Nâng từ v26:
+Mục tiêu: thao tác trực quan mà không làm vỡ HTML.
 
-- Paste trong chế độ Trực quan ưu tiên `clipboardData.text/html`.
-- Giữ tốt hơn `class`, `style`, `data-*`, bảng, callout, box...
-- Thêm nút `⧉ Nhân khối`.
-- Đặt con trỏ vào một box/đoạn rồi bấm `⧉ Nhân khối` để clone nguyên `outerHTML`.
-- `Ctrl+D` cũng nhân nguyên khối.
-- Đây là cách chắc chắn nhất để sao chép một box mà không mất wrapper/thuộc tính.
-- WYSIWYG + `</> HTML`, Ctrl+S, PAT, GitHub API, Dã Tẩu, video, Safe JSON và copyright giữ nguyên.
+## Cách dùng
+1. Click vào một dòng, list item, box, hàng bảng...
+2. Editor sẽ đánh dấu khối đang chọn.
+3. Dùng:
+   - `⧉ Nhân khối`
+   - `↑ Khối`
+   - `↓ Khối`
+   - `🗑 Xóa khối`
 
-Lưu ý:
-Khi chỉ bôi đen một đoạn chữ rồi Ctrl+C, trình duyệt không thể tự mang theo wrapper cha nằm ngoài selection.
-Muốn copy nguyên layout, dùng `Nhân khối` / Ctrl+D.
+## Copy / Paste
+- Nếu không bôi đen text, `Ctrl+C` sẽ copy nguyên `outerHTML` của khối đang chọn.
+- Paste sẽ cố chèn khối mới thành sibling cùng cấp.
+- Với `<li>`, `<p>`, `<tr>` không còn nhét nhiều text vào trong cùng một node như v27.
+- `Ctrl+D` nhân nguyên khối.
+- `Ctrl+Shift+Backspace` xóa nguyên khối.
+
+## Vẫn giữ
+- WYSIWYG + HTML Source hai chiều
+- Ctrl+S
+- PAT / GitHub API
+- Safe JSON
+- Search / video / Dã Tẩu
+- Copyright sidebar

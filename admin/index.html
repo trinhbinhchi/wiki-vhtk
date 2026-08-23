@@ -219,7 +219,24 @@ button,input,textarea,select{font:inherit}
 }
 #sourceEditor.active{display:block!important}
 .v26-mode-indicator{margin-left:auto;font-size:11px;color:#6f7d75;font-weight:700}
-</style></head>
+</style>
+<style id="v28-block-editor-style">
+.v28-block-status{
+  margin-left:6px;
+  padding:4px 7px;
+  border:1px solid #d7e1da;
+  border-radius:7px;
+  background:#fff;
+  color:#65756b;
+  font-size:11px;
+  font-weight:700;
+  max-width:190px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+</style>
+</head>
 <body>
 <div class="login" id="loginView">
 <div class="login-card">
@@ -283,8 +300,8 @@ button,input,textarea,select{font:inherit}
 <span class="sep"></span>
 <button id="linkBtn">🔗</button><button id="imageBtn">🖼 Ảnh</button><button id="videoBtn">▶ Video</button><button id="tableBtn">▦ Bảng</button><button data-cmd="insertHorizontalRule">―</button>
 <span class="sep"></span>
-<button id="duplicateBlockBtn" title="Nhân bản nguyên khối HTML đang đặt con trỏ">⧉ Nhân khối</button><button id="sourceBtn">&lt;/&gt; HTML</button><button data-cmd="removeFormat">⌫ Format</button>
-<span class="v26-mode-indicator" id="v26ModeIndicator">Chế độ: Trực quan</span></div>
+<button id="duplicateBlockBtn" title="Nhân bản nguyên khối HTML đang đặt con trỏ">⧉ Nhân khối</button><button id="moveBlockUpBtn" title="Di chuyển khối lên">↑ Khối</button><button id="moveBlockDownBtn" title="Di chuyển khối xuống">↓ Khối</button><button id="deleteBlockBtn" title="Xóa nguyên khối HTML đang chọn">🗑 Xóa khối</button><button id="sourceBtn">&lt;/&gt; HTML</button><button data-cmd="removeFormat">⌫ Format</button>
+<span class="v26-mode-indicator" id="v26ModeIndicator">Chế độ: Trực quan</span><span id="v28BlockStatus" class="v28-block-status">Khối: chưa chọn</span></div>
 <div class="editor" contenteditable="true" id="editor"></div><div class="public-live-wrap" id="publicLiveWrap"><div class="preview-badge">PUBLIC ARTICLE • sửa trực tiếp</div><iframe id="publicLiveFrame" title="Trang Public thật"></iframe></div>
 <textarea class="source" id="sourceEditor" spellcheck="false"></textarea>
 <div class="help">V26: sửa trực tiếp trên Public hoặc bấm &lt;/&gt; HTML để chỉnh mã nguồn thật. Chuyển qua lại hai chiều; Ctrl+S để Lưu &amp; Commit.</div>
@@ -360,23 +377,84 @@ function syncFromPublic(){
   if(!sourceMode)$("#sourceEditor").value=html;
 }
 
+
 function nearestCloneBlock(node, root){
   if(!node)return null;
   if(node.nodeType===3)node=node.parentElement;
+  if(!node || !node.closest)return null;
+
+  /* Ưu tiên các phần tử semantic nhỏ trước.
+     Quan trọng: LI đứng trước DIV để copy list item không thành text lồng. */
   const preferred=[
+    "li","tr","td","th",
+    "p","blockquote","figure",
     ".clean-table-wrap",".clean-guide-table",
     ".notice-box",".info-box",".warning-box",".success-box",
     ".callout",".quote-box",".rework-video-box",
     ".da-tau-section",".da-tau-collapse-body",
     ".notion-callout",".notion-text-block",
-    "li","p","blockquote","table","figure",
+    ".section-block",".content-box",".guide-box",
+    "table",
     "div"
   ];
+
   for(const sel of preferred){
-    const el=node.closest ? node.closest(sel) : null;
+    const el=node.closest(sel);
     if(el && root.contains(el) && el!==root)return el;
   }
   return null;
+}
+
+function blockLabel(el){
+  if(!el)return "chưa chọn";
+  const tag=el.tagName ? el.tagName.toLowerCase() : "";
+  let cls=(el.className && typeof el.className==="string") ? el.className.trim().split(/\s+/).slice(0,2).join(".") : "";
+  let label=tag;
+  if(cls)label+="."+cls;
+  if(tag==="li")label="li • mục danh sách";
+  if(tag==="p")label="p • đoạn văn";
+  if(tag==="tr")label="tr • hàng bảng";
+  if(tag==="table")label="table • bảng";
+  return label || "khối";
+}
+
+function markCurrentBlock(root, block){
+  if(!root)return;
+  const old=root.__vhtkLastBlock;
+  if(old && old!==block){
+    try{
+      old.style.removeProperty("outline");
+      old.style.removeProperty("outline-offset");
+    }catch(e){}
+  }
+  root.__vhtkLastBlock=block||null;
+
+  if(block){
+    block.style.setProperty("outline","2px solid rgba(32,107,81,.22)","important");
+    block.style.setProperty("outline-offset","2px","important");
+  }
+
+  const st=$("#v28BlockStatus");
+  if(st)st.textContent="Khối: "+blockLabel(block);
+}
+
+function currentBlock(){
+  const d=publicDoc();
+  const root=selectedPublicSection();
+  if(!d || !root)return null;
+  const sel=d.getSelection();
+  const node=sel && sel.anchorNode;
+  return nearestCloneBlock(node,root) || root.__vhtkLastBlock || null;
+}
+
+function placeCaretAfter(d, el){
+  if(!d || !el)return;
+  const sel=d.getSelection();
+  const range=d.createRange();
+  range.setStartAfter(el);
+  range.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(range);
 }
 
 function insertHTMLAtSelection(d, html){
@@ -403,16 +481,101 @@ function insertHTMLAtSelection(d, html){
   return true;
 }
 
+function insertAsSiblingOfCurrentBlock(d, root, html){
+  const block=currentBlock();
+  if(!block || !block.parentNode)return false;
+
+  const holder=d.createElement("div");
+  holder.innerHTML=html;
+
+  /* Nếu clipboard chứa 1 hoặc nhiều block top-level,
+     chèn chúng sau block hiện tại, cùng cấp. */
+  const nodes=[...holder.childNodes].filter(n=>{
+    return n.nodeType===1 || (n.nodeType===3 && n.textContent.trim());
+  });
+  if(!nodes.length)return false;
+
+  let ref=block;
+  let lastEl=null;
+  for(const n of nodes){
+    const node=n.cloneNode(true);
+    ref.parentNode.insertBefore(node, ref.nextSibling);
+    ref=node;
+    if(node.nodeType===1)lastEl=node;
+  }
+
+  if(lastEl){
+    markCurrentBlock(root,lastEl);
+    placeCaretAfter(d,lastEl);
+  }
+  return true;
+}
+
 function installRichClipboard(d, root){
   if(!d || !root || root.dataset.richClipboardInstalled==="1")return;
   root.dataset.richClipboardInstalled="1";
 
-  /* Paste HTML first, not plain text. This preserves class/style/data-* attrs. */
+  function updateBlockFromSelection(){
+    const sel=d.getSelection();
+    const node=sel && sel.anchorNode;
+    const block=nearestCloneBlock(node,root);
+    if(block)markCurrentBlock(root,block);
+  }
+
+  root.addEventListener("mouseup",updateBlockFromSelection,true);
+  root.addEventListener("keyup",updateBlockFromSelection,true);
+  root.addEventListener("click",updateBlockFromSelection,true);
+
+  /* Ctrl+C khi KHÔNG bôi đen text:
+     copy nguyên khối HTML hiện tại vào clipboard.
+     Khi có selection text bình thường, vẫn để trình duyệt copy text/rich selection. */
+  root.addEventListener("copy",e=>{
+    const sel=d.getSelection();
+    if(!sel)return;
+    if(sel.isCollapsed){
+      const block=currentBlock();
+      if(!block)return;
+      e.preventDefault();
+      e.clipboardData.setData("text/html",block.outerHTML);
+      e.clipboardData.setData("text/plain",block.innerText||block.textContent||"");
+      e.clipboardData.setData("application/x-vhtk-block",block.outerHTML);
+      setStatus("Đã copy nguyên khối "+blockLabel(block),"ok");
+    }
+  },true);
+
   root.addEventListener("paste",e=>{
     const cd=e.clipboardData;
     if(!cd)return;
+
+    const custom=cd.getData("application/x-vhtk-block");
+    if(custom){
+      e.preventDefault();
+      if(insertAsSiblingOfCurrentBlock(d,root,custom)){
+        syncFromPublic();
+        setStatus("Đã dán nguyên khối cùng cấp","ok");
+      }
+      return;
+    }
+
     const rich=cd.getData("text/html");
     if(rich){
+      const block=currentBlock();
+      const holder=d.createElement("div");
+      holder.innerHTML=rich;
+      const first=holder.firstElementChild;
+
+      /* Nếu đang ở LI/P/TR và clipboard cũng là cùng tag,
+         chèn thành sibling thay vì nhét vào bên trong node. */
+      if(block && first && ["LI","P","TR"].includes(block.tagName) && first.tagName===block.tagName){
+        e.preventDefault();
+        if(insertAsSiblingOfCurrentBlock(d,root,rich)){
+          syncFromPublic();
+          setStatus("Đã dán thành khối cùng cấp, giữ HTML","ok");
+        }
+        return;
+      }
+
+      /* Paste rich HTML bình thường. */
       e.preventDefault();
       insertHTMLAtSelection(d,rich);
       syncFromPublic();
@@ -420,34 +583,19 @@ function installRichClipboard(d, root){
     }
   },true);
 
-  /* Store the last selected semantic block for one-click duplication. */
-  root.addEventListener("mouseup",()=>{
-    const sel=d.getSelection();
-    const node=sel && sel.anchorNode;
-    const block=nearestCloneBlock(node,root);
-    if(block)root.__vhtkLastBlock=block;
-  },true);
-
-  root.addEventListener("keyup",()=>{
-    const sel=d.getSelection();
-    const node=sel && sel.anchorNode;
-    const block=nearestCloneBlock(node,root);
-    if(block)root.__vhtkLastBlock=block;
-  },true);
-
-  /* Ctrl+D duplicates the complete outerHTML block, including class/styles/attrs. */
+  /* Ctrl+D = nhân nguyên block */
   root.addEventListener("keydown",e=>{
     if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="d"){
       e.preventDefault();
-      const sel=d.getSelection();
-      const node=sel && sel.anchorNode;
-      const block=nearestCloneBlock(node,root) || root.__vhtkLastBlock;
-      if(!block)return;
-      const clone=block.cloneNode(true);
-      block.insertAdjacentElement("afterend",clone);
-      root.__vhtkLastBlock=clone;
-      syncFromPublic();
-      setStatus("Đã nhân nguyên khối HTML","ok");
+      duplicateCurrentBlock();
+    }
+  },true);
+
+  /* Delete block nhanh bằng Ctrl+Shift+Backspace */
+  root.addEventListener("keydown",e=>{
+    if((e.ctrlKey||e.metaKey) && e.shiftKey && e.key==="Backspace"){
+      e.preventDefault();
+      deleteCurrentBlock();
     }
   },true);
 }
@@ -456,18 +604,67 @@ function duplicateCurrentBlock(){
   const d=publicDoc();
   const root=selectedPublicSection();
   if(!d || !root)return;
-  const sel=d.getSelection();
-  const node=sel && sel.anchorNode;
-  const block=nearestCloneBlock(node,root) || root.__vhtkLastBlock;
+  const block=currentBlock();
+
   if(!block){
-    setStatus("Hãy đặt con trỏ vào khối cần nhân bản trước","bad");
+    setStatus("Hãy click vào khối cần nhân bản trước","bad");
     return;
   }
+
   const clone=block.cloneNode(true);
-  block.insertAdjacentElement("afterend",clone);
-  root.__vhtkLastBlock=clone;
+  block.parentNode.insertBefore(clone,block.nextSibling);
+  markCurrentBlock(root,clone);
+  placeCaretAfter(d,clone);
   syncFromPublic();
-  setStatus("Đã nhân nguyên khối, giữ class/style/thuộc tính","ok");
+  setStatus("Đã nhân nguyên khối "+blockLabel(block),"ok");
+}
+
+function deleteCurrentBlock(){
+  const root=selectedPublicSection();
+  const block=currentBlock();
+  if(!root || !block){
+    setStatus("Hãy click vào khối cần xóa trước","bad");
+    return;
+  }
+
+  const parent=block.parentElement;
+  const next=block.nextElementSibling || block.previousElementSibling || parent;
+  block.remove();
+
+  if(next && next!==root)markCurrentBlock(root,next);
+  else markCurrentBlock(root,null);
+
+  syncFromPublic();
+  setStatus("Đã xóa khối","ok");
+}
+
+function moveCurrentBlock(direction){
+  const root=selectedPublicSection();
+  const block=currentBlock();
+  if(!root || !block || !block.parentNode){
+    setStatus("Hãy click vào khối cần di chuyển trước","bad");
+    return;
+  }
+
+  if(direction<0){
+    const prev=block.previousElementSibling;
+    if(!prev){
+      setStatus("Khối đã ở đầu nhóm","bad");
+      return;
+    }
+    block.parentNode.insertBefore(block,prev);
+  }else{
+    const next=block.nextElementSibling;
+    if(!next){
+      setStatus("Khối đã ở cuối nhóm","bad");
+      return;
+    }
+    block.parentNode.insertBefore(next,block);
+  }
+
+  markCurrentBlock(root,block);
+  syncFromPublic();
+  setStatus(direction<0 ? "Đã đưa khối lên" : "Đã đưa khối xuống","ok");
 }
 
 function ensurePublicEditMode(){
@@ -862,6 +1059,9 @@ $("#loginBtn").onclick=login;$("#logoutBtn").onclick=logout;$("#reloadBtn").oncl
 $("#saveBtn").onclick=saveArticle;$("#settingsBtn").onclick=loadSettings;$("#saveSettingsBtn").onclick=saveSettings;
 $("#newArticleBtn").onclick=newArticle;$("#articleSearch").oninput=renderArticleList;
 $("#duplicateBlockBtn").onclick=duplicateCurrentBlock;
+$("#deleteBlockBtn").onclick=deleteCurrentBlock;
+$("#moveBlockUpBtn").onclick=()=>moveCurrentBlock(-1);
+$("#moveBlockDownBtn").onclick=()=>moveCurrentBlock(1);
 $("#sourceBtn").onclick=toggleSource;$("#linkBtn").onclick=addLink;$("#videoBtn").onclick=addVideo;$("#tableBtn").onclick=addTable;
 $("#imageBtn").onclick=openMedia;$("#closeMediaBtn").onclick=()=>$("#mediaModal").classList.add("hidden");$("#uploadBtn").onclick=uploadImage;
 document.querySelectorAll("[data-cmd]").forEach(b=>b.onmousedown=e=>e.preventDefault());
