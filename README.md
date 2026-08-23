@@ -1,36 +1,18 @@
-# CMS v29 — WYSIWYG thật
+# CMS v30 — Đặt con trỏ mọi nơi trong WYSIWYG
 
-Mục tiêu: gần như không cần dùng HTML Source.
+Sửa hạn chế của v29:
+- Có điểm chèn ở đầu section.
+- Có điểm chèn giữa các top-level block.
+- Có điểm chèn ở cuối section.
+- Click vào khoảng trống và gõ trực tiếp.
+- Khi bắt đầu gõ, anchor biến thành paragraph thật.
+- Anchor trống là editor-only và bị loại bỏ trước khi Save/Commit.
+- Không làm bẩn section_html bằng các helper của editor.
 
-## Trực quan
-- Click đặt con trỏ ở bất kỳ text nào và gõ sửa.
-- Bôi đen text rồi bấm toolbar:
-  - Bold / Italic / Underline / Strike
-  - H2/H3/H4/Paragraph
-  - Cỡ chữ
-  - Màu chữ
-  - Màu nền
-  - Căn trái / giữa / phải
-  - Bullet list / numbered list
-  - Link
-  - Xóa format
-
-## Selection
-Toolbar không còn làm mất selection trong iframe.
-Editor lưu Range trước khi click toolbar và restore trước khi áp lệnh.
-
-## Thuộc tính trực quan
-Nút `⚙ Thuộc tính`:
-- ảnh: sửa src/alt
-- link: sửa href/target
-- iframe/video: sửa src
-- phần tử khác: sửa class/style
-
-## Phím tắt
-- Ctrl+B
-- Ctrl+I
-- Ctrl+U
-- Ctrl+K
-- Ctrl+S
-
-Block tools và HTML Source vẫn giữ làm công cụ nâng cao, nhưng thao tác thông thường không cần chuyển sang HTML.
+Vẫn giữ:
+- Selection-preserving toolbar
+- B/I/U, màu, cỡ chữ, căn lề, list, link
+- Thuộc tính trực quan
+- Block tools
+- HTML Source hai chiều
+- PAT/GitHub API/Safe JSON

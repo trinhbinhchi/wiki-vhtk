@@ -248,6 +248,40 @@ button,input,textarea,select{font:inherit}
   white-space:nowrap;
 }
 </style>
+
+<style id="v30-caret-anchor-style">
+/* Editor-only insertion lines. They are removed before save. */
+.vhtk-caret-anchor{
+  display:block!important;
+  position:relative!important;
+  min-height:14px!important;
+  height:14px!important;
+  margin:2px 0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  outline:none!important;
+  line-height:14px!important;
+}
+.vhtk-caret-anchor:focus{
+  min-height:28px!important;
+  height:auto!important;
+  margin:4px 0!important;
+  padding:3px 6px!important;
+  border-left:2px solid rgba(32,107,81,.45)!important;
+  background:rgba(32,107,81,.035)!important;
+}
+.vhtk-caret-anchor:hover::before{
+  content:"Click để chèn nội dung";
+  position:absolute;
+  left:8px;
+  top:0;
+  color:#9aa79f;
+  font-size:10px;
+  pointer-events:none;
+}
+.vhtk-caret-anchor:focus::before{display:none}
+</style>
 </head>
 <body>
 <div class="login" id="loginView">
@@ -380,11 +414,10 @@ function editablePublicNode(){
 }
 
 function getVisualHTML(){
-  const sec=selectedPublicSection();
-  return sec ? sec.innerHTML : ($("#editor").innerHTML||"");
+  return visualHTMLForSave();
 }
 function syncFromPublic(){
-  const html=getVisualHTML();
+  const html=visualHTMLForSave();
   $("#editor").innerHTML=html;
   if(!sourceMode)$("#sourceEditor").value=html;
 }
@@ -628,6 +661,7 @@ function duplicateCurrentBlock(){
   markCurrentBlock(root,clone);
   placeCaretAfter(d,clone);
   syncFromPublic();
+  refreshCaretAnchors(publicDoc(),selectedPublicSection());
   setStatus("Đã nhân nguyên khối "+blockLabel(block),"ok");
 }
 
@@ -647,6 +681,7 @@ function deleteCurrentBlock(){
   else markCurrentBlock(root,null);
 
   syncFromPublic();
+  refreshCaretAnchors(publicDoc(),selectedPublicSection());
   setStatus("Đã xóa khối","ok");
 }
 
@@ -676,6 +711,7 @@ function moveCurrentBlock(direction){
 
   markCurrentBlock(root,block);
   syncFromPublic();
+  refreshCaretAnchors(publicDoc(),selectedPublicSection());
   setStatus(direction<0 ? "Đã đưa khối lên" : "Đã đưa khối xuống","ok");
 }
 
@@ -853,6 +889,129 @@ function installVisualShortcuts(d,root){
     }
   },true);
 }
+
+function makeCaretAnchor(d){
+  const p=d.createElement("p");
+  p.className="vhtk-caret-anchor";
+  p.dataset.vhtkEditorOnly="1";
+  p.setAttribute("contenteditable","true");
+  p.innerHTML="<br>";
+  return p;
+}
+
+function isEditorOnlyAnchor(el){
+  return !!(el && el.nodeType===1 && el.dataset && el.dataset.vhtkEditorOnly==="1");
+}
+
+function stripEditorOnlyFromClone(rootClone){
+  if(!rootClone)return rootClone;
+  rootClone.querySelectorAll('[data-vhtk-editor-only="1"]').forEach(el=>el.remove());
+  return rootClone;
+}
+
+function visualHTMLForSave(){
+  const sec=selectedPublicSection();
+  if(!sec)return $("#editor").innerHTML||"";
+  const clone=sec.cloneNode(true);
+  stripEditorOnlyFromClone(clone);
+
+  /* Remove editing-only attributes/styles from the cloned section contents. */
+  clone.removeAttribute("contenteditable");
+  clone.removeAttribute("spellcheck");
+  clone.removeAttribute("data-vhtk-admin-editing");
+  clone.removeAttribute("data-rich-clipboard-installed");
+  clone.removeAttribute("data-selection-tracking");
+  clone.removeAttribute("data-visual-shortcuts");
+
+  return clone.innerHTML;
+}
+
+function refreshCaretAnchors(d,root){
+  if(!d || !root)return;
+
+  /* Keep anchors only as direct children of the edited section.
+     This gives insertion points before/between/after main blocks. */
+  const children=[...root.children];
+
+  if(!children.length){
+    root.appendChild(makeCaretAnchor(d));
+    return;
+  }
+
+  if(!isEditorOnlyAnchor(root.firstElementChild)){
+    root.insertBefore(makeCaretAnchor(d),root.firstElementChild);
+  }
+
+  let cur=root.firstElementChild;
+  while(cur){
+    const next=cur.nextElementSibling;
+
+    if(!isEditorOnlyAnchor(cur) && (!next || !isEditorOnlyAnchor(next))){
+      const a=makeCaretAnchor(d);
+      cur.insertAdjacentElement("afterend",a);
+      cur=a;
+    }
+
+    cur=cur.nextElementSibling;
+  }
+}
+
+function convertAnchorWhenTyping(e){
+  const el=e.target && e.target.closest ? e.target.closest(".vhtk-caret-anchor") : null;
+  if(!el)return;
+
+  const text=(el.textContent||"").replace(/\u200B/g,"").trim();
+  const hasMeaningfulHTML=(el.innerHTML||"").replace(/<br\s*\/?>/gi,"").trim();
+
+  if(text || hasMeaningfulHTML){
+    el.classList.remove("vhtk-caret-anchor");
+    el.removeAttribute("data-vhtk-editor-only");
+    el.removeAttribute("style");
+    if(el.tagName.toLowerCase()==="p" && !el.getAttribute("class")){
+      el.removeAttribute("class");
+    }
+
+    const d=publicDoc();
+    const root=selectedPublicSection();
+    setTimeout(()=>{
+      refreshCaretAnchors(d,root);
+      saveVisualSelection();
+      syncFromPublic();
+    },0);
+  }
+}
+
+function installCaretAnchors(d,root){
+  if(!d || !root || root.dataset.caretAnchorsInstalled==="1")return;
+  root.dataset.caretAnchorsInstalled="1";
+
+  refreshCaretAnchors(d,root);
+
+  root.addEventListener("input",convertAnchorWhenTyping,true);
+
+  /* After block operations or Enter, regenerate missing insertion points. */
+  root.addEventListener("keyup",e=>{
+    if(["Enter","Backspace","Delete"].includes(e.key)){
+      setTimeout(()=>refreshCaretAnchors(d,root),0);
+    }
+  },true);
+
+  root.addEventListener("click",e=>{
+    if(e.target===root){
+      const last=root.lastElementChild;
+      if(last && isEditorOnlyAnchor(last)){
+        const r=d.createRange();
+        const sel=d.getSelection();
+        r.selectNodeContents(last);
+        r.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(r);
+        last.focus();
+      }
+    }
+  },true);
+}
+
 function ensurePublicEditMode(){
   const d=publicDoc();
   if(!d || !currentData)return false;
@@ -918,6 +1077,7 @@ function ensurePublicEditMode(){
   installRichClipboard(d,sec);
   installSelectionTracking(d,sec);
   installVisualShortcuts(d,sec);
+  installCaretAnchors(d,sec);
 
   if(!d.getElementById("vhtk-admin-live-style")){
     const marker=d.createElement("style");
@@ -1063,7 +1223,7 @@ function collectArticle(){
   currentData.order=Number($("#orderInput").value||1);
   currentData.visible=$("#visibleInput").checked;
 
-  const edited=sourceMode?$("#sourceEditor").value:getVisualHTML();
+  const edited=sourceMode?$("#sourceEditor").value:visualHTMLForSave();
 
   if("section_html" in currentData){
     currentData.section_html=edited;
