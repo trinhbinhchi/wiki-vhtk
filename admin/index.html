@@ -1225,6 +1225,58 @@ button,input,textarea,select{font:inherit}
 .v52-note{margin:8px 10px;padding:8px;border-radius:8px;background:#eaf5ef;color:#315d4a;font-size:10px;line-height:1.45}
 #v52SelectedPath{padding:7px 8px;border-radius:7px;background:#f4f6f4;color:#52635a;font:10px/1.4 Consolas,monospace;word-break:break-all}
 </style>
+
+<style id="v53-block-copy-style">
+#v42Side{display:none!important}
+#v42Shell{grid-template-columns:minmax(0,1fr)!important}
+#v50TogglePanel{display:none!important}
+#v53CopyBlockBtn{
+  min-width:34px!important;
+}
+.v53-block-selected{
+  outline:2px solid rgba(39,119,85,.48)!important;
+  outline-offset:4px!important;
+  border-radius:4px!important;
+}
+.v53-block-hover{
+  position:relative!important;
+}
+.v53-block-hover:hover{
+  outline:1px dashed rgba(39,119,85,.22)!important;
+  outline-offset:3px!important;
+}
+#v53PropsPopup{
+  position:fixed;
+  z-index:510000;
+  display:none;
+  width:280px;
+  padding:10px;
+  border:1px solid #d5dfd8;
+  border-radius:10px;
+  background:#fff;
+  box-shadow:0 14px 36px rgba(25,50,38,.18);
+  font-family:"Segoe UI",Arial,sans-serif;
+}
+#v53PropsPopup.show{display:block}
+#v53PropsPopup h4{margin:0 0 7px;color:#315d4a;font-size:11px}
+#v53PropsPopup label{display:block;margin:7px 0;color:#67756e;font-size:10px;font-weight:800}
+#v53PropsPopup input,#v53PropsPopup textarea{
+  width:100%;box-sizing:border-box;margin-top:4px;padding:7px 8px;
+  border:1px solid #d9e1dc;border-radius:7px;background:#fff;font:11px/1.4 "Segoe UI",Arial
+}
+#v53PropsPopup .row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#v53PropsPopup button{
+  border:1px solid #d4dfd8;border-radius:7px;background:#fff;color:#355044;
+  padding:7px;font-size:10px;font-weight:800;cursor:pointer
+}
+#v53PropsPopup button:hover{background:#edf6f1}
+#v53CopyToast{
+  position:fixed;z-index:520000;left:50%;bottom:30px;transform:translateX(-50%);
+  display:none;padding:8px 12px;border-radius:999px;background:#254c3b;color:#fff;
+  font-size:11px;font-weight:800;box-shadow:0 8px 24px rgba(0,0,0,.18)
+}
+#v53CopyToast.show{display:block}
+</style>
 </head>
 <body>
 <div class="login" id="loginView">
@@ -14572,6 +14624,203 @@ function v49CleanEditorAttrs(root){
 }
 
 
+
+let v53BlockClipboardHtml="";
+let v53PropsTarget=null;
+
+function v53ShowToast(text){
+  const t=$("#v53CopyToast");
+  if(!t)return;
+  t.textContent=text||"Đã copy";
+  t.classList.add("show");
+  clearTimeout(v53ShowToast._timer);
+  v53ShowToast._timer=setTimeout(()=>t.classList.remove("show"),1400);
+}
+
+function v53CleanOuterHtml(el){
+  if(!el)return "";
+  const clone=el.cloneNode(true);
+  v52CleanEditorArtifacts(clone);
+  clone.classList.remove("v53-block-selected","v53-block-hover");
+  clone.querySelectorAll(".v53-block-selected,.v53-block-hover").forEach(x=>{
+    x.classList.remove("v53-block-selected","v53-block-hover");
+  });
+  return clone.outerHTML;
+}
+
+async function v53CopyBlock(){
+  if(!v52SelectedEl)return;
+  const html=v53CleanOuterHtml(v52SelectedEl);
+  const text=(v52SelectedEl.innerText||v52SelectedEl.textContent||"").trim();
+  v53BlockClipboardHtml=html;
+
+  try{
+    if(navigator.clipboard && window.ClipboardItem){
+      const item=new ClipboardItem({
+        "text/html":new Blob([html],{type:"text/html"}),
+        "text/plain":new Blob([text],{type:"text/plain"})
+      });
+      await navigator.clipboard.write([item]);
+    }else if(navigator.clipboard){
+      await navigator.clipboard.writeText(html);
+    }
+    v53ShowToast("Đã copy nguyên khối");
+  }catch(e){
+    console.warn("Clipboard API failed",e);
+    // Internal clipboard still works for Ctrl+V in editor.
+    v53ShowToast("Đã lưu khối trong editor");
+  }
+}
+
+function v53PasteBlock(){
+  if(!v53BlockClipboardHtml||!v52SelectedEl||!v51Doc)return false;
+  const holder=v51Doc.createElement("div");
+  holder.innerHTML=v53BlockClipboardHtml;
+  const node=holder.firstElementChild;
+  if(!node)return false;
+  v52SelectedEl.parentNode.insertBefore(node,v52SelectedEl.nextSibling);
+  v52SyncHtml(true);
+  v52Select(node,true);
+  v53ShowToast("Đã dán nguyên khối");
+  return true;
+}
+
+function v53MarkHoverBlocks(){
+  if(!v51Doc)return;
+  const article=v51Doc.querySelector("article.article");
+  if(!article)return;
+
+  article.querySelectorAll(
+    ".guide-callout,.notion-callout-block,.notice-box,.info-box,.warning-box,.success-box,"+
+    ".rework-video-box,.da-tau-section,.clean-table-wrap,table,figure,ul,ol,li,"+
+    "h1,h2,h3,h4,h5,h6,p,div"
+  ).forEach(el=>{
+    if(el===article)return;
+    el.classList.add("v53-block-hover");
+  });
+}
+
+function v53SelectWholeBlock(el){
+  if(!el||!v51Doc)return;
+  v51Doc.querySelectorAll(".v53-block-selected").forEach(x=>x.classList.remove("v53-block-selected"));
+  v52SelectedEl=el;
+  el.classList.add("v53-block-selected");
+  v52UpdateProps();
+  v50ShowMiniToolbar(0);
+}
+
+function v53OpenProps(){
+  if(!v52SelectedEl)return;
+  v53PropsTarget=v52SelectedEl;
+  const p=$("#v53PropsPopup");
+  if(!p)return;
+
+  $("#v53Class").value=(v53PropsTarget.getAttribute("class")||"")
+    .replace(/\bv51-selected\b|\bv53-block-selected\b|\bv53-block-hover\b/g,"").trim();
+  $("#v53Style").value=v53PropsTarget.getAttribute("style")||"";
+
+  const tag=(v53PropsTarget.tagName||"").toLowerCase();
+  $("#v53HrefWrap").style.display=tag==="a"?"":"none";
+  $("#v53Href").value=tag==="a"?(v53PropsTarget.getAttribute("href")||""):"";
+  $("#v53SrcWrap").style.display=["img","iframe","video","source"].includes(tag)?"":"none";
+  $("#v53Src").value=["img","iframe","video","source"].includes(tag)?(v53PropsTarget.getAttribute("src")||""):"";
+
+  const frame=$("#v51PublicFrame");
+  const fr=frame?.getBoundingClientRect();
+  const r=v53PropsTarget.getBoundingClientRect();
+  if(fr){
+    p.style.left=Math.min(window.innerWidth-292,fr.left+r.right-280)+"px";
+    p.style.top=Math.max(8,fr.top+r.top+34)+"px";
+  }
+  p.classList.add("show");
+}
+
+function v53ApplyProps(){
+  const el=v53PropsTarget;
+  if(!el)return;
+
+  const cls=$("#v53Class").value.trim();
+  const keepHover=el.classList.contains("v53-block-hover");
+  const keepSel=el.classList.contains("v53-block-selected");
+
+  el.setAttribute("class",[
+    cls,
+    keepHover?"v53-block-hover":"",
+    keepSel?"v53-block-selected":""
+  ].filter(Boolean).join(" "));
+
+  const sty=$("#v53Style").value.trim();
+  if(sty)el.setAttribute("style",sty);else el.removeAttribute("style");
+
+  const tag=(el.tagName||"").toLowerCase();
+  if(tag==="a"){
+    const x=$("#v53Href").value.trim();
+    if(x)el.setAttribute("href",x);else el.removeAttribute("href");
+  }
+  if(["img","iframe","video","source"].includes(tag)){
+    const x=$("#v53Src").value.trim();
+    if(x)el.setAttribute("src",x);else el.removeAttribute("src");
+  }
+  v52SyncHtml(true);
+  $("#v53PropsPopup").classList.remove("show");
+}
+
+function v53BindEditorShortcuts(){
+  if(!v51Doc)return;
+  const article=v51Doc.querySelector("article.article");
+  if(!article)return;
+
+  article.addEventListener("mousedown",e=>{
+    // Alt+click always means select the complete semantic block.
+    if(e.altKey){
+      const block=v52Semantic(e.target);
+      if(block){
+        e.preventDefault();
+        e.stopPropagation();
+        v53SelectWholeBlock(block);
+      }
+      return;
+    }
+
+    // Click padding / non-editable area selects full block.
+    if(!e.target.closest("[contenteditable=true]")){
+      const block=v52Semantic(e.target);
+      if(block)v53SelectWholeBlock(block);
+    }
+  },true);
+
+  v51Doc.addEventListener("keydown",e=>{
+    const mod=e.ctrlKey||e.metaKey;
+
+    if(mod && e.key.toLowerCase()==="c"){
+      // If there is active text selection, keep browser's normal copy.
+      const sel=v51Win?.getSelection?.();
+      if(sel && !sel.isCollapsed && String(sel).trim())return;
+
+      // No text selected -> copy selected full block.
+      if(v52SelectedEl){
+        e.preventDefault();
+        v53CopyBlock();
+      }
+    }
+
+    if(mod && e.key.toLowerCase()==="v"){
+      // If block clipboard exists and there's no editable caret target, paste full block.
+      const active=v51Doc.activeElement;
+      const editing=active && active.isContentEditable;
+      if(!editing && v53BlockClipboardHtml && v52SelectedEl){
+        e.preventDefault();
+        v53PasteBlock();
+      }
+    }
+  },true);
+}
+
+function v53AfterFrameReady(){
+  v53MarkHoverBlocks();
+  v53BindEditorShortcuts();
+}
+
 let v52SelectedEl=null;
 let v52History=[];
 let v52Future=[];
@@ -14588,7 +14837,7 @@ function v52CleanEditorArtifacts(root){
     x.removeAttribute("data-v51-block-index");
     x.removeAttribute("data-v52-selected");
   });
-  root.querySelectorAll(".v51-selected").forEach(x=>x.classList.remove("v51-selected"));
+  root.querySelectorAll(".v51-selected,.v53-block-selected,.v53-block-hover").forEach(x=>x.classList.remove("v51-selected","v53-block-selected","v53-block-hover"));
   root.querySelectorAll("[contenteditable]").forEach(x=>x.removeAttribute("contenteditable"));
   root.querySelectorAll("[data-v51-editable]").forEach(x=>x.removeAttribute("data-v51-editable"));
   return root;
@@ -14655,7 +14904,7 @@ function v52Select(el,showToolbar=true){
   if(!el||!v51Doc)return;
   v51Doc.querySelectorAll(".v51-selected").forEach(x=>x.classList.remove("v51-selected"));
   v52SelectedEl=el;
-  el.classList.add("v51-selected");
+  el.classList.add("v51-selected","v53-block-selected");
   v52UpdateProps();
 
   if(showToolbar){
@@ -14741,6 +14990,7 @@ function v52RenderPublic(){
     v52SelectedEl=null;
     v52EnableEditable();
     v51Doc.addEventListener("selectionchange",v50RememberSelection);
+    v53AfterFrameReady();
   };
   frame.srcdoc=v52DocHtml(v52CurrentHtml());
 }
@@ -16675,11 +16925,31 @@ document.addEventListener("DOMContentLoaded",()=>{
   </select>
   <button id="v50LinkBtn" title="Tạo link">🔗</button>
   <span class="sep"></span>
-  <button id="v50DupBtn" title="Nhân bản block">⧉</button>
+  <button id="v53CopyBlockBtn" title="Copy nguyên khối">⧉ Copy</button><button id="v50DupBtn" title="Nhân bản block">⧉</button>
   <button id="v50UpBtn" title="Đưa lên">↑</button>
   <button id="v50DownBtn" title="Đưa xuống">↓</button>
   <button id="v50DeleteBtn" class="danger" title="Xóa block">🗑</button>
   <button id="v50PropsBtn" title="Thuộc tính nâng cao">⚙</button>
 </div>
-</body>
+
+<div id="v53PropsPopup">
+  <h4>⚙ Thuộc tính phần tử</h4>
+  <label>Class<input id="v53Class"></label>
+  <label>Style<textarea id="v53Style" rows="3"></textarea></label>
+  <label id="v53HrefWrap" style="display:none">href<input id="v53Href"></label>
+  <label id="v53SrcWrap" style="display:none">src<input id="v53Src"></label>
+  <div class="row">
+    <button id="v53ApplyProps">✓ Áp dụng</button>
+    <button id="v53CloseProps">Đóng</button>
+  </div>
+</div>
+<div id="v53CopyToast">Đã copy nguyên khối</div>
+<script>
+document.addEventListener("DOMContentLoaded",()=>{
+  $("#v53CopyBlockBtn").onclick=v53CopyBlock;
+  $("#v50PropsBtn").onclick=v53OpenProps;
+  $("#v53ApplyProps").onclick=v53ApplyProps;
+  $("#v53CloseProps").onclick=()=>$("#v53PropsPopup").classList.remove("show");
+});
+</script></body>
 </html>
