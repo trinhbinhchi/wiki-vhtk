@@ -231,6 +231,18 @@ button,input,textarea,select{font:inherit}
   font-weight:700;
 }
 </style>
+
+<style id="v32-smart-selection-style">
+.v32-copy-status{
+  margin-left:6px;
+  padding:4px 7px;
+  border-radius:7px;
+  background:#fff7e8;
+  color:#765b22;
+  font-size:11px;
+  font-weight:700;
+}
+</style>
 </head>
 <body>
 <div class="login" id="loginView">
@@ -299,7 +311,7 @@ button,input,textarea,select{font:inherit}
 <span class="v26-mode-indicator" id="v26ModeIndicator">Chế độ: Trực quan</span></div>
 <div class="editor" contenteditable="true" id="editor"></div><div class="public-live-wrap" id="publicLiveWrap"><div class="preview-badge">PUBLIC ARTICLE • sửa trực tiếp</div><iframe id="publicLiveFrame" title="Trang Public thật"></iframe></div>
 <textarea class="source" id="sourceEditor" spellcheck="false"></textarea>
-<div class="help">V31: soạn thảo trực quan kiểu HTML đơn giản — click đâu gõ đó, bôi đen rồi dùng toolbar, Enter xuống dòng, copy/paste như trình soạn thảo thông thường. </> HTML chỉ dùng khi cần.</div>
+<div class="help">V32: tô chọn trực quan thông minh. Nếu tô hết một block hoặc nhiều block, Ctrl+C sẽ copy nguyên outerHTML kèm class/style/wrapper; tô một phần text thì vẫn copy đúng phần text đã chọn. Paste giữ HTML.</div>
 </div>
 </section>
 <section class="settings-panel hidden" id="settingsPanel">
@@ -430,6 +442,180 @@ function execSimple(cmd,arg=null){
   saveV31Selection();
   syncFromPublic();
 }
+
+function normalizeText(s){
+  return (s||"").replace(/\s+/g," ").trim();
+}
+
+function semanticBlock(node,root){
+  if(!node)return null;
+  if(node.nodeType===3)node=node.parentElement;
+  if(!node || !node.closest)return null;
+
+  const sels=[
+    "li","p","blockquote","h1","h2","h3","h4",
+    "tr","table","figure",
+    ".notice-box",".info-box",".warning-box",".success-box",
+    ".callout",".quote-box",".rework-video-box",
+    ".clean-table-wrap",".da-tau-section",
+    ".notion-callout",".notion-text-block",
+    "div"
+  ];
+
+  for(const sel of sels){
+    const el=node.closest(sel);
+    if(el && root.contains(el) && el!==root)return el;
+  }
+  return null;
+}
+
+function selectionBlocks(d,root){
+  const sel=d.getSelection();
+  if(!sel || !sel.rangeCount || sel.isCollapsed)return [];
+
+  const range=sel.getRangeAt(0);
+  const all=[...root.querySelectorAll(
+    "li,p,blockquote,h1,h2,h3,h4,tr,table,figure,.notice-box,.info-box,.warning-box,.success-box,.callout,.quote-box,.rework-video-box,.clean-table-wrap,.da-tau-section,.notion-callout,.notion-text-block"
+  )];
+
+  return all.filter(el=>{
+    try{return range.intersectsNode(el)}catch(e){return false}
+  }).filter(el=>{
+    /* Keep only top-most selected blocks among matches. */
+    return !all.some(parent=>parent!==el && parent.contains(el) && range.intersectsNode(parent));
+  });
+}
+
+function selectedTextCoversBlock(sel,block){
+  if(!sel || !block)return false;
+  const a=normalizeText(sel.toString());
+  const b=normalizeText(block.innerText||block.textContent||"");
+  if(!a || !b)return false;
+
+  /* Treat as full-block selection when selected text is >= 90% of block text.
+     This accommodates whitespace/line-break differences. */
+  return a.length >= Math.max(1, Math.floor(b.length*0.90));
+}
+
+function htmlForSmartSelection(d,root){
+  const sel=d.getSelection();
+  if(!sel || !sel.rangeCount || sel.isCollapsed)return null;
+
+  const blocks=selectionBlocks(d,root);
+
+  if(blocks.length===1 && selectedTextCoversBlock(sel,blocks[0])){
+    return {
+      html:blocks[0].outerHTML,
+      text:blocks[0].innerText||blocks[0].textContent||"",
+      mode:"block"
+    };
+  }
+
+  if(blocks.length>1){
+    /* If selection spans multiple semantic siblings/blocks, preserve each outerHTML. */
+    const selectedText=normalizeText(sel.toString());
+    const blocksText=normalizeText(blocks.map(b=>b.innerText||b.textContent||"").join(" "));
+    if(selectedText.length >= Math.max(1,Math.floor(blocksText.length*0.85))){
+      return {
+        html:blocks.map(b=>b.outerHTML).join("\n"),
+        text:blocks.map(b=>b.innerText||b.textContent||"").join("\n"),
+        mode:"blocks"
+      };
+    }
+  }
+
+  /* Fallback: browser's native range fragment for partial text selections. */
+  try{
+    const frag=sel.getRangeAt(0).cloneContents();
+    const holder=d.createElement("div");
+    holder.appendChild(frag);
+    return {
+      html:holder.innerHTML,
+      text:sel.toString(),
+      mode:"partial"
+    };
+  }catch(e){
+    return null;
+  }
+}
+
+function insertHTMLSmart(d,root,html){
+  const sel=d.getSelection();
+  if(!sel || !sel.rangeCount)return false;
+  const range=sel.getRangeAt(0);
+
+  const holder=d.createElement("div");
+  holder.innerHTML=html;
+
+  const first=holder.firstElementChild;
+  let anchor=semanticBlock(range.startContainer,root);
+
+  /* If pasted content is a full block and current caret is inside same type block,
+     insert as sibling rather than nesting it. */
+  if(first && anchor && first.tagName===anchor.tagName && ["LI","P","TR","DIV","BLOCKQUOTE"].includes(first.tagName)){
+    let ref=anchor;
+    [...holder.childNodes].forEach(n=>{
+      const c=n.cloneNode(true);
+      ref.parentNode.insertBefore(c,ref.nextSibling);
+      if(c.nodeType===1)ref=c;
+    });
+    return true;
+  }
+
+  range.deleteContents();
+  const frag=d.createDocumentFragment();
+  let last=null;
+  while(holder.firstChild){
+    last=frag.appendChild(holder.firstChild);
+  }
+  range.insertNode(frag);
+
+  if(last){
+    range.setStartAfter(last);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+  return true;
+}
+
+function installSmartSelectionCopy(d,root){
+  if(!d || !root || root.dataset.smartCopyInstalled==="1")return;
+  root.dataset.smartCopyInstalled="1";
+
+  root.addEventListener("copy",e=>{
+    const data=htmlForSmartSelection(d,root);
+    if(!data)return;
+
+    e.preventDefault();
+    e.clipboardData.setData("text/html",data.html);
+    e.clipboardData.setData("text/plain",data.text);
+
+    const st=$("#v32CopyStatus");
+    if(st){
+      st.textContent=data.mode==="block" ? "Copy: nguyên block" :
+                     data.mode==="blocks" ? "Copy: nhiều block" :
+                     "Copy: đoạn chọn";
+    }
+    setStatus(
+      data.mode==="partial"
+        ? "Đã copy phần được chọn"
+        : "Đã copy kèm class/style/wrapper của block",
+      "ok"
+    );
+  },true);
+
+  root.addEventListener("paste",e=>{
+    const rich=e.clipboardData && e.clipboardData.getData("text/html");
+    if(!rich)return;
+
+    e.preventDefault();
+    if(insertHTMLSmart(d,root,rich)){
+      syncFromPublic();
+      setStatus("Đã paste HTML giữ thuộc tính","ok");
+    }
+  },true);
+}
 function ensurePublicEditMode(){
   const d=publicDoc();
   if(!d || !currentData)return false;
@@ -493,6 +679,7 @@ function ensurePublicEditMode(){
   sec.addEventListener("input",syncFromPublic);
   sec.addEventListener("blur",syncFromPublic);
   enableSimpleVisualEditor(d,sec);
+  installSmartSelectionCopy(d,sec);
 
   if(!d.getElementById("vhtk-admin-live-style")){
     const marker=d.createElement("style");
