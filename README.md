@@ -1,24 +1,20 @@
-# CMS v34 — Word-like Block Editor
+# CMS v35 — sửa đúng cấu trúc HTML thật
 
-## Text
-- Click trực tiếp vào chữ -> đặt caret/gõ/sửa như bình thường.
-- Bôi đen text -> dùng toolbar như editor thông thường.
+Lỗi v34:
+- Các box hiện tại thực tế dùng `.guide-callout` / `.notion-callout-block`.
+- Chúng nằm trong `.article-content > .intro-panel`.
+- V34 không nhận đúng class và đặt dấu + sai cấp DOM.
 
-## Chọn nguyên box
-- Click vào vùng trống/padding của box.
-- Hoặc Alt+click ở bất kỳ đâu trong box.
-- Box được viền xanh để báo đang chọn nguyên khối.
-
-Khi box được chọn:
-- Ctrl+C -> copy nguyên outerHTML.
-- Ctrl+V -> paste nguyên block cùng cấp.
-- Delete/Backspace -> xóa nguyên box.
-- Toolbar nổi: Copy khối / Nhân bản / + Trên / + Dưới / Xóa.
-
-## Chèn nội dung giữa hai box
-- Có dấu + nhỏ giữa các khối.
-- Click dấu + -> tạo paragraph mới và đặt caret sẵn.
-
-## Lưu
-- Toàn bộ rail/toolbar/selection class của editor được loại bỏ trước Save/Commit.
-- Không làm bẩn HTML public.
+V35:
+- Nhận đúng `.guide-callout`.
+- Hover mỗi box sẽ thấy `☰ Khối`.
+- Click `☰ Khối` = chọn nguyên box chắc chắn.
+- Alt+click bên trong box cũng chọn nguyên box.
+- Sau khi chọn:
+  - Copy
+  - Nhân bản
+  - + Trên
+  - + Dưới
+  - Xóa
+- `+ Thêm nội dung` nằm giữa từng child của `.intro-panel`, đúng vị trí giữa các box.
+- Editor UI bị strip hoàn toàn trước Save/Commit.

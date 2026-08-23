@@ -332,6 +332,91 @@ button,input,textarea,select{font:inherit}
 .v34-block-popover button:hover{background:#edf6f1}
 .v34-block-popover .danger{color:#a5453e}
 </style>
+
+<style id="v35-real-block-style">
+.v35-block-handle{
+  position:absolute!important;
+  top:8px!important;
+  right:8px!important;
+  z-index:99998!important;
+  display:none!important;
+  align-items:center!important;
+  gap:4px!important;
+  padding:4px 7px!important;
+  border:1px solid rgba(38,92,67,.22)!important;
+  border-radius:7px!important;
+  background:rgba(255,255,255,.96)!important;
+  color:#32654f!important;
+  font:700 11px/1 "Segoe UI",Arial,sans-serif!important;
+  cursor:pointer!important;
+  box-shadow:0 3px 12px rgba(0,0,0,.09)!important;
+  user-select:none!important;
+}
+.v35-managed-block{
+  position:relative!important;
+}
+.v35-managed-block:hover > .v35-block-handle,
+.v35-managed-block.v35-selected > .v35-block-handle{
+  display:flex!important;
+}
+.v35-managed-block.v35-selected{
+  outline:3px solid rgba(35,110,80,.42)!important;
+  outline-offset:3px!important;
+}
+.v35-insert-rail{
+  position:relative!important;
+  display:block!important;
+  height:22px!important;
+  min-height:22px!important;
+  margin:2px 0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  cursor:pointer!important;
+}
+.v35-insert-rail::before{
+  content:"+ Thêm nội dung";
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  padding:3px 9px;
+  border:1px solid rgba(40,90,68,.22);
+  border-radius:999px;
+  background:#fff;
+  color:#347157;
+  font:700 10px/16px "Segoe UI",Arial,sans-serif;
+  opacity:.18;
+  transition:.15s;
+  box-shadow:0 2px 8px rgba(0,0,0,.05);
+  white-space:nowrap;
+}
+.v35-insert-rail:hover::before{opacity:1}
+.v35-actionbar{
+  position:absolute!important;
+  z-index:100000!important;
+  display:none;
+  gap:4px;
+  padding:5px;
+  border:1px solid rgba(50,80,63,.18);
+  border-radius:9px;
+  background:rgba(255,255,255,.98);
+  box-shadow:0 7px 22px rgba(0,0,0,.12);
+  font-family:"Segoe UI",Arial,sans-serif;
+}
+.v35-actionbar button{
+  border:1px solid #d6e0d9;
+  border-radius:6px;
+  background:#fff;
+  color:#355044;
+  padding:4px 7px;
+  font-size:11px;
+  font-weight:700;
+  cursor:pointer;
+}
+.v35-actionbar button:hover{background:#edf6f1}
+.v35-actionbar .danger{color:#a5453e}
+</style>
 </head>
 <body>
 <div class="login" id="loginView">
@@ -400,7 +485,7 @@ button,input,textarea,select{font:inherit}
 <span class="v26-mode-indicator" id="v26ModeIndicator">Chế độ: Trực quan</span></div>
 <div class="editor" contenteditable="true" id="editor"></div><div class="public-live-wrap" id="publicLiveWrap"><div class="preview-badge">PUBLIC ARTICLE • sửa trực tiếp</div><iframe id="publicLiveFrame" title="Trang Public thật"></iframe></div>
 <textarea class="source" id="sourceEditor" spellcheck="false"></textarea>
-<div class="help">V34: click chữ để sửa như Word; click vùng trống/padding của box hoặc Alt+click để chọn nguyên box. Khi box được chọn, Ctrl+C copy nguyên outerHTML. Giữa các box có dấu + để chèn đoạn mới ngay tại vị trí đó.</div>
+<div class="help">V35: mỗi box thật (.guide-callout) có nút ☰ Khối ở góc phải khi rê chuột. Bấm nút để chọn nguyên box. Dấu “+ Thêm nội dung” nằm thật giữa từng box trong intro-panel. Alt+click cũng chọn nguyên box.</div>
 </div>
 </section>
 <section class="settings-panel hidden" id="settingsPanel">
@@ -467,8 +552,7 @@ function getVisualHTML(){
   const sec=selectedPublicSection();
   if(!sec)return $("#editor").innerHTML||"";
   const clone=sec.cloneNode(true);
-  v34CleanEditorArtifacts(clone);
-  if(typeof v33CleanEditorUIFromClone==="function")v33CleanEditorUIFromClone(clone);
+  v35StripEditorUI(clone);
   return clone.innerHTML;
 }
 function syncFromPublic(){
@@ -476,8 +560,7 @@ function syncFromPublic(){
   let html="";
   if(sec){
     const clone=sec.cloneNode(true);
-    v34CleanEditorArtifacts(clone);
-    if(typeof v33CleanEditorUIFromClone==="function")v33CleanEditorUIFromClone(clone);
+    v35StripEditorUI(clone);
     html=clone.innerHTML;
   }else{
     html=$("#editor").innerHTML||"";
@@ -1229,6 +1312,331 @@ function installWordLikeBlockEditor(d,root){
     if(v34SelectedBlock)v34ShowPopover(v34SelectedBlock);
   });
 }
+
+let v35Selected=null;
+let v35Actionbar=null;
+let v35Clipboard=null;
+
+function v35Root(){
+  return selectedPublicSection();
+}
+
+function v35ContentContainer(root){
+  if(!root)return null;
+  return root.querySelector(".article-content .intro-panel")
+      || root.querySelector(".article-content")
+      || root;
+}
+
+function v35BlockFromTarget(target,root){
+  if(!target || !target.closest || !root)return null;
+
+  /* These are the REAL main box classes used by current content. */
+  const block=target.closest(
+    ".guide-callout,.notion-callout-block,"+
+    ".notice-box,.info-box,.warning-box,.success-box,"+
+    ".rework-video-box,.da-tau-section,.clean-table-wrap,"+
+    ".article-card,.feature-card,.reward-card"
+  );
+
+  return block && root.contains(block) ? block : null;
+}
+
+function v35ClearSelected(){
+  if(v35Selected){
+    v35Selected.classList.remove("v35-selected");
+  }
+  v35Selected=null;
+  if(v35Actionbar)v35Actionbar.style.display="none";
+}
+
+function v35MakeHandle(d,block){
+  const h=d.createElement("span");
+  h.className="v35-block-handle";
+  h.dataset.vhtkEditorOnly="1";
+  h.setAttribute("contenteditable","false");
+  h.textContent="☰ Khối";
+  h.title="Chọn nguyên khối";
+  h.addEventListener("mousedown",e=>{
+    e.preventDefault();
+    e.stopPropagation();
+  });
+  h.addEventListener("click",e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    v35Select(block);
+  });
+  return h;
+}
+
+function v35PrepareBlocks(d,root){
+  if(!d || !root)return;
+  const blocks=[...root.querySelectorAll(
+    ".guide-callout,.notion-callout-block,"+
+    ".notice-box,.info-box,.warning-box,.success-box,"+
+    ".rework-video-box,.da-tau-section,.clean-table-wrap"
+  )];
+
+  blocks.forEach(block=>{
+    /* Avoid marking nested notion-callout when its guide-callout ancestor is already managed. */
+    const parentManaged=block.parentElement && block.parentElement.closest(
+      ".guide-callout,.notion-callout-block"
+    );
+    if(parentManaged && parentManaged!==block && root.contains(parentManaged))return;
+
+    block.classList.add("v35-managed-block");
+    if(!block.querySelector(":scope > .v35-block-handle")){
+      block.insertBefore(v35MakeHandle(d,block),block.firstChild);
+    }
+  });
+}
+
+function v35CreateActionbar(d){
+  const bar=d.createElement("div");
+  bar.className="v35-actionbar";
+  bar.dataset.vhtkEditorOnly="1";
+  bar.setAttribute("contenteditable","false");
+  bar.innerHTML=`
+    <button data-a="copy">⧉ Copy</button>
+    <button data-a="dup">⧉ Nhân bản</button>
+    <button data-a="before">＋ Trên</button>
+    <button data-a="after">＋ Dưới</button>
+    <button data-a="delete" class="danger">🗑 Xóa</button>
+  `;
+  d.body.appendChild(bar);
+
+  bar.addEventListener("mousedown",e=>e.preventDefault());
+  bar.addEventListener("click",e=>{
+    const b=e.target.closest("button[data-a]");
+    if(!b || !v35Selected)return;
+    const a=b.dataset.a;
+    if(a==="copy")v35Copy();
+    if(a==="dup")v35Duplicate();
+    if(a==="before")v35InsertNear(-1);
+    if(a==="after")v35InsertNear(1);
+    if(a==="delete")v35Delete();
+  });
+  return bar;
+}
+
+function v35PositionActionbar(block){
+  const d=publicDoc();
+  if(!d || !block)return;
+  if(!v35Actionbar)v35Actionbar=v35CreateActionbar(d);
+
+  const r=block.getBoundingClientRect();
+  v35Actionbar.style.left=Math.max(8,r.left+d.defaultView.scrollX)+"px";
+  v35Actionbar.style.top=Math.max(8,r.top+d.defaultView.scrollY-36)+"px";
+  v35Actionbar.style.display="flex";
+}
+
+function v35Select(block){
+  if(!block)return;
+  if(v35Selected && v35Selected!==block){
+    v35Selected.classList.remove("v35-selected");
+  }
+  v35Selected=block;
+  block.classList.add("v35-selected");
+  v35PositionActionbar(block);
+  setStatus("Đã chọn nguyên box • Copy/Nhân bản/Thêm/Xóa đều dùng được","ok");
+}
+
+function v35Copy(){
+  if(!v35Selected)return;
+  const clone=v35Selected.cloneNode(true);
+  v35StripEditorUI(clone);
+  v35Clipboard=clone.outerHTML;
+  setStatus("Đã copy nguyên outerHTML của box","ok");
+}
+
+function v35Duplicate(){
+  if(!v35Selected || !v35Selected.parentNode)return;
+  const clone=v35Selected.cloneNode(true);
+  v35StripEditorUI(clone);
+  v35Selected.parentNode.insertBefore(clone,v35Selected.nextSibling);
+
+  const d=publicDoc(),root=v35Root();
+  v35PrepareBlocks(d,root);
+  v35RefreshRails(d,root);
+
+  /* pick newly inserted clone after preparation */
+  v35Select(clone);
+  syncFromPublic();
+  setStatus("Đã nhân bản nguyên box, giữ đầy đủ class/style/nội dung","ok");
+}
+
+function v35Delete(){
+  if(!v35Selected)return;
+  const old=v35Selected;
+  v35ClearSelected();
+  old.remove();
+  const d=publicDoc(),root=v35Root();
+  v35RefreshRails(d,root);
+  syncFromPublic();
+  setStatus("Đã xóa box","ok");
+}
+
+function v35CreateNewEditableBlock(d){
+  /* Create a visually neutral block that can immediately be typed in. */
+  const div=d.createElement("div");
+  div.className="notion-selectable notion-text-block prose-block";
+  div.innerHTML='<div><div><div><div class="x78zum5"><div class="content-editable-leaf-rtl"><br></div><div></div></div></div></div></div>';
+  return div;
+}
+
+function v35FocusFirstEditable(d,el){
+  const target=el.querySelector(".content-editable-leaf-rtl,p,div") || el;
+  const sel=d.getSelection();
+  const r=d.createRange();
+  r.selectNodeContents(target);
+  r.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(r);
+  target.focus();
+}
+
+function v35InsertNear(direction){
+  if(!v35Selected || !v35Selected.parentNode)return;
+  const d=publicDoc();
+  const n=v35CreateNewEditableBlock(d);
+
+  if(direction<0)v35Selected.parentNode.insertBefore(n,v35Selected);
+  else v35Selected.parentNode.insertBefore(n,v35Selected.nextSibling);
+
+  v35ClearSelected();
+  v35RefreshRails(d,v35Root());
+  v35FocusFirstEditable(d,n);
+  syncFromPublic();
+  setStatus(direction<0?"Đã thêm nội dung phía trên":"Đã thêm nội dung phía dưới","ok");
+}
+
+function v35MakeRail(d){
+  const rail=d.createElement("div");
+  rail.className="v35-insert-rail";
+  rail.dataset.vhtkEditorOnly="1";
+  rail.setAttribute("contenteditable","false");
+  rail.addEventListener("mousedown",e=>e.preventDefault());
+  rail.addEventListener("click",e=>{
+    e.preventDefault();
+    e.stopPropagation();
+
+    const n=v35CreateNewEditableBlock(d);
+    rail.parentNode.insertBefore(n,rail.nextSibling);
+
+    v35RefreshRails(d,v35Root());
+    v35FocusFirstEditable(d,n);
+    syncFromPublic();
+    setStatus("Đã chèn nội dung mới tại đây","ok");
+  });
+  return rail;
+}
+
+function v35RefreshRails(d,root){
+  if(!d || !root)return;
+  root.querySelectorAll(".v35-insert-rail").forEach(x=>x.remove());
+
+  const container=v35ContentContainer(root);
+  if(!container)return;
+
+  /* Only between REAL top-level blocks inside intro-panel/article-content. */
+  const blocks=[...container.children].filter(el=>{
+    return !el.matches(".v35-insert-rail,[data-vhtk-editor-only='1']");
+  });
+
+  if(!blocks.length){
+    container.appendChild(v35MakeRail(d));
+    return;
+  }
+
+  container.insertBefore(v35MakeRail(d),blocks[0]);
+  blocks.forEach(block=>{
+    block.insertAdjacentElement("afterend",v35MakeRail(d));
+  });
+}
+
+function v35StripEditorUI(root){
+  if(!root)return root;
+  root.querySelectorAll(
+    ".v35-block-handle,.v35-insert-rail,.v35-actionbar,"+
+    ".v34-insert-rail,.v34-block-popover,"+
+    ".v33-block-toolbar,[data-vhtk-editor-only='1']"
+  ).forEach(x=>x.remove());
+
+  root.querySelectorAll(".v35-managed-block,.v35-selected,.v34-selected-block").forEach(el=>{
+    el.classList.remove("v35-managed-block","v35-selected","v34-selected-block");
+  });
+
+  root.querySelectorAll("[style]").forEach(el=>{
+    const s=(el.getAttribute("style")||"")
+      .replace(/outline\s*:[^;]+;?/gi,"")
+      .replace(/outline-offset\s*:[^;]+;?/gi,"")
+      .trim();
+    if(s)el.setAttribute("style",s); else el.removeAttribute("style");
+  });
+
+  return root;
+}
+
+function installV35Editor(d,root){
+  if(!d || !root || root.dataset.v35Installed==="1")return;
+  root.dataset.v35Installed="1";
+
+  v35PrepareBlocks(d,root);
+  v35RefreshRails(d,root);
+
+  /* Guaranteed block selection:
+     - Click visible ☰ Khối handle
+     - Alt+click anywhere inside guide-callout */
+  root.addEventListener("mousedown",e=>{
+    if(e.target.closest(".v35-block-handle,.v35-insert-rail,.v35-actionbar"))return;
+
+    if(e.altKey){
+      const b=v35BlockFromTarget(e.target,root);
+      if(b){
+        e.preventDefault();
+        e.stopPropagation();
+        v35Select(b);
+      }
+    }
+  },true);
+
+  /* Ctrl+C / Ctrl+V when a box is selected */
+  root.addEventListener("copy",e=>{
+    if(!v35Selected)return;
+    e.preventDefault();
+    v35Copy();
+    e.clipboardData.setData("text/html",v35Clipboard||"");
+    e.clipboardData.setData("text/plain",v35Selected.innerText||v35Selected.textContent||"");
+    e.clipboardData.setData("application/x-vhtk-v35-block",v35Clipboard||"");
+  },true);
+
+  root.addEventListener("paste",e=>{
+    if(!v35Selected)return;
+    const custom=e.clipboardData && e.clipboardData.getData("application/x-vhtk-v35-block");
+    if(!custom)return;
+
+    e.preventDefault();
+    const holder=d.createElement("div");
+    holder.innerHTML=custom;
+    const node=holder.firstElementChild;
+    if(node){
+      v35Selected.parentNode.insertBefore(node,v35Selected.nextSibling);
+      v35PrepareBlocks(d,root);
+      v35RefreshRails(d,root);
+      v35Select(node);
+      syncFromPublic();
+      setStatus("Đã paste nguyên box cùng cấp","ok");
+    }
+  },true);
+
+  d.addEventListener("keydown",e=>{
+    if(e.key==="Escape")v35ClearSelected();
+  },true);
+
+  d.addEventListener("scroll",()=>{
+    if(v35Selected)v35PositionActionbar(v35Selected);
+  },true);
+}
 function ensurePublicEditMode(){
   const d=publicDoc();
   if(!d || !currentData)return false;
@@ -1293,7 +1701,7 @@ function ensurePublicEditMode(){
   sec.addEventListener("blur",syncFromPublic);
   enableSimpleVisualEditor(d,sec);
   installSmartSelectionCopy(d,sec);
-  installWordLikeBlockEditor(d,sec);
+  installV35Editor(d,sec);
 
   if(!d.getElementById("vhtk-admin-live-style")){
     const marker=d.createElement("style");
