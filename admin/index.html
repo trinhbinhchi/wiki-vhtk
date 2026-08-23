@@ -220,67 +220,16 @@ button,input,textarea,select{font:inherit}
 #sourceEditor.active{display:block!important}
 .v26-mode-indicator{margin-left:auto;font-size:11px;color:#6f7d75;font-weight:700}
 </style>
-<style id="v28-block-editor-style">
-.v28-block-status{
-  margin-left:6px;
-  padding:4px 7px;
-  border:1px solid #d7e1da;
-  border-radius:7px;
-  background:#fff;
-  color:#65756b;
-  font-size:11px;
-  font-weight:700;
-  max-width:190px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-</style>
-
-<style id="v29-wysiwyg-style">
-.v29-selection-status{
-  padding:4px 7px;
+<style id="v31-simple-editor-style">
+.v31-editor-note{
+  margin-left:auto;
+  padding:4px 8px;
   border-radius:7px;
   background:#eef6f1;
   color:#315d4a;
   font-size:11px;
   font-weight:700;
-  white-space:nowrap;
 }
-</style>
-
-<style id="v30-caret-anchor-style">
-/* Editor-only insertion lines. They are removed before save. */
-.vhtk-caret-anchor{
-  display:block!important;
-  position:relative!important;
-  min-height:14px!important;
-  height:14px!important;
-  margin:2px 0!important;
-  padding:0!important;
-  border:0!important;
-  background:transparent!important;
-  outline:none!important;
-  line-height:14px!important;
-}
-.vhtk-caret-anchor:focus{
-  min-height:28px!important;
-  height:auto!important;
-  margin:4px 0!important;
-  padding:3px 6px!important;
-  border-left:2px solid rgba(32,107,81,.45)!important;
-  background:rgba(32,107,81,.035)!important;
-}
-.vhtk-caret-anchor:hover::before{
-  content:"Click để chèn nội dung";
-  position:absolute;
-  left:8px;
-  top:0;
-  color:#9aa79f;
-  font-size:10px;
-  pointer-events:none;
-}
-.vhtk-caret-anchor:focus::before{display:none}
 </style>
 </head>
 <body>
@@ -346,11 +295,11 @@ button,input,textarea,select{font:inherit}
 <span class="sep"></span>
 <button id="linkBtn">🔗</button><button id="imageBtn">🖼 Ảnh</button><button id="videoBtn">▶ Video</button><button id="tableBtn">▦ Bảng</button><button data-cmd="insertHorizontalRule">―</button>
 <span class="sep"></span>
-<button id="duplicateBlockBtn" title="Nhân bản nguyên khối HTML đang đặt con trỏ">⧉ Nhân khối</button><button id="moveBlockUpBtn" title="Di chuyển khối lên">↑ Khối</button><button id="moveBlockDownBtn" title="Di chuyển khối xuống">↓ Khối</button><button id="deleteBlockBtn" title="Xóa nguyên khối HTML đang chọn">🗑 Xóa khối</button><button id="elementPropsBtn" title="Sửa thuộc tính phần tử đang chọn">⚙ Thuộc tính</button><button id="sourceBtn">&lt;/&gt; HTML</button><button data-cmd="removeFormat">⌫ Format</button>
-<span class="v26-mode-indicator" id="v26ModeIndicator">Chế độ: Trực quan</span><span id="v29SelectionStatus" class="v29-selection-status">Selection: chưa chọn</span><span id="v28BlockStatus" class="v28-block-status">Khối: chưa chọn</span></div>
+<button id="sourceBtn">&lt;/&gt; HTML</button><button data-cmd="removeFormat">⌫ Format</button>
+<span class="v26-mode-indicator" id="v26ModeIndicator">Chế độ: Trực quan</span></div>
 <div class="editor" contenteditable="true" id="editor"></div><div class="public-live-wrap" id="publicLiveWrap"><div class="preview-badge">PUBLIC ARTICLE • sửa trực tiếp</div><iframe id="publicLiveFrame" title="Trang Public thật"></iframe></div>
 <textarea class="source" id="sourceEditor" spellcheck="false"></textarea>
-<div class="help">V26: sửa trực tiếp trên Public hoặc bấm &lt;/&gt; HTML để chỉnh mã nguồn thật. Chuyển qua lại hai chiều; Ctrl+S để Lưu &amp; Commit.</div>
+<div class="help">V31: soạn thảo trực quan kiểu HTML đơn giản — click đâu gõ đó, bôi đen rồi dùng toolbar, Enter xuống dòng, copy/paste như trình soạn thảo thông thường. </> HTML chỉ dùng khi cần.</div>
 </div>
 </section>
 <section class="settings-panel hidden" id="settingsPanel">
@@ -414,604 +363,73 @@ function editablePublicNode(){
 }
 
 function getVisualHTML(){
-  return visualHTMLForSave();
+  const sec=selectedPublicSection();
+  return sec ? sec.innerHTML : ($("#editor").innerHTML||"");
 }
 function syncFromPublic(){
-  const html=visualHTMLForSave();
+  const html=getVisualHTML();
   $("#editor").innerHTML=html;
   if(!sourceMode)$("#sourceEditor").value=html;
 }
 
+let v31SavedRange=null;
 
-function nearestCloneBlock(node, root){
-  if(!node)return null;
-  if(node.nodeType===3)node=node.parentElement;
-  if(!node || !node.closest)return null;
-
-  /* Ưu tiên các phần tử semantic nhỏ trước.
-     Quan trọng: LI đứng trước DIV để copy list item không thành text lồng. */
-  const preferred=[
-    "li","tr","td","th",
-    "p","blockquote","figure",
-    ".clean-table-wrap",".clean-guide-table",
-    ".notice-box",".info-box",".warning-box",".success-box",
-    ".callout",".quote-box",".rework-video-box",
-    ".da-tau-section",".da-tau-collapse-body",
-    ".notion-callout",".notion-text-block",
-    ".section-block",".content-box",".guide-box",
-    "table",
-    "div"
-  ];
-
-  for(const sel of preferred){
-    const el=node.closest(sel);
-    if(el && root.contains(el) && el!==root)return el;
-  }
-  return null;
-}
-
-function blockLabel(el){
-  if(!el)return "chưa chọn";
-  const tag=el.tagName ? el.tagName.toLowerCase() : "";
-  let cls=(el.className && typeof el.className==="string") ? el.className.trim().split(/\s+/).slice(0,2).join(".") : "";
-  let label=tag;
-  if(cls)label+="."+cls;
-  if(tag==="li")label="li • mục danh sách";
-  if(tag==="p")label="p • đoạn văn";
-  if(tag==="tr")label="tr • hàng bảng";
-  if(tag==="table")label="table • bảng";
-  return label || "khối";
-}
-
-function markCurrentBlock(root, block){
-  if(!root)return;
-  const old=root.__vhtkLastBlock;
-  if(old && old!==block){
-    try{
-      old.style.removeProperty("outline");
-      old.style.removeProperty("outline-offset");
-    }catch(e){}
-  }
-  root.__vhtkLastBlock=block||null;
-
-  if(block){
-    block.style.setProperty("outline","2px solid rgba(32,107,81,.22)","important");
-    block.style.setProperty("outline-offset","2px","important");
-  }
-
-  const st=$("#v28BlockStatus");
-  if(st)st.textContent="Khối: "+blockLabel(block);
-}
-
-function currentBlock(){
+function saveV31Selection(){
   const d=publicDoc();
-  const root=selectedPublicSection();
-  if(!d || !root)return null;
-  const sel=d.getSelection();
-  const node=sel && sel.anchorNode;
-  return nearestCloneBlock(node,root) || root.__vhtkLastBlock || null;
-}
-
-function placeCaretAfter(d, el){
-  if(!d || !el)return;
-  const sel=d.getSelection();
-  const range=d.createRange();
-  range.setStartAfter(el);
-  range.collapse(true);
-  sel.removeAllRanges();
-  sel.addRange(range);
-}
-
-function insertHTMLAtSelection(d, html){
-  const sel=d.getSelection();
-  if(!sel || !sel.rangeCount)return false;
-  const range=sel.getRangeAt(0);
-  range.deleteContents();
-
-  const holder=d.createElement("div");
-  holder.innerHTML=html;
-  const frag=d.createDocumentFragment();
-  let last=null;
-  while(holder.firstChild){
-    last=frag.appendChild(holder.firstChild);
-  }
-  range.insertNode(frag);
-
-  if(last){
-    range.setStartAfter(last);
-    range.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(range);
-  }
-  return true;
-}
-
-function insertAsSiblingOfCurrentBlock(d, root, html){
-  const block=currentBlock();
-  if(!block || !block.parentNode)return false;
-
-  const holder=d.createElement("div");
-  holder.innerHTML=html;
-
-  /* Nếu clipboard chứa 1 hoặc nhiều block top-level,
-     chèn chúng sau block hiện tại, cùng cấp. */
-  const nodes=[...holder.childNodes].filter(n=>{
-    return n.nodeType===1 || (n.nodeType===3 && n.textContent.trim());
-  });
-  if(!nodes.length)return false;
-
-  let ref=block;
-  let lastEl=null;
-  for(const n of nodes){
-    const node=n.cloneNode(true);
-    ref.parentNode.insertBefore(node, ref.nextSibling);
-    ref=node;
-    if(node.nodeType===1)lastEl=node;
-  }
-
-  if(lastEl){
-    markCurrentBlock(root,lastEl);
-    placeCaretAfter(d,lastEl);
-  }
-  return true;
-}
-
-function installRichClipboard(d, root){
-  if(!d || !root || root.dataset.richClipboardInstalled==="1")return;
-  root.dataset.richClipboardInstalled="1";
-
-  function updateBlockFromSelection(){
-    const sel=d.getSelection();
-    const node=sel && sel.anchorNode;
-    const block=nearestCloneBlock(node,root);
-    if(block)markCurrentBlock(root,block);
-  }
-
-  root.addEventListener("mouseup",updateBlockFromSelection,true);
-  root.addEventListener("keyup",updateBlockFromSelection,true);
-  root.addEventListener("click",updateBlockFromSelection,true);
-
-  /* Ctrl+C khi KHÔNG bôi đen text:
-     copy nguyên khối HTML hiện tại vào clipboard.
-     Khi có selection text bình thường, vẫn để trình duyệt copy text/rich selection. */
-  root.addEventListener("copy",e=>{
-    const sel=d.getSelection();
-    if(!sel)return;
-    if(sel.isCollapsed){
-      const block=currentBlock();
-      if(!block)return;
-      e.preventDefault();
-      e.clipboardData.setData("text/html",block.outerHTML);
-      e.clipboardData.setData("text/plain",block.innerText||block.textContent||"");
-      e.clipboardData.setData("application/x-vhtk-block",block.outerHTML);
-      setStatus("Đã copy nguyên khối "+blockLabel(block),"ok");
-    }
-  },true);
-
-  root.addEventListener("paste",e=>{
-    const cd=e.clipboardData;
-    if(!cd)return;
-
-    const custom=cd.getData("application/x-vhtk-block");
-    if(custom){
-      e.preventDefault();
-      if(insertAsSiblingOfCurrentBlock(d,root,custom)){
-        syncFromPublic();
-        setStatus("Đã dán nguyên khối cùng cấp","ok");
-      }
-      return;
-    }
-
-    const rich=cd.getData("text/html");
-    if(rich){
-      const block=currentBlock();
-      const holder=d.createElement("div");
-      holder.innerHTML=rich;
-      const first=holder.firstElementChild;
-
-      /* Nếu đang ở LI/P/TR và clipboard cũng là cùng tag,
-         chèn thành sibling thay vì nhét vào bên trong node. */
-      if(block && first && ["LI","P","TR"].includes(block.tagName) && first.tagName===block.tagName){
-        e.preventDefault();
-        if(insertAsSiblingOfCurrentBlock(d,root,rich)){
-          syncFromPublic();
-          setStatus("Đã dán thành khối cùng cấp, giữ HTML","ok");
-        }
-        return;
-      }
-
-      /* Paste rich HTML bình thường. */
-      e.preventDefault();
-      insertHTMLAtSelection(d,rich);
-      syncFromPublic();
-      setStatus("Đã dán HTML và giữ thuộc tính","ok");
-    }
-  },true);
-
-  /* Ctrl+D = nhân nguyên block */
-  root.addEventListener("keydown",e=>{
-    if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="d"){
-      e.preventDefault();
-      duplicateCurrentBlock();
-    }
-  },true);
-
-  /* Delete block nhanh bằng Ctrl+Shift+Backspace */
-  root.addEventListener("keydown",e=>{
-    if((e.ctrlKey||e.metaKey) && e.shiftKey && e.key==="Backspace"){
-      e.preventDefault();
-      deleteCurrentBlock();
-    }
-  },true);
-}
-
-function duplicateCurrentBlock(){
-  const d=publicDoc();
-  const root=selectedPublicSection();
-  if(!d || !root)return;
-  const block=currentBlock();
-
-  if(!block){
-    setStatus("Hãy click vào khối cần nhân bản trước","bad");
-    return;
-  }
-
-  const clone=block.cloneNode(true);
-  block.parentNode.insertBefore(clone,block.nextSibling);
-  markCurrentBlock(root,clone);
-  placeCaretAfter(d,clone);
-  syncFromPublic();
-  refreshCaretAnchors(publicDoc(),selectedPublicSection());
-  setStatus("Đã nhân nguyên khối "+blockLabel(block),"ok");
-}
-
-function deleteCurrentBlock(){
-  const root=selectedPublicSection();
-  const block=currentBlock();
-  if(!root || !block){
-    setStatus("Hãy click vào khối cần xóa trước","bad");
-    return;
-  }
-
-  const parent=block.parentElement;
-  const next=block.nextElementSibling || block.previousElementSibling || parent;
-  block.remove();
-
-  if(next && next!==root)markCurrentBlock(root,next);
-  else markCurrentBlock(root,null);
-
-  syncFromPublic();
-  refreshCaretAnchors(publicDoc(),selectedPublicSection());
-  setStatus("Đã xóa khối","ok");
-}
-
-function moveCurrentBlock(direction){
-  const root=selectedPublicSection();
-  const block=currentBlock();
-  if(!root || !block || !block.parentNode){
-    setStatus("Hãy click vào khối cần di chuyển trước","bad");
-    return;
-  }
-
-  if(direction<0){
-    const prev=block.previousElementSibling;
-    if(!prev){
-      setStatus("Khối đã ở đầu nhóm","bad");
-      return;
-    }
-    block.parentNode.insertBefore(block,prev);
-  }else{
-    const next=block.nextElementSibling;
-    if(!next){
-      setStatus("Khối đã ở cuối nhóm","bad");
-      return;
-    }
-    block.parentNode.insertBefore(next,block);
-  }
-
-  markCurrentBlock(root,block);
-  syncFromPublic();
-  refreshCaretAnchors(publicDoc(),selectedPublicSection());
-  setStatus(direction<0 ? "Đã đưa khối lên" : "Đã đưa khối xuống","ok");
-}
-
-
-let savedVisualRange=null;
-let savedVisualElement=null;
-
-function visualSelection(){
-  const d=publicDoc();
-  return d ? d.getSelection() : null;
-}
-
-function saveVisualSelection(){
-  const d=publicDoc();
-  const root=selectedPublicSection();
-  if(!d || !root)return;
-
+  if(!d)return;
   const sel=d.getSelection();
   if(sel && sel.rangeCount){
-    const r=sel.getRangeAt(0);
-    if(root.contains(r.commonAncestorContainer)){
-      savedVisualRange=r.cloneRange();
-      let n=sel.anchorNode;
-      if(n && n.nodeType===3)n=n.parentElement;
-      savedVisualElement=n && root.contains(n) ? n : null;
-
-      const st=$("#v29SelectionStatus");
-      if(st){
-        st.textContent=sel.isCollapsed ? "Selection: con trỏ" : "Selection: "+sel.toString().length+" ký tự";
-      }
-    }
+    try{v31SavedRange=sel.getRangeAt(0).cloneRange()}catch(e){}
   }
 }
 
-function restoreVisualSelection(){
+function restoreV31Selection(){
   const d=publicDoc();
-  const root=selectedPublicSection();
-  if(!d || !root)return false;
-
+  if(!d || !v31SavedRange)return;
   const sel=d.getSelection();
-  if(savedVisualRange){
-    try{
-      sel.removeAllRanges();
-      sel.addRange(savedVisualRange.cloneRange());
-      return true;
-    }catch(e){}
-  }
-
-  if(savedVisualElement && root.contains(savedVisualElement)){
-    try{
-      const r=d.createRange();
-      r.selectNodeContents(savedVisualElement);
-      r.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(r);
-      return true;
-    }catch(e){}
-  }
-  return false;
+  try{
+    sel.removeAllRanges();
+    sel.addRange(v31SavedRange.cloneRange());
+  }catch(e){}
 }
 
-function currentVisualElement(){
-  const d=publicDoc();
-  const root=selectedPublicSection();
-  if(!d || !root)return null;
-  const sel=d.getSelection();
-  let n=sel && sel.anchorNode;
-  if(n && n.nodeType===3)n=n.parentElement;
-  if(n && root.contains(n))return n;
-  if(savedVisualElement && root.contains(savedVisualElement))return savedVisualElement;
-  return root;
-}
+function enableSimpleVisualEditor(d, sec){
+  if(!d || !sec)return;
 
-function installSelectionTracking(d,root){
-  if(!d || !root || root.dataset.selectionTracking==="1")return;
-  root.dataset.selectionTracking="1";
+  /* Let the browser edit naturally like a normal HTML document. */
+  try{d.designMode="on"}catch(e){}
+  d.body.setAttribute("contenteditable","true");
+  d.body.setAttribute("spellcheck","false");
 
-  ["mouseup","keyup","input","click"].forEach(ev=>{
-    root.addEventListener(ev,()=>{
-      setTimeout(saveVisualSelection,0);
-    },true);
+  /* Keep only current article editable/visible. */
+  sec.setAttribute("contenteditable","true");
+  sec.style.outline="none";
+
+  ["mouseup","keyup","click","input","focusin"].forEach(ev=>{
+    d.addEventListener(ev,()=>setTimeout(saveV31Selection,0),true);
   });
 
-  root.addEventListener("focusin",()=>setTimeout(saveVisualSelection,0),true);
-}
+  d.addEventListener("input",()=>{
+    syncFromPublic();
+  },true);
 
-/* Universal visual command.
-   Critical point: restore iframe selection BEFORE execCommand. */
-function execVisual(cmd,arg=null){
-  const d=publicDoc();
-  const root=selectedPublicSection();
-  if(!d || !root)return;
-
-  restoreVisualSelection();
-  root.focus();
-
-  try{
-    d.execCommand("styleWithCSS",false,true);
-  }catch(e){}
-
-  d.execCommand(cmd,false,arg);
-  saveVisualSelection();
-  syncFromPublic();
-}
-
-/* Edit attrs without opening HTML source. */
-function editCurrentElementProps(){
-  const el=currentVisualElement();
-  const root=selectedPublicSection();
-  if(!el || !root)return;
-
-  let target=el;
-  if(target.closest){
-    target = target.closest("img,a,iframe,video,table,td,th,li,p,div,span,h1,h2,h3,h4,blockquote") || target;
-  }
-  if(target===root){
-    setStatus("Hãy click vào phần tử cần sửa trước","bad");
-    return;
-  }
-
-  const tag=(target.tagName||"").toLowerCase();
-
-  if(tag==="img"){
-    const src=prompt("Đường dẫn ảnh (src):",target.getAttribute("src")||"");
-    if(src===null)return;
-    const alt=prompt("Mô tả ảnh (alt):",target.getAttribute("alt")||"");
-    if(alt===null)return;
-    target.setAttribute("src",src);
-    target.setAttribute("alt",alt);
-  }else if(tag==="a"){
-    const href=prompt("Liên kết (href):",target.getAttribute("href")||"");
-    if(href===null)return;
-    target.setAttribute("href",href);
-    const blank=confirm("Mở liên kết ở tab mới?");
-    if(blank){
-      target.setAttribute("target","_blank");
-      target.setAttribute("rel","noopener noreferrer");
-    }else{
-      target.removeAttribute("target");
-      target.removeAttribute("rel");
-    }
-  }else if(tag==="iframe"){
-    const src=prompt("URL iframe/video:",target.getAttribute("src")||"");
-    if(src===null)return;
-    target.setAttribute("src",src);
-  }else{
-    const cls=prompt("Class CSS:",target.getAttribute("class")||"");
-    if(cls===null)return;
-    const sty=prompt("Style inline:",target.getAttribute("style")||"");
-    if(sty===null)return;
-    if(cls.trim())target.setAttribute("class",cls.trim()); else target.removeAttribute("class");
-    if(sty.trim())target.setAttribute("style",sty.trim()); else target.removeAttribute("style");
-  }
-
-  syncFromPublic();
-  saveVisualSelection();
-  setStatus("Đã cập nhật thuộc tính "+tag,"ok");
-}
-
-function installVisualShortcuts(d,root){
-  if(!d || !root || root.dataset.visualShortcuts==="1")return;
-  root.dataset.visualShortcuts="1";
-
-  root.addEventListener("keydown",e=>{
-    if(!(e.ctrlKey||e.metaKey))return;
-    const k=e.key.toLowerCase();
-
-    if(k==="b"){e.preventDefault();saveVisualSelection();execVisual("bold")}
-    if(k==="i"){e.preventDefault();saveVisualSelection();execVisual("italic")}
-    if(k==="u"){e.preventDefault();saveVisualSelection();execVisual("underline")}
-    if(k==="k"){
+  d.addEventListener("keydown",e=>{
+    if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="s"){
       e.preventDefault();
-      saveVisualSelection();
-      addLink();
+      saveArticle();
     }
   },true);
 }
 
-function makeCaretAnchor(d){
-  const p=d.createElement("p");
-  p.className="vhtk-caret-anchor";
-  p.dataset.vhtkEditorOnly="1";
-  p.setAttribute("contenteditable","true");
-  p.innerHTML="<br>";
-  return p;
+function execSimple(cmd,arg=null){
+  const d=publicDoc();
+  if(!d)return;
+  restoreV31Selection();
+  try{d.execCommand("styleWithCSS",false,true)}catch(e){}
+  d.execCommand(cmd,false,arg);
+  saveV31Selection();
+  syncFromPublic();
 }
-
-function isEditorOnlyAnchor(el){
-  return !!(el && el.nodeType===1 && el.dataset && el.dataset.vhtkEditorOnly==="1");
-}
-
-function stripEditorOnlyFromClone(rootClone){
-  if(!rootClone)return rootClone;
-  rootClone.querySelectorAll('[data-vhtk-editor-only="1"]').forEach(el=>el.remove());
-  return rootClone;
-}
-
-function visualHTMLForSave(){
-  const sec=selectedPublicSection();
-  if(!sec)return $("#editor").innerHTML||"";
-  const clone=sec.cloneNode(true);
-  stripEditorOnlyFromClone(clone);
-
-  /* Remove editing-only attributes/styles from the cloned section contents. */
-  clone.removeAttribute("contenteditable");
-  clone.removeAttribute("spellcheck");
-  clone.removeAttribute("data-vhtk-admin-editing");
-  clone.removeAttribute("data-rich-clipboard-installed");
-  clone.removeAttribute("data-selection-tracking");
-  clone.removeAttribute("data-visual-shortcuts");
-
-  return clone.innerHTML;
-}
-
-function refreshCaretAnchors(d,root){
-  if(!d || !root)return;
-
-  /* Keep anchors only as direct children of the edited section.
-     This gives insertion points before/between/after main blocks. */
-  const children=[...root.children];
-
-  if(!children.length){
-    root.appendChild(makeCaretAnchor(d));
-    return;
-  }
-
-  if(!isEditorOnlyAnchor(root.firstElementChild)){
-    root.insertBefore(makeCaretAnchor(d),root.firstElementChild);
-  }
-
-  let cur=root.firstElementChild;
-  while(cur){
-    const next=cur.nextElementSibling;
-
-    if(!isEditorOnlyAnchor(cur) && (!next || !isEditorOnlyAnchor(next))){
-      const a=makeCaretAnchor(d);
-      cur.insertAdjacentElement("afterend",a);
-      cur=a;
-    }
-
-    cur=cur.nextElementSibling;
-  }
-}
-
-function convertAnchorWhenTyping(e){
-  const el=e.target && e.target.closest ? e.target.closest(".vhtk-caret-anchor") : null;
-  if(!el)return;
-
-  const text=(el.textContent||"").replace(/\u200B/g,"").trim();
-  const hasMeaningfulHTML=(el.innerHTML||"").replace(/<br\s*\/?>/gi,"").trim();
-
-  if(text || hasMeaningfulHTML){
-    el.classList.remove("vhtk-caret-anchor");
-    el.removeAttribute("data-vhtk-editor-only");
-    el.removeAttribute("style");
-    if(el.tagName.toLowerCase()==="p" && !el.getAttribute("class")){
-      el.removeAttribute("class");
-    }
-
-    const d=publicDoc();
-    const root=selectedPublicSection();
-    setTimeout(()=>{
-      refreshCaretAnchors(d,root);
-      saveVisualSelection();
-      syncFromPublic();
-    },0);
-  }
-}
-
-function installCaretAnchors(d,root){
-  if(!d || !root || root.dataset.caretAnchorsInstalled==="1")return;
-  root.dataset.caretAnchorsInstalled="1";
-
-  refreshCaretAnchors(d,root);
-
-  root.addEventListener("input",convertAnchorWhenTyping,true);
-
-  /* After block operations or Enter, regenerate missing insertion points. */
-  root.addEventListener("keyup",e=>{
-    if(["Enter","Backspace","Delete"].includes(e.key)){
-      setTimeout(()=>refreshCaretAnchors(d,root),0);
-    }
-  },true);
-
-  root.addEventListener("click",e=>{
-    if(e.target===root){
-      const last=root.lastElementChild;
-      if(last && isEditorOnlyAnchor(last)){
-        const r=d.createRange();
-        const sel=d.getSelection();
-        r.selectNodeContents(last);
-        r.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(r);
-        last.focus();
-      }
-    }
-  },true);
-}
-
 function ensurePublicEditMode(){
   const d=publicDoc();
   if(!d || !currentData)return false;
@@ -1074,10 +492,7 @@ function ensurePublicEditMode(){
 
   sec.addEventListener("input",syncFromPublic);
   sec.addEventListener("blur",syncFromPublic);
-  installRichClipboard(d,sec);
-  installSelectionTracking(d,sec);
-  installVisualShortcuts(d,sec);
-  installCaretAnchors(d,sec);
+  enableSimpleVisualEditor(d,sec);
 
   if(!d.getElementById("vhtk-admin-live-style")){
     const marker=d.createElement("style");
@@ -1223,7 +638,7 @@ function collectArticle(){
   currentData.order=Number($("#orderInput").value||1);
   currentData.visible=$("#visibleInput").checked;
 
-  const edited=sourceMode?$("#sourceEditor").value:visualHTMLForSave();
+  const edited=sourceMode?$("#sourceEditor").value:getVisualHTML();
 
   if("section_html" in currentData){
     currentData.section_html=edited;
@@ -1312,7 +727,7 @@ async function newArticle(){
 }
 
 function exec(cmd,arg=null){
-  execVisual(cmd,arg);
+  execSimple(cmd,arg);
 }
 function syncEditors(){
   if(!sourceMode)syncFromPublic();
@@ -1355,12 +770,11 @@ function toggleSource(){
   }
 }
 function addLink(){
-  saveVisualSelection();
+  saveV31Selection();
   const u=prompt("URL liên kết:");
-  if(u){
-    restoreVisualSelection();
-    execVisual("createLink",u);
-  }
+  if(!u)return;
+  restoreV31Selection();
+  execSimple("createLink",u);
 }
 function addVideo(){
   const u=prompt("Dán URL YouTube:");if(!u)return;
@@ -1408,25 +822,18 @@ async function uploadImage(){
 $("#loginBtn").onclick=login;$("#logoutBtn").onclick=logout;$("#reloadBtn").onclick=()=>loadArticles();
 $("#saveBtn").onclick=saveArticle;$("#settingsBtn").onclick=loadSettings;$("#saveSettingsBtn").onclick=saveSettings;
 $("#newArticleBtn").onclick=newArticle;$("#articleSearch").oninput=renderArticleList;
-$("#duplicateBlockBtn").onclick=duplicateCurrentBlock;
-$("#deleteBlockBtn").onclick=deleteCurrentBlock;
-$("#moveBlockUpBtn").onclick=()=>moveCurrentBlock(-1);
-$("#moveBlockDownBtn").onclick=()=>moveCurrentBlock(1);
-$("#elementPropsBtn").onclick=editCurrentElementProps;
 $("#sourceBtn").onclick=toggleSource;$("#linkBtn").onclick=addLink;$("#videoBtn").onclick=addVideo;$("#tableBtn").onclick=addTable;
 $("#imageBtn").onclick=openMedia;$("#closeMediaBtn").onclick=()=>$("#mediaModal").classList.add("hidden");$("#uploadBtn").onclick=uploadImage;
-document.querySelectorAll(".toolbar button,.toolbar select,.toolbar input").forEach(el=>{
-  el.addEventListener("mousedown",e=>{
-    saveVisualSelection();
-    /* Prevent buttons/selects from destroying iframe selection.
-       Color input remains clickable via click event. */
-    if(el.tagName==="BUTTON")e.preventDefault();
+document.querySelectorAll(".toolbar button").forEach(b=>{
+  b.addEventListener("mousedown",e=>{
+    saveV31Selection();
+    e.preventDefault();
   });
 });
 document.querySelectorAll("[data-cmd]").forEach(b=>b.onclick=()=>exec(b.dataset.cmd));
-$("#blockSelect").onchange=e=>{if(e.target.value){restoreVisualSelection();execVisual("formatBlock",e.target.value)}};
-$("#fontSizeSelect").onchange=e=>{if(e.target.value){restoreVisualSelection();execVisual("fontSize",e.target.value)}};
-$("#foreColor").onchange=e=>restoreVisualSelection();execVisual("foreColor",e.target.value);$("#backColor").onchange=e=>restoreVisualSelection();execVisual("hiliteColor",e.target.value);
+$("#blockSelect").onchange=e=>{if(e.target.value){restoreV31Selection();execSimple("formatBlock",e.target.value)}};
+$("#fontSizeSelect").onchange=e=>{if(e.target.value){restoreV31Selection();execSimple("fontSize",e.target.value)}};
+$("#foreColor").onchange=e=>restoreV31Selection();execSimple("foreColor",e.target.value);$("#backColor").onchange=e=>restoreV31Selection();execSimple("hiliteColor",e.target.value);
 /* V13 syncs directly from same-origin Public iframe */$("#sourceEditor").oninput=()=>{if(sourceMode){}};
 
 // Auto-login from stored token.

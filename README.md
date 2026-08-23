@@ -1,18 +1,11 @@
-# CMS v30 — Đặt con trỏ mọi nơi trong WYSIWYG
+# CMS v31 — Editor đơn giản như HTML trước đây
 
-Sửa hạn chế của v29:
-- Có điểm chèn ở đầu section.
-- Có điểm chèn giữa các top-level block.
-- Có điểm chèn ở cuối section.
-- Click vào khoảng trống và gõ trực tiếp.
-- Khi bắt đầu gõ, anchor biến thành paragraph thật.
-- Anchor trống là editor-only và bị loại bỏ trước khi Save/Commit.
-- Không làm bẩn section_html bằng các helper của editor.
-
-Vẫn giữ:
-- Selection-preserving toolbar
-- B/I/U, màu, cỡ chữ, căn lề, list, link
-- Thuộc tính trực quan
-- Block tools
-- HTML Source hai chiều
-- PAT/GitHub API/Safe JSON
+- Bỏ toàn bộ block editor / caret anchor phức tạp.
+- Dùng iframe `designMode` + contenteditable tự nhiên.
+- Click vào text và gõ trực tiếp.
+- Bôi đen rồi dùng toolbar.
+- Enter xuống dòng bình thường.
+- Copy/paste bình thường.
+- Ctrl+S để lưu.
+- HTML Source vẫn giữ như chế độ phụ.
+- Giữ PAT, GitHub API, Safe JSON, search, video, Dã Tẩu và copyright.
