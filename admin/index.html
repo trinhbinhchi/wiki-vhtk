@@ -1334,6 +1334,39 @@ button,input,textarea,select{font:inherit}
 }
 .v54-insert-menu button:hover{background:#edf6f1}
 </style>
+
+<style id="v55-list-indent-style">
+/* v55: marker là text thật trong editor nhưng wrap/BR vẫn thẳng hàng với phần chữ */
+.v54-editor-li{
+  list-style:none!important;
+  padding-left:1.55em!important;
+  text-indent:-1.55em!important;
+}
+.v54-editor-li > .v54-li-marker{
+  display:inline-block!important;
+  width:1.55em!important;
+  margin-right:0!important;
+  text-indent:0!important;
+  user-select:text!important;
+  -webkit-user-select:text!important;
+  cursor:text!important;
+  vertical-align:baseline!important;
+}
+.v54-editor-li br{
+  line-height:inherit!important;
+}
+
+/* dấu + luôn bấm được và nổi trên nội dung */
+.v54-insert-gap{
+  pointer-events:auto!important;
+  z-index:2147483000!important;
+}
+.v54-insert-gap button{
+  pointer-events:auto!important;
+  position:relative!important;
+  z-index:2147483001!important;
+}
+</style>
 </head>
 <body>
 <div class="login" id="loginView">
@@ -14705,6 +14738,13 @@ function v54InstallRealMarkers(){
   if(!article)return;
 
   article.querySelectorAll("li").forEach(li=>{
+    li.classList.add("v54-editor-li");
+
+    /* LI itself editable so Enter/BR behaves as a list row */
+    li.contentEditable="true";
+    li.spellcheck=false;
+    li.dataset.v51Editable="1";
+
     if(li.querySelector(":scope > .v54-li-marker"))return;
 
     const marker=v51Doc.createElement("span");
@@ -14713,7 +14753,6 @@ function v54InstallRealMarkers(){
     marker.textContent=v54MarkerText(li)+" ";
     marker.contentEditable="false";
 
-    li.classList.add("v54-editor-li");
     li.insertBefore(marker,li.firstChild);
   });
 }
@@ -14784,18 +14823,53 @@ function v54InstallInsertGaps(){
   content.querySelectorAll(":scope > .v54-insert-gap").forEach(x=>x.remove());
 
   const blocks=[...content.children].filter(x=>!x.classList.contains("v54-insert-gap"));
+
   const make=(afterEl)=>{
     const gap=v51Doc.createElement("div");
     gap.className="v54-insert-gap";
     gap.dataset.v54EditorOnly="1";
     gap.contentEditable="false";
-    gap.innerHTML="<button type='button'>＋</button>";
+    gap.innerHTML="<button type='button' title='Chèn dòng mới'>＋</button>";
+
     const btn=gap.querySelector("button");
-    btn.addEventListener("mousedown",e=>{e.preventDefault();e.stopPropagation()});
-    btn.addEventListener("click",e=>{
-      e.preventDefault();e.stopPropagation();
-      v54OpenInsertMenu(afterEl,btn);
+    btn.addEventListener("mousedown",e=>{
+      e.preventDefault();
+      e.stopPropagation();
     });
+
+    btn.addEventListener("click",e=>{
+      e.preventDefault();
+      e.stopPropagation();
+
+      /* v55: click + là chèn paragraph ngay, không qua menu */
+      const p=v51Doc.createElement("p");
+      p.innerHTML="<br>";
+      p.contentEditable="true";
+      p.spellcheck=false;
+      p.dataset.v51Editable="1";
+
+      if(afterEl && afterEl.parentNode){
+        afterEl.parentNode.insertBefore(p,afterEl.nextSibling);
+      }else{
+        content.insertBefore(p,content.firstChild);
+      }
+
+      v52SyncHtml(true);
+      v54InstallInsertGaps();
+
+      const range=v51Doc.createRange();
+      range.selectNodeContents(p);
+      range.collapse(true);
+      const sel=v51Win.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      p.focus();
+
+      v52SelectedEl=p;
+      v52UpdateProps();
+      v50ShowMiniToolbar(0);
+    });
+
     return gap;
   };
 
@@ -14818,7 +14892,9 @@ function v54InstallEnterBehavior(){
     const active=v51Doc.activeElement;
     if(!active || !active.isContentEditable)return;
 
-    // Shift+Enter = explicit line break exactly at caret.
+    const li=active.closest("li");
+
+    /* Shift+Enter: xuống dòng trong cùng bullet, dùng hanging indent */
     if(e.shiftKey){
       e.preventDefault();
       try{
@@ -14830,18 +14906,50 @@ function v54InstallEnterBehavior(){
       return;
     }
 
-    // Enter at paragraph/heading creates a new paragraph after current block.
-    const base=active.closest("p,h1,h2,h3,h4,h5,h6");
-    if(base && !active.closest("li")){
+    /* Enter trong LI: tạo LI mới đúng cấu trúc */
+    if(li){
       e.preventDefault();
+
+      const newLi=v51Doc.createElement("li");
+      newLi.innerHTML="<br>";
+      newLi.contentEditable="true";
+      newLi.spellcheck=false;
+      newLi.dataset.v51Editable="1";
+      newLi.classList.add("v54-editor-li");
+
+      li.parentNode.insertBefore(newLi,li.nextSibling);
+
+      const marker=v51Doc.createElement("span");
+      marker.className="v54-li-marker";
+      marker.dataset.v54EditorOnly="1";
+      marker.textContent=v54MarkerText(newLi)+" ";
+      marker.contentEditable="false";
+      newLi.insertBefore(marker,newLi.firstChild);
+
+      const range=v51Doc.createRange();
+      range.setStart(newLi,newLi.childNodes.length);
+      range.collapse(true);
+      const sel=v51Win.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      newLi.focus();
+
+      v52SyncHtml(true);
+      return;
+    }
+
+    /* Enter trong p/h: tạo paragraph mới phía dưới */
+    const base=active.closest("p,h1,h2,h3,h4,h5,h6");
+    if(base){
+      e.preventDefault();
+
       const p=v51Doc.createElement("p");
       p.innerHTML="<br>";
-      base.parentNode.insertBefore(p,base.nextSibling);
       p.contentEditable="true";
       p.spellcheck=false;
       p.dataset.v51Editable="1";
+      base.parentNode.insertBefore(p,base.nextSibling);
 
-      // Place caret inside new paragraph.
       const range=v51Doc.createRange();
       range.selectNodeContents(p);
       range.collapse(true);
@@ -14852,15 +14960,6 @@ function v54InstallEnterBehavior(){
 
       v52SyncHtml(true);
       v54InstallInsertGaps();
-      return;
-    }
-
-    // In list item: native Enter behavior is useful; sync after browser modifies DOM.
-    if(active.closest("li")){
-      setTimeout(()=>{
-        v54InstallRealMarkers();
-        v52SyncHtml(true);
-      },0);
     }
   },true);
 }
@@ -15022,6 +15121,66 @@ function v53ApplyProps(){
   $("#v53PropsPopup").classList.remove("show");
 }
 
+
+function v55NormalizedText(s){
+  return String(s||"").replace(/\s+/g," ").trim();
+}
+
+function v55SelectedWholeListItem(){
+  const sel=v51Win?.getSelection?.();
+  if(!sel||sel.rangeCount===0||sel.isCollapsed)return null;
+
+  let node=sel.anchorNode;
+  if(node?.nodeType===3)node=node.parentElement;
+  const li=node?.closest?.("li");
+  if(!li)return null;
+
+  const focusNode=sel.focusNode?.nodeType===3?sel.focusNode.parentElement:sel.focusNode;
+  if(!focusNode || !li.contains(focusNode))return null;
+
+  const selected=v55NormalizedText(String(sel));
+  if(!selected)return null;
+
+  const clone=li.cloneNode(true);
+  clone.querySelectorAll(".v54-li-marker").forEach(x=>x.remove());
+  const body=v55NormalizedText(clone.innerText||clone.textContent||"");
+
+  return selected===body ? li : null;
+}
+
+async function v55CopyWholeListItem(li){
+  if(!li)return false;
+
+  const marker=li.querySelector(":scope > .v54-li-marker")?.textContent?.trim() || "•";
+  const clone=li.cloneNode(true);
+
+  clone.querySelectorAll(".v54-li-marker").forEach(x=>x.remove());
+  clone.classList.remove("v54-editor-li","v53-block-hover","v53-block-selected","v51-selected");
+  clone.removeAttribute("contenteditable");
+  clone.removeAttribute("data-v51-editable");
+
+  const plain=marker+" "+(clone.innerText||clone.textContent||"").trim();
+
+  /* HTML clipboard: explicit marker text INSIDE li so it survives outside site CSS */
+  const html=`<li>${marker} ${clone.innerHTML}</li>`;
+
+  try{
+    if(navigator.clipboard && window.ClipboardItem){
+      await navigator.clipboard.write([new ClipboardItem({
+        "text/html":new Blob([html],{type:"text/html"}),
+        "text/plain":new Blob([plain],{type:"text/plain"})
+      })]);
+    }else if(navigator.clipboard){
+      await navigator.clipboard.writeText(plain);
+    }
+    v53ShowToast("Đã copy cả dấu tròn + nội dung");
+    return true;
+  }catch(e){
+    console.warn("v55 clipboard failed",e);
+    return false;
+  }
+}
+
 function v53BindEditorShortcuts(){
   if(!v51Doc)return;
   const article=v51Doc.querySelector("article.article");
@@ -15050,11 +15209,20 @@ function v53BindEditorShortcuts(){
     const mod=e.ctrlKey||e.metaKey;
 
     if(mod && e.key.toLowerCase()==="c"){
-      // If there is active text selection, keep browser's normal copy.
       const sel=v51Win?.getSelection?.();
+
+      /* v55: nếu người dùng tô hết chữ của 1 LI thì copy luôn marker */
+      const wholeLi=v55SelectedWholeListItem();
+      if(wholeLi){
+        e.preventDefault();
+        v55CopyWholeListItem(wholeLi);
+        return;
+      }
+
+      /* Selection text bình thường vẫn để browser copy */
       if(sel && !sel.isCollapsed && String(sel).trim())return;
 
-      // No text selected -> copy selected full block.
+      /* Không selection: copy nguyên selected block */
       if(v52SelectedEl){
         e.preventDefault();
         v53CopyBlock();
