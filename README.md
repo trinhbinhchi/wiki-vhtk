@@ -1,47 +1,15 @@
-# CMS v37 — Visual Builder
+# CMS v38 — Public-like Visual Builder
 
-Đổi hoàn toàn phần soạn thảo Admin sang Visual Builder (GrapesJS).
+Cải thiện giao diện v37:
 
-## Trực tiếp
-- Double click text để sửa.
-- Click phần tử/box để chọn.
-- Kéo thả block mới vào bài.
-- Undo / Redo.
-- Nhân bản / Xóa.
-- Di chuyển lên / xuống.
+- Nhúng CSS thật của trang Public vào canvas GrapesJS.
+- Canvas dùng nền, font, card, heading, khoảng cách và layout gần Public 1:1.
+- Bỏ cảm giác canvas xám/dev-tool.
+- Panel phải thu từ 310px xuống 260px.
+- Có nút `☰ Panel` để ẩn/hiện panel thuộc tính.
+- Vùng bài viết rộng hơn.
+- Giữ Thêm / Thuộc tính / Cấu trúc.
+- Giữ Undo / Redo / Nhân bản / Xóa / Lên / Xuống / HTML.
+- Giữ GitHub PAT/API, Safe JSON và toàn bộ Public.
 
-## Tab bên phải
-### Thêm
-- Văn bản
-- Tiêu đề
-- Danh sách
-- Khung
-- Ảnh
-- Link
-- Bảng
-
-### Thuộc tính
-- width / min-height
-- margin / padding
-- font / size / weight / line-height
-- màu chữ
-- căn lề
-- background
-- border
-- border radius
-- shadow / opacity
-
-### Cấu trúc
-- Cây HTML cha/con để chọn đúng phần tử.
-
-## HTML
-Nút `</> HTML` vẫn có cho trường hợp cần chỉnh source.
-
-## Giữ nguyên
-- GitHub PAT / API
-- Safe JSON
-- Public site
-- Search / video / Dã Tẩu
-- Copyright sidebar
-
-Lưu ý: Visual Builder được tải từ CDN `unpkg.com`, nên khi vào Admin cần có Internet.
+Visual Builder vẫn tải GrapesJS từ CDN nên Admin cần Internet.
