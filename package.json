@@ -1,7 +1,0 @@
-{
-  "name": "wiki-vhtk",
-  "private": true,
-  "scripts": {
-    "build": "node build.js"
-  }
-}
