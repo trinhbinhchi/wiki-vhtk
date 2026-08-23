@@ -1117,6 +1117,76 @@ button,input,textarea,select{font:inherit}
   line-height:1.45;
 }
 </style>
+
+<style id="v50-miniadmin-style">
+#v50MiniToolbar{
+  position:fixed;
+  z-index:500000;
+  display:none;
+  align-items:center;
+  gap:4px;
+  padding:5px 6px;
+  border:1px solid #cedbd3;
+  border-radius:9px;
+  background:rgba(255,255,255,.98);
+  box-shadow:0 10px 28px rgba(30,55,43,.16);
+  font-family:"Segoe UI",Arial,sans-serif;
+}
+#v50MiniToolbar.show{display:flex}
+#v50MiniToolbar button,
+#v50MiniToolbar select,
+#v50MiniToolbar input[type=color]{
+  height:27px;
+  border:1px solid #d3ddd7;
+  border-radius:6px;
+  background:#fff;
+  color:#355044;
+  font-size:10px;
+  font-weight:800;
+  cursor:pointer;
+}
+#v50MiniToolbar button{min-width:28px;padding:0 7px}
+#v50MiniToolbar button:hover{background:#edf6f1}
+#v50MiniToolbar .danger{color:#a5443c}
+#v50MiniToolbar .sep{width:1px;height:19px;background:#dde5df;margin:0 2px}
+#v50MiniToolbar input[type=color]{width:30px;padding:2px}
+#v50MiniToolbar select{padding:0 5px}
+#v50SaveState{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  margin-left:6px;
+  padding:4px 8px;
+  border-radius:999px;
+  border:1px solid #d7e0da;
+  background:#fff;
+  color:#67756e;
+  font-size:10px;
+  font-weight:800;
+  white-space:nowrap;
+}
+#v50SaveState.dirty{background:#fff7e5;color:#8a641e;border-color:#ead29b}
+#v50SaveState.local{background:#eef7f2;color:#35654f;border-color:#cfe2d7}
+#v50SaveState.commit{background:#e8f2ff;color:#315f91;border-color:#c9daf0}
+#v50SaveState.ok{background:#eaf6ef;color:#267151;border-color:#bedcc9}
+#v50SaveState.bad{background:#fff0ef;color:#a3423a;border-color:#e8c4c1}
+#v42Side.v50-collapsed{display:none!important}
+#v42Shell.v50-side-collapsed{grid-template-columns:minmax(0,1fr)!important}
+#v50TogglePanel{
+  margin-left:4px;
+}
+.v50-block-hover{
+  position:relative;
+}
+.v50-block-hover:hover::after{
+  content:"";
+  position:absolute;
+  inset:-3px;
+  pointer-events:none;
+  border:1px dashed rgba(43,117,85,.25);
+  border-radius:7px;
+}
+</style>
 </head>
 <body>
 <div class="login" id="loginView">
@@ -1155,7 +1225,7 @@ button,input,textarea,select{font:inherit}
 <div class="topbar-right">
 <a class="btn" href="../" rel="noopener" target="_blank">👁 Xem website</a>
 <button class="btn" id="reloadBtn">↻ Tải lại</button>
-<button class="btn btn-primary" id="saveBtn">💾 Lưu &amp; Commit</button>
+<button class="btn btn-primary" id="saveBtn" title="Commit nhanh bằng GitHub GraphQL">⚡ Commit nhanh</button><span id="v50SaveState" class="ok">✓ Đã đồng bộ</span>
 </div>
 </div>
 <section class="hidden" id="articlePanel">
@@ -1188,7 +1258,7 @@ button,input,textarea,select{font:inherit}
 
 
 <div id="v42Shell"><section id="v42Main">
-<div id="v42Top"><button id="v42Undo">↶ Undo</button><button id="v42Redo">↷ Redo</button><button id="v42Duplicate">⧉ Nhân bản</button><button id="v42Delete">🗑 Xóa</button><button id="v42Up">↑ Lên</button><button id="v42Down">↓ Xuống</button><span id="v42State">Structured CMS</span></div>
+<div id="v42Top"><button id="v42Undo">↶ Undo</button><button id="v42Redo">↷ Redo</button><button id="v42Duplicate">⧉ Nhân bản</button><button id="v42Delete">🗑 Xóa</button><button id="v42Up">↑ Lên</button><button id="v42Down">↓ Xuống</button><button id="v50TogglePanel" type="button">☰ Panel</button><span id="v42State">Structured CMS</span></div>
 <div id="v42Canvas"><div id="v49HeaderPreview"></div><div id="v42Preview"></div></div></section>
 <aside id="v42Side"><div class="v42-head">✦ Structured CMS</div>
 <div class="v42-sec"><h4>Thêm block</h4><div class="v42-grid2">
@@ -2914,6 +2984,7 @@ async function showApp(){
   $("#loginView").classList.add("hidden");$("#appView").classList.remove("hidden");
   $("#whoami").textContent="GitHub: "+(user?.login||"");
   await loadArticles();
+  v50RefreshHeadOid().catch(e=>console.warn("HEAD load",e));
 }
 
 function logout(){
@@ -11569,6 +11640,7 @@ function v49SyncHeader(){
   v49PatchTemplateHeader();
   currentData.section_html=renderBlocks(currentData);
   setStatus("Đã cập nhật tiêu đề/header trực quan","ok");
+  v50MarkDirty();
 }
 
 function v49PatchTemplateHeader(){
@@ -11705,6 +11777,7 @@ function v47MakeEditable(render,b,index){
       v42Selected=index;
       document.querySelectorAll(".v42-block").forEach((x,j)=>x.classList.toggle("selected",j===index));
       v42Props();
+      setTimeout(()=>v50ShowMiniToolbar(index),0);
     });
 
     el.addEventListener("input",()=>{
@@ -11781,8 +11854,9 @@ function v47SyncEditable(render,b,index){
   v42Selected=index;
   v42Props();
   setStatus("Đã cập nhật block trực quan","ok");
+  v50MarkDirty();
 }
-function v42Select(i){v42Selected=i;v42Render()}
+function v42Select(i){v42Selected=i;v42Render();setTimeout(()=>v50ShowMiniToolbar(i),0)}
 function v42Props(){
   const b=v42Blocks()[v42Selected],e=$("#v42Empty"),p=$("#v42Props");if(!b){e.style.display="";p.style.display="none";return}e.style.display="none";p.style.display="";
   $("#v42Type").value=b.type||"";$("#v42LevelWrap").style.display=b.type==="heading"?"":"none";$("#v42Level").value=b.level||3;
@@ -12645,6 +12719,7 @@ function v37BindUi(){
 function openArticle(name){
   const a=articles.find(x=>x.name===name);if(!a)return;
   currentFile=a.name;currentSha=a.sha;currentData=structuredClone(a.data);
+  v50RestoreDraftIfSafe();
   $("#articlePanel").classList.remove("hidden");$("#settingsPanel").classList.add("hidden");
   $("#currentTitle").textContent=currentData.title||name;
   $("#titleInput").value=currentData.title||"";
@@ -12661,7 +12736,7 @@ function openArticle(name){
   loadPublicForEditing();
 
   renderArticleList();
-  setStatus("Đang mở trang Public thật...");
+  if(!v50Dirty)setStatus("Đang mở trang Public thật...");
   
   
   
@@ -12685,39 +12760,332 @@ function collectArticle(){
   return currentData;
 }
 
-async function saveArticle(){
-  if(!currentFile)return;
-  v49SyncHeader();
-  if(currentData&&currentData.blocks)currentData.section_html=renderBlocks(currentData);
-  
-  
-  
-  if(sourceMode){
-    const raw=$("#sourceEditor").value;
-    if("section_html" in currentData)currentData.section_html=raw;
-    else currentData.body_html=raw;
-  }
-  collectArticle();setStatus("Đang commit...");
+
+let v50HeadOid="";
+let v50Dirty=false;
+let v50DraftTimer=null;
+let v50SavedRange=null;
+let v50ToolbarBlock=-1;
+
+function v50DraftKey(file=currentFile){return file?`vhtk_draft_${OWNER}_${REPO}_${file}`:""}
+
+function v50SetSaveState(text,kind=""){
+  const el=$("#v50SaveState");
+  if(!el)return;
+  el.textContent=text;
+  el.className=kind||"";
+}
+
+function v50CaptureCurrent(){
+  if(!currentData)return null;
+  currentData.title=$("#titleInput").value.trim();
+  currentData.icon=$("#iconInput").value.trim();
+  currentData.order=Number($("#orderInput").value||1);
+  currentData.visible=$("#visibleInput").checked;
+  if(currentData.blocks)currentData.section_html=renderBlocks(currentData);
+  return currentData;
+}
+
+function v50SaveDraftNow(){
+  if(!currentFile||!currentData)return;
   try{
+    v50CaptureCurrent();
+    const payload={
+      baseSha:currentSha||"",
+      savedAt:Date.now(),
+      data:currentData
+    };
+    localStorage.setItem(v50DraftKey(),JSON.stringify(payload));
+    v50SetSaveState("✓ Đã lưu local","local");
+  }catch(e){
+    console.warn("Local draft save failed",e);
+  }
+}
+
+function v50MarkDirty(){
+  if(!currentFile||!currentData)return;
+  v50Dirty=true;
+  v50SetSaveState("● Chưa commit","dirty");
+  clearTimeout(v50DraftTimer);
+  v50DraftTimer=setTimeout(v50SaveDraftNow,450);
+}
+
+function v50ClearDraft(){
+  try{localStorage.removeItem(v50DraftKey())}catch(e){}
+}
+
+function v50RestoreDraftIfSafe(){
+  if(!currentFile||!currentData)return false;
+  try{
+    const raw=localStorage.getItem(v50DraftKey());
+    if(!raw)return false;
+    const d=JSON.parse(raw);
+    if(!d?.data)return false;
+    // Chỉ tự khôi phục nếu remote SHA vẫn đúng bản gốc của draft.
+    if(d.baseSha && currentSha && d.baseSha!==currentSha)return false;
+    currentData=structuredClone(d.data);
+    v50Dirty=true;
+    $("#titleInput").value=currentData.title||"";
+    $("#iconInput").value=currentData.icon||"";
+    $("#orderInput").value=currentData.order||1;
+    $("#visibleInput").checked=currentData.visible!==false;
+    v50SetSaveState("↺ Đã khôi phục nháp","local");
+    return true;
+  }catch(e){console.warn("Draft restore failed",e);return false}
+}
+
+async function v50RefreshHeadOid(){
+  const b=await api(`/repos/${OWNER}/${REPO}/branches/${enc(BRANCH)}`);
+  v50HeadOid=b?.commit?.sha||"";
+  return v50HeadOid;
+}
+
+async function v50GraphQL(query,variables){
+  const r=await fetch("https://api.github.com/graphql",{
+    method:"POST",
+    headers:{...authHeaders(),"Content-Type":"application/json"},
+    body:JSON.stringify({query,variables})
+  });
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(`${r.status} ${r.statusText}: ${j?.message||"GraphQL error"}`);
+  if(j.errors?.length)throw new Error(j.errors.map(x=>x.message).join(" | "));
+  return j.data;
+}
+
+async function v50CommitGraphQL(content){
+  if(!v50HeadOid)await v50RefreshHeadOid();
+
+  const mutation=`mutation($input:CreateCommitOnBranchInput!){
+    createCommitOnBranch(input:$input){
+      commit{oid url}
+    }
+  }`;
+
+  const variables={
+    input:{
+      branch:{
+        repositoryNameWithOwner:`${OWNER}/${REPO}`,
+        branchName:BRANCH
+      },
+      message:{
+        headline:`Update article: ${currentData.title||currentFile}`
+      },
+      fileChanges:{
+        additions:[{
+          path:`content/articles/${currentFile}`,
+          contents:b64EncodeUnicode(content)
+        }]
+      },
+      expectedHeadOid:v50HeadOid
+    }
+  };
+
+  const data=await v50GraphQL(mutation,variables);
+  const commit=data?.createCommitOnBranch?.commit;
+  if(!commit?.oid)throw new Error("GitHub không trả về commit OID.");
+  v50HeadOid=commit.oid;
+  return commit;
+}
+
+async function v50CommitContentsFallback(content){
+  // Refresh file SHA if currentSha may be stale after an earlier GraphQL commit.
+  let sha=currentSha;
+  try{
+    const meta=await api(`/repos/${OWNER}/${REPO}/contents/content/articles/${enc(currentFile)}?ref=${BRANCH}`);
+    sha=meta.sha||sha;
+  }catch(e){}
+
+  const res=await api(`/repos/${OWNER}/${REPO}/contents/content/articles/${enc(currentFile)}`,{
+    method:"PUT",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      message:`Update article: ${currentData.title||currentFile}`,
+      content:b64EncodeUnicode(content),
+      sha,
+      branch:BRANCH
+    })
+  });
+  currentSha=res?.content?.sha||currentSha;
+  try{await v50RefreshHeadOid()}catch(e){}
+  return {oid:res?.commit?.sha||"",url:res?.commit?.html_url||""};
+}
+
+async function v50FastSaveArticle(){
+  if(!currentFile||!currentData)return;
+
+  v50SetSaveState("⟳ Đang commit...","commit");
+  setStatus("Đang commit nhanh...");
+
+  try{
+    if(typeof v49SyncHeader==="function")v49SyncHeader();
+    v50CaptureCurrent();
+
     const content=safeJSONStringify(currentData);
-    // Tự kiểm tra JSON trước khi gửi GitHub.
     JSON.parse(content);
-    const res=await api(`/repos/${OWNER}/${REPO}/contents/content/articles/${enc(currentFile)}`,{
-      method:"PUT",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        message:`Update article: ${currentData.title||currentFile}`,
-        content:b64EncodeUnicode(content),sha:currentSha,branch:BRANCH
-      })
+
+    let commit=null;
+    try{
+      commit=await v50CommitGraphQL(content);
+    }catch(firstErr){
+      console.warn("GraphQL fast commit failed, refreshing HEAD",firstErr);
+      // Một lần retry khi HEAD đã đổi.
+      try{
+        await v50RefreshHeadOid();
+        commit=await v50CommitGraphQL(content);
+      }catch(secondErr){
+        console.warn("GraphQL retry failed, fallback Contents API",secondErr);
+        commit=await v50CommitContentsFallback(content);
+      }
+    }
+
+    const a=articles.find(x=>x.name===currentFile);
+    if(a)a.data=structuredClone(currentData);
+
+    v50Dirty=false;
+    v50ClearDraft();
+    v50SetSaveState("✓ Đã commit","ok");
+    setStatus("Đã commit nhanh. GitHub Pages đang deploy...","ok");
+    renderArticleList();
+
+  }catch(e){
+    console.error("Fast commit failed",e);
+    v50SetSaveState("! Commit lỗi","bad");
+    setStatus("Lỗi commit: "+(e?.message||e),"bad");
+  }
+}
+
+function v50RememberSelection(){
+  const sel=window.getSelection();
+  if(!sel||!sel.rangeCount)return;
+  const r=sel.getRangeAt(0);
+  const preview=$("#v42Preview");
+  if(preview && preview.contains(r.commonAncestorContainer)){
+    v50SavedRange=r.cloneRange();
+  }
+}
+
+function v50RestoreSelection(){
+  if(!v50SavedRange)return false;
+  const sel=window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(v50SavedRange);
+  return true;
+}
+
+function v50Exec(cmd,value=null){
+  v50RestoreSelection();
+  try{document.execCommand(cmd,false,value)}catch(e){console.warn(e)}
+  v50MarkDirty();
+  setTimeout(()=>{
+    const row=document.querySelector(`.v42-block[data-index="${v50ToolbarBlock}"] .v42-render`);
+    const b=v42Blocks()[v50ToolbarBlock];
+    if(row&&b&&typeof v47SyncEditable==="function")v47SyncEditable(row,b,v50ToolbarBlock);
+  },30);
+}
+
+function v50ApplyFontSize(px){
+  if(!px)return;
+  if(!v50RestoreSelection())return;
+  try{
+    document.execCommand("fontSize",false,"7");
+    const preview=$("#v42Preview");
+    preview?.querySelectorAll('font[size="7"]').forEach(font=>{
+      const span=document.createElement("span");
+      span.style.fontSize=px+"px";
+      while(font.firstChild)span.appendChild(font.firstChild);
+      font.replaceWith(span);
     });
-    currentSha=res.content.sha;
-    const a=articles.find(x=>x.name===currentFile);if(a){a.sha=currentSha;a.data=structuredClone(currentData)}
-    articles.sort((a,b)=>(a.data.order||999)-(b.data.order||999));renderArticleList();
-    setStatus("Đã commit. GitHub Pages đang deploy...","ok");
-  }catch(e){if(String(e.message||"").includes("409")){
-      setStatus("Xung đột phiên bản (409). Bấm Tải lại rồi lưu lại.","bad");
-    }else{
-      setStatus("Lỗi lưu: "+e.message,"bad");
-    }}
+  }catch(e){console.warn(e)}
+  v50MarkDirty();
+  setTimeout(()=>{
+    const row=document.querySelector(`.v42-block[data-index="${v50ToolbarBlock}"] .v42-render`);
+    const b=v42Blocks()[v50ToolbarBlock];
+    if(row&&b&&typeof v47SyncEditable==="function")v47SyncEditable(row,b,v50ToolbarBlock);
+  },30);
+}
+
+function v50ShowMiniToolbar(index){
+  v50ToolbarBlock=index;
+  const tb=$("#v50MiniToolbar");
+  const row=document.querySelector(`.v42-block[data-index="${index}"]`);
+  if(!tb||!row)return;
+  const r=row.getBoundingClientRect();
+  const width=tb.offsetWidth||420;
+  let left=Math.min(window.innerWidth-width-12,Math.max(8,r.right-width));
+  let top=r.top-38;
+  if(top<8)top=Math.min(window.innerHeight-40,r.top+8);
+  tb.style.left=left+"px";
+  tb.style.top=top+"px";
+  tb.classList.add("show");
+}
+
+function v50HideMiniToolbar(){
+  $("#v50MiniToolbar")?.classList.remove("show");
+}
+
+function v50InitMiniToolbar(){
+  document.addEventListener("selectionchange",v50RememberSelection);
+
+  $("#v50MiniToolbar")?.addEventListener("mousedown",e=>{
+    // Giữ selection/caret trong vùng soạn thảo khi bấm toolbar.
+    if(e.target.matches("button"))e.preventDefault();
+  });
+
+  document.querySelectorAll("[data-v50cmd]").forEach(b=>{
+    b.onclick=()=>v50Exec(b.dataset.v50cmd);
+  });
+
+  $("#v50TextColor").oninput=e=>v50Exec("foreColor",e.target.value);
+  $("#v50FontSize").onchange=e=>v50ApplyFontSize(Number(e.target.value));
+
+  $("#v50LinkBtn").onclick=()=>{
+    const href=prompt("Nhập đường dẫn liên kết:","https://");
+    if(href)v50Exec("createLink",href);
+  };
+
+  $("#v50DupBtn").onclick=()=>{v42Selected=v50ToolbarBlock;v42Duplicate();v50MarkDirty()};
+  $("#v50UpBtn").onclick=()=>{v42Selected=v50ToolbarBlock;v42Move(-1);v50MarkDirty()};
+  $("#v50DownBtn").onclick=()=>{v42Selected=v50ToolbarBlock;v42Move(1);v50MarkDirty()};
+  $("#v50DeleteBtn").onclick=()=>{v42Selected=v50ToolbarBlock;v42Delete();v50HideMiniToolbar();v50MarkDirty()};
+  $("#v50PropsBtn").onclick=()=>{
+    $("#v42Shell")?.classList.remove("v50-side-collapsed");
+    $("#v42Side")?.classList.remove("v50-collapsed");
+    $("#v42Side")?.scrollTo({top:0,behavior:"smooth"});
+  };
+
+  $("#v50TogglePanel").onclick=()=>{
+    $("#v42Shell")?.classList.toggle("v50-side-collapsed");
+    $("#v42Side")?.classList.toggle("v50-collapsed");
+  };
+
+  window.addEventListener("scroll",()=>{
+    if(v50ToolbarBlock>=0 && $("#v50MiniToolbar")?.classList.contains("show")){
+      v50ShowMiniToolbar(v50ToolbarBlock);
+    }
+  },true);
+}
+
+function v50InitAutosave(){
+  ["titleInput","iconInput","orderInput","visibleInput"].forEach(id=>{
+    $("#"+id)?.addEventListener("input",v50MarkDirty);
+    $("#"+id)?.addEventListener("change",v50MarkDirty);
+  });
+
+  $("#v42Shell")?.addEventListener("input",v50MarkDirty,true);
+  $("#v42Shell")?.addEventListener("click",e=>{
+    if(e.target.closest("[data-v42add],#v42Duplicate,#v42Delete,#v42Up,#v42Down,#v42Apply")){
+      setTimeout(v50MarkDirty,0);
+    }
+  },true);
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+  v50InitMiniToolbar();
+  v50InitAutosave();
+});
+
+async function saveArticle(){
+  return v50FastSaveArticle();
 }
 
 async function loadSettings(){
@@ -12862,7 +13230,7 @@ async function uploadImage(){
 
 // Events
 $("#loginBtn").onclick=login;$("#logoutBtn").onclick=logout;$("#reloadBtn").onclick=()=>loadArticles();
-$("#saveBtn").onclick=saveArticle;$("#settingsBtn").onclick=loadSettings;$("#saveSettingsBtn").onclick=saveSettings;
+$("#saveBtn").onclick=v50FastSaveArticle;$("#settingsBtn").onclick=loadSettings;$("#saveSettingsBtn").onclick=saveSettings;
 $("#newArticleBtn").onclick=newArticle;$("#articleSearch").oninput=renderArticleList;
 
 $("#inspectorToggleBtn").onclick=()=>v36SetInspectorEnabled(!v36InspectorEnabled);
@@ -13005,5 +13373,26 @@ document.addEventListener("DOMContentLoaded",()=>{
   if(saved && tokenEl && !tokenEl.value) tokenEl.value=saved;
 });
 </script>
+
+<div id="v50MiniToolbar">
+  <button data-v50cmd="bold" title="Đậm"><b>B</b></button>
+  <button data-v50cmd="italic" title="Nghiêng"><i>I</i></button>
+  <button data-v50cmd="underline" title="Gạch chân"><u>U</u></button>
+  <input id="v50TextColor" type="color" value="#2f322f" title="Màu chữ">
+  <select id="v50FontSize" title="Cỡ chữ">
+    <option value="">Cỡ chữ</option>
+    <option value="12">12</option><option value="14">14</option>
+    <option value="16">16</option><option value="18">18</option>
+    <option value="20">20</option><option value="24">24</option>
+    <option value="28">28</option><option value="32">32</option>
+  </select>
+  <button id="v50LinkBtn" title="Tạo link">🔗</button>
+  <span class="sep"></span>
+  <button id="v50DupBtn" title="Nhân bản block">⧉</button>
+  <button id="v50UpBtn" title="Đưa lên">↑</button>
+  <button id="v50DownBtn" title="Đưa xuống">↓</button>
+  <button id="v50DeleteBtn" class="danger" title="Xóa block">🗑</button>
+  <button id="v50PropsBtn" title="Thuộc tính nâng cao">⚙</button>
+</div>
 </body>
 </html>
