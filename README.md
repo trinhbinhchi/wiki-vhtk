@@ -1,8 +1,12 @@
-# CMS v43 — Fix Login + Preserve Layout
+# CMS v44 — Login Fixed
 
-- Sửa đăng nhập: `async function login()` được khôi phục.
-- Structured renderer không tự dựng lại layout.
-- Mỗi bài có `structured_template_html` lấy từ HTML gốc 1:1.
-- Renderer chỉ thay đúng nội dung bên trong `.intro-panel` hoặc `.article-content`.
-- Hero/header/article-content/wrapper cũ được giữ nguyên.
-- `legacy_section_html` vẫn giữ để rollback.
+Sửa lỗi login v43:
+- Xác thực token bằng `GET /user`.
+- Kiểm tra quyền repository bằng `GET /repos/trinhbinhchi/wiki-vhtk`.
+- Timeout 12 giây, không treo vô hạn.
+- Báo rõ 401 / 403 / 404 / network timeout.
+- Khôi phục nút Đăng nhập khi thất bại.
+- Lưu token vào sessionStorage; localStorage chỉ khi chọn "Nhớ trên máy này".
+- Chỉ load dữ liệu Admin sau khi xác thực GitHub thành công.
+
+Structured CMS + layout-preserving renderer của v43 được giữ nguyên.

@@ -2668,18 +2668,130 @@ async function api(path,opts={}){
 }
 
 async function login(){
-  const t=$("#tokenInput").value.trim();
-  if(!t)return;
-  token=t; $("#loginError").textContent="Đang kiểm tra...";
+  const input=$("#tokenInput");
+  const btn=$("#loginBtn");
+  const remember=$("#rememberToken");
+
+  const t=(input?.value||"").trim();
+  if(!t){
+    setStatus("Vui lòng nhập GitHub token","bad");
+    return;
+  }
+
+  const oldText=btn ? btn.textContent : "";
+  if(btn){
+    btn.disabled=true;
+    btn.textContent="Đang kiểm tra...";
+  }
+
   try{
-    user=await api("/user");
-    const repo=await api(`/repos/${OWNER}/${REPO}`);
-    if(!repo.permissions || !repo.permissions.push) throw new Error("Token chưa có quyền ghi vào repository.");
-    if($("#rememberToken").checked)localStorage.setItem("vhtk_pat",token);
-    else sessionStorage.setItem("vhtk_pat",token);
-    showApp();
-  }catch(e){
-    token="";$("#loginError").textContent="Đăng nhập thất bại: "+e.message;
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),12000);
+
+    const headers={
+      "Accept":"application/vnd.github+json",
+      "Authorization":"Bearer "+t,
+      "X-GitHub-Api-Version":"2022-11-28"
+    };
+
+    // 1) Validate token/account.
+    const userRes=await fetch("https://api.github.com/user",{
+      method:"GET",
+      headers,
+      signal:controller.signal
+    });
+
+    if(!userRes.ok){
+      clearTimeout(timer);
+      if(userRes.status===401) throw new Error("Token không hợp lệ hoặc đã hết hạn (401)");
+      if(userRes.status===403) throw new Error("GitHub từ chối quyền truy cập (403)");
+      throw new Error("Không xác thực được token. HTTP "+userRes.status);
+    }
+
+    const user=await userRes.json();
+
+    // 2) Validate exact repository access.
+    const repoRes=await fetch("https://api.github.com/repos/trinhbinhchi/wiki-vhtk",{
+      method:"GET",
+      headers,
+      signal:controller.signal
+    });
+
+    clearTimeout(timer);
+
+    if(!repoRes.ok){
+      if(repoRes.status===404){
+        throw new Error("Token chưa có quyền truy cập repository trinhbinhchi/wiki-vhtk (404)");
+      }
+      if(repoRes.status===403){
+        throw new Error("Token không đủ quyền truy cập repository (403)");
+      }
+      throw new Error("Không truy cập được repository. HTTP "+repoRes.status);
+    }
+
+    token=t;
+
+    if(remember && remember.checked){
+      localStorage.setItem("vhtk_github_token",t);
+    }else{
+      localStorage.removeItem("vhtk_github_token");
+    }
+
+    // Keep token in session for this tab even when 'remember' is off.
+    sessionStorage.setItem("vhtk_github_token",t);
+
+    if(btn){
+      btn.textContent="Đăng nhập thành công";
+    }
+
+    setStatus("Đăng nhập GitHub thành công: "+(user.login||""),"ok");
+
+    // Support both common login/app wrappers used in previous CMS versions.
+    const loginView=$("#loginView") || $("#loginScreen") || $(".login-screen");
+    const appView=$("#app") || $("#adminApp") || $("#mainApp");
+
+    if(loginView) loginView.style.display="none";
+    if(appView) appView.style.display="";
+
+    // Load CMS data only after auth succeeds.
+    if(typeof loadAll==="function"){
+      await loadAll();
+    }else if(typeof loadData==="function"){
+      await loadData();
+    }else if(typeof boot==="function"){
+      await boot();
+    }
+
+  }catch(err){
+    console.error("Login error:",err);
+
+    let msg="Đăng nhập thất bại";
+    if(err && err.name==="AbortError"){
+      msg="Kết nối GitHub quá lâu. Vui lòng thử lại.";
+    }else if(err && err.message){
+      msg=err.message;
+    }
+
+    setStatus(msg,"bad");
+
+    // Show error directly on login screen too.
+    let errBox=$("#loginError");
+    if(!errBox){
+      const form=(btn && btn.parentElement) ? btn.parentElement.parentElement : null;
+      if(form){
+        errBox=document.createElement("div");
+        errBox.id="loginError";
+        errBox.style.cssText="margin-top:10px;padding:8px 10px;border-radius:7px;background:#fff1f0;color:#a33;font-size:12px;line-height:1.4";
+        form.appendChild(errBox);
+      }
+    }
+    if(errBox) errBox.textContent=msg;
+
+  }finally{
+    if(btn){
+      btn.disabled=false;
+      btn.textContent=oldText || "Đăng nhập";
+    }
   }
 }
 
@@ -8637,7 +8749,37 @@ html,body{margin:0;min-height:100%;background:#f7f4ea}body{padding:24px 30px 80p
 .v40-block:hover>.v40-handle,.v40-selected>.v40-handle{opacity:1}.v40-selected{outline:3px solid rgba(34,110,79,.45)!important;outline-offset:3px!important}
 .v40-insert{height:18px;display:flex;align-items:center;justify-content:center}.v40-insert button{opacity:.12;transition:.15s;border:1px solid #9db4a8;border-radius:999px;background:#fff;color:#2f6b51;padding:1px 8px;font:800 10px Arial;cursor:pointer}.v40-insert:hover button,.v40-insert.over button{opacity:1}
 [contenteditable=true]{cursor:text!important;user-select:text!important;-webkit-user-select:text!important}
-[contenteditable=true]:focus{outline:1px dashed rgba(36,104,78,.28)}</style></head><body><div id="v40Root">${h}</div></body></html>`}
+[contenteditable=true]:focus{outline:1px dashed rgba(36,104,78,.28)}</style></head><body><div id="v40Root">${h}</div><script>
+document.addEventListener("DOMContentLoaded",()=>{
+  if(!window.$) return;
+
+  // Alias common legacy login field IDs so v44 login works across previous layouts.
+  if(!$("#tokenInput")){
+    const legacy=document.querySelector("#token,#githubToken,#patToken,input[type=password]");
+    if(legacy) legacy.id="tokenInput";
+  }
+  if(!$("#rememberToken")){
+    const legacy=document.querySelector("#remember,#rememberMe,input[type=checkbox]");
+    if(legacy) legacy.id="rememberToken";
+  }
+  if(!$("#loginBtn")){
+    const legacy=[...document.querySelectorAll("button")].find(b=>/đăng nhập/i.test(b.textContent||""));
+    if(legacy) legacy.id="loginBtn";
+  }
+
+  const saved=localStorage.getItem("vhtk_github_token") || sessionStorage.getItem("vhtk_github_token");
+  if(saved && $("#tokenInput") && !$("#tokenInput").value){
+    $("#tokenInput").value=saved;
+  }
+
+  if($("#loginBtn")){
+    $("#loginBtn").onclick=(e)=>{
+      e.preventDefault();
+      login();
+    };
+  }
+});
+</script></body></html>`}
 function v40Load(){
   const f=$("#v40Frame");
   if(!f||!currentData)return;
