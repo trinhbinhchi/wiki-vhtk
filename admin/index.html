@@ -515,7 +515,120 @@ button,input,textarea,select{font:inherit}
   color:#1f6248!important;
 }
 </style>
-</head>
+<link rel="stylesheet" href="https://unpkg.com/grapesjs@0.22.12/dist/css/grapes.min.css">
+<style id="v37-builder-style">
+#v37BuilderShell{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 310px;
+  height:calc(100vh - 170px);
+  min-height:720px;
+  border:1px solid #d9e3dc;
+  border-radius:12px;
+  overflow:hidden;
+  background:#f4f6f3;
+}
+#v37CanvasWrap{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  background:#edf0ec;
+}
+#v37BuilderTop{
+  height:42px;
+  flex:0 0 42px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:0 9px;
+  background:#fff;
+  border-bottom:1px solid #dce4de;
+}
+#v37BuilderTop button{
+  border:1px solid #d4ddd7;
+  border-radius:7px;
+  background:#fff;
+  color:#355044;
+  padding:6px 9px;
+  font-size:11px;
+  font-weight:700;
+  cursor:pointer;
+}
+#v37BuilderTop button:hover{background:#edf6f1}
+#v37SelectedLabel{
+  margin-left:auto;
+  color:#6b7a72;
+  font-size:11px;
+  font-weight:700;
+  max-width:260px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+#v37Grapes{
+  flex:1 1 auto;
+  min-height:0;
+}
+#v37Side{
+  min-width:0;
+  background:#fff;
+  border-left:1px solid #dce4de;
+  overflow:auto;
+}
+.v37-side-tabs{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  position:sticky;
+  top:0;
+  z-index:3;
+  background:#fff;
+  border-bottom:1px solid #e0e6e2;
+}
+.v37-side-tabs button{
+  border:0;
+  border-right:1px solid #e4e9e5;
+  background:#fff;
+  padding:10px 4px;
+  font-size:11px;
+  font-weight:800;
+  color:#66746d;
+  cursor:pointer;
+}
+.v37-side-tabs button.active{
+  background:#eaf5ef;
+  color:#28644a;
+}
+.v37-pane{display:none;padding:10px}
+.v37-pane.active{display:block}
+#v37BlockPanel .gjs-blocks-c{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+#v37BlockPanel .gjs-block{
+  width:auto;
+  min-height:72px;
+  margin:0;
+  padding:8px;
+  box-shadow:none;
+  border:1px solid #dce5df;
+  border-radius:8px;
+}
+#v37StylePanel .gjs-sm-sectors{padding:0}
+#v37LayerPanel .gjs-layer{font-size:11px}
+.v37-help{
+  margin:8px 0 0;
+  padding:8px;
+  border-radius:8px;
+  background:#fff8e9;
+  color:#75613c;
+  font-size:10px;
+  line-height:1.5;
+}
+#publicLiveWrap,#sourceEditor{display:none!important}
+@media(max-width:1100px){
+  #v37BuilderShell{grid-template-columns:minmax(0,1fr) 260px}
+}
+</style>
+<style id="v37-hide-old-editor">
+.toolbar{display:none!important}
+.help{display:none!important}
+</style></head>
 <body>
 <div class="login" id="loginView">
 <div class="login-card">
@@ -581,7 +694,37 @@ button,input,textarea,select{font:inherit}
 <span class="sep"></span>
 <button id="inspectorToggleBtn" title="Bật/tắt Visual Inspector">🔎 Inspector</button><button id="sourceBtn">&lt;/&gt; HTML</button><button data-cmd="removeFormat">⌫ Format</button>
 <span class="v26-mode-indicator" id="v26ModeIndicator">Chế độ: Trực quan</span></div>
-<div class="editor" contenteditable="true" id="editor"></div><div class="public-live-wrap" id="publicLiveWrap"><div class="preview-badge">PUBLIC ARTICLE • sửa trực tiếp</div><iframe id="publicLiveFrame" title="Trang Public thật"></iframe></div>
+<div class="editor" contenteditable="true" id="editor"></div>
+<div id="v37BuilderShell">
+  <div id="v37CanvasWrap">
+    <div id="v37BuilderTop">
+      <button id="v37UndoBtn" type="button">↶ Undo</button>
+      <button id="v37RedoBtn" type="button">↷ Redo</button>
+      <button id="v37DuplicateBtn" type="button">⧉ Nhân bản</button>
+      <button id="v37DeleteBtn" type="button">🗑 Xóa</button>
+      <button id="v37MoveUpBtn" type="button">↑ Lên</button>
+      <button id="v37MoveDownBtn" type="button">↓ Xuống</button>
+      <button id="v37HtmlBtn" type="button">&lt;/&gt; HTML</button>
+      <span id="v37SelectedLabel">Chưa chọn phần tử</span>
+    </div>
+    <div id="v37Grapes"></div>
+  </div>
+  <aside id="v37Side">
+    <div class="v37-side-tabs">
+      <button class="active" data-v37tab="blocks">Thêm</button>
+      <button data-v37tab="styles">Thuộc tính</button>
+      <button data-v37tab="layers">Cấu trúc</button>
+    </div>
+    <div id="v37BlockPanel" class="v37-pane active"></div>
+    <div id="v37StylePanel" class="v37-pane"></div>
+    <div id="v37LayerPanel" class="v37-pane"></div>
+    <div class="v37-help">
+      Click chữ để sửa trực tiếp. Click viền/khối để chọn phần tử. Kéo block từ tab <b>Thêm</b> vào bài.
+      Tab <b>Thuộc tính</b> chỉnh margin, padding, màu, font, border... Tab <b>Cấu trúc</b> chọn đúng thẻ cha/con.
+    </div>
+  </aside>
+</div>
+<div class="public-live-wrap" id="publicLiveWrap"><div class="preview-badge">PUBLIC ARTICLE • sửa trực tiếp</div><iframe id="publicLiveFrame" title="Trang Public thật"></iframe></div>
 <textarea class="source" id="sourceEditor" spellcheck="false"></textarea>
 <div class="help">V36: sửa chữ trực tiếp như cũ. Khi cần sửa thuộc tính, bật 🔎 Inspector rồi click phần tử. Panel bên phải cho sửa text/class/id/style/href/src, chọn cha, phần tử trước/sau, copy/paste style, nhân bản và xóa.</div>
 </div>
@@ -2107,6 +2250,200 @@ function renderArticleList(){
   });
 }
 
+
+let v37Editor=null;
+let v37Loading=false;
+
+function v37PublicCssUrls(){
+  const urls=[];
+  try{
+    document.querySelectorAll('link[rel="stylesheet"]').forEach(l=>{
+      const href=l.href||"";
+      if(href && !href.includes("grapesjs"))urls.push(href);
+    });
+  }catch(e){}
+  return urls;
+}
+
+function v37ArticleHtml(){
+  if(!currentData)return "";
+  return currentData.section_html||currentData.body_html||"";
+}
+
+function v37CanvasCss(){
+  return `
+    html,body{margin:0;padding:0;background:#f7f4ea;font-family:Arial,sans-serif}
+    body{padding:24px;box-sizing:border-box}
+    .v37-editor-root{max-width:1100px;margin:0 auto}
+  `;
+}
+
+function v37InitBuilder(){
+  if(v37Editor)return v37Editor;
+  if(typeof grapesjs==="undefined"){
+    setStatus("Không tải được Visual Builder (GrapesJS). Kiểm tra Internet/CDN.","bad");
+    return null;
+  }
+
+  v37Editor=grapesjs.init({
+    container:"#v37Grapes",
+    height:"100%",
+    width:"auto",
+    fromElement:false,
+    storageManager:false,
+    noticeOnUnload:false,
+    selectorManager:{componentFirst:true},
+    blockManager:{appendTo:"#v37BlockPanel"},
+    styleManager:{
+      appendTo:"#v37StylePanel",
+      sectors:[
+        {
+          name:"Kích thước & khoảng cách",
+          open:true,
+          buildProps:["display","position","width","max-width","min-height","margin","padding"]
+        },
+        {
+          name:"Chữ",
+          open:true,
+          buildProps:["font-family","font-size","font-weight","line-height","letter-spacing","color","text-align","text-decoration"]
+        },
+        {
+          name:"Nền & viền",
+          open:true,
+          buildProps:["background-color","border","border-radius","box-shadow","opacity"]
+        }
+      ]
+    },
+    layerManager:{appendTo:"#v37LayerPanel"},
+    panels:{defaults:[]},
+    canvas:{
+      styles:v37PublicCssUrls()
+    }
+  });
+
+  v37Editor.addStyle(v37CanvasCss());
+
+  const bm=v37Editor.BlockManager;
+  bm.add("v37-text",{label:"✎ Văn bản",category:"Cơ bản",content:'<p>Nhập nội dung...</p>'});
+  bm.add("v37-heading",{label:"H Tiêu đề",category:"Cơ bản",content:'<h3>Tiêu đề mới</h3>'});
+  bm.add("v37-list",{label:"• Danh sách",category:"Cơ bản",content:'<ul><li>Mục 1</li><li>Mục 2</li></ul>'});
+  bm.add("v37-box",{
+    label:"▣ Khung",
+    category:"Cơ bản",
+    content:'<div style="padding:18px;border:1px solid #d7b66b;border-left:4px solid #b98524;border-radius:10px;margin:12px 0"><h3>Tiêu đề khung</h3><p>Nội dung...</p></div>'
+  });
+  bm.add("v37-image",{label:"▧ Ảnh",category:"Media",content:{type:"image"}});
+  bm.add("v37-link",{label:"🔗 Link",category:"Cơ bản",content:'<a href="#">Liên kết</a>'});
+  bm.add("v37-table",{
+    label:"▦ Bảng",
+    category:"Cơ bản",
+    content:'<table style="width:100%;border-collapse:collapse"><tr><th>Tiêu đề</th><th>Tiêu đề</th></tr><tr><td>Nội dung</td><td>Nội dung</td></tr></table>'
+  });
+
+  v37Editor.on("component:selected",model=>{
+    const tag=(model.get("tagName")||model.get("type")||"element").toString();
+    const cls=(model.getClasses && model.getClasses().join("."))||"";
+    $("#v37SelectedLabel").textContent=cls ? `${tag}.${cls}` : tag;
+  });
+
+  v37Editor.on("component:deselected",()=>{
+    $("#v37SelectedLabel").textContent="Chưa chọn phần tử";
+  });
+
+  v37Editor.on("update",()=>{
+    if(v37Loading)return;
+    if(currentData){
+      const html=v37GetHtml();
+      if("section_html" in currentData)currentData.section_html=html;
+      else currentData.body_html=html;
+    }
+  });
+
+  v37BindUi();
+  return v37Editor;
+}
+
+function v37LoadCurrent(){
+  const ed=v37InitBuilder();
+  if(!ed || !currentData)return;
+
+  v37Loading=true;
+  ed.setComponents(v37ArticleHtml());
+  setTimeout(()=>{
+    v37Loading=false;
+    ed.select();
+  },60);
+}
+
+function v37GetHtml(){
+  if(!v37Editor)return v37ArticleHtml();
+  return v37Editor.getHtml();
+}
+
+function v37Selected(){
+  return v37Editor && v37Editor.getSelected ? v37Editor.getSelected() : null;
+}
+
+function v37Duplicate(){
+  const m=v37Selected();
+  if(!m)return setStatus("Hãy chọn phần tử cần nhân bản","bad");
+  const parent=m.parent();
+  if(!parent)return;
+  const idx=parent.index(m);
+  const clone=m.clone();
+  parent.components().add(clone,{at:idx+1});
+  v37Editor.select(clone);
+}
+
+function v37Delete(){
+  const m=v37Selected();
+  if(!m)return setStatus("Hãy chọn phần tử cần xóa","bad");
+  m.remove();
+}
+
+function v37Move(dir){
+  const m=v37Selected();
+  if(!m)return setStatus("Hãy chọn phần tử cần di chuyển","bad");
+  const p=m.parent();
+  if(!p)return;
+  const idx=p.index(m);
+  const target=idx+dir;
+  if(target<0 || target>=p.components().length)return;
+  p.components().remove(m,{temporary:true});
+  p.components().add(m,{at:target});
+  v37Editor.select(m);
+}
+
+function v37EditHtml(){
+  if(!v37Editor)return;
+  const current=v37GetHtml();
+  const next=prompt("HTML của bài đang chỉnh:",current);
+  if(next===null)return;
+  v37Loading=true;
+  v37Editor.setComponents(next);
+  v37Loading=false;
+  setStatus("Đã áp dụng HTML vào Visual Builder","ok");
+}
+
+function v37BindUi(){
+  $("#v37UndoBtn").onclick=()=>v37Editor && v37Editor.UndoManager.undo();
+  $("#v37RedoBtn").onclick=()=>v37Editor && v37Editor.UndoManager.redo();
+  $("#v37DuplicateBtn").onclick=v37Duplicate;
+  $("#v37DeleteBtn").onclick=v37Delete;
+  $("#v37MoveUpBtn").onclick=()=>v37Move(-1);
+  $("#v37MoveDownBtn").onclick=()=>v37Move(1);
+  $("#v37HtmlBtn").onclick=v37EditHtml;
+
+  document.querySelectorAll("[data-v37tab]").forEach(btn=>{
+    btn.onclick=()=>{
+      document.querySelectorAll("[data-v37tab]").forEach(x=>x.classList.remove("active"));
+      document.querySelectorAll(".v37-pane").forEach(x=>x.classList.remove("active"));
+      btn.classList.add("active");
+      const t=btn.dataset.v37tab;
+      $("#v37"+(t==="blocks"?"Block":t==="styles"?"Style":"Layer")+"Panel").classList.add("active");
+    };
+  });
+}
 function openArticle(name){
   const a=articles.find(x=>x.name===name);if(!a)return;
   currentFile=a.name;currentSha=a.sha;currentData=structuredClone(a.data);
@@ -2127,6 +2464,7 @@ function openArticle(name){
 
   renderArticleList();
   setStatus("Đang mở trang Public thật...");
+  setTimeout(v37LoadCurrent,0);
 }
 
 function collectArticle(){
@@ -2136,7 +2474,7 @@ function collectArticle(){
   currentData.order=Number($("#orderInput").value||1);
   currentData.visible=$("#visibleInput").checked;
 
-  const edited=sourceMode?$("#sourceEditor").value:getVisualHTML();
+  const edited=v37GetHtml();
 
   if("section_html" in currentData){
     currentData.section_html=edited;
@@ -2148,6 +2486,11 @@ function collectArticle(){
 
 async function saveArticle(){
   if(!currentFile)return;
+  if(currentData){
+    const h=v37GetHtml();
+    if("section_html" in currentData)currentData.section_html=h;
+    else currentData.body_html=h;
+  }
   if(sourceMode){
     const raw=$("#sourceEditor").value;
     if("section_html" in currentData)currentData.section_html=raw;
@@ -2444,5 +2787,6 @@ document.addEventListener("keydown",e=>{
     Bật Inspector rồi click phần tử trên bài. Tắt Inspector để quay lại sửa chữ trực tiếp.
   </div>
 </div>
+<script src="https://unpkg.com/grapesjs@0.22.12/dist/grapes.min.js"></script>
 </body>
 </html>

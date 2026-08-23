@@ -1,32 +1,47 @@
-# CMS v36 — Visual Inspector
+# CMS v37 — Visual Builder
 
-Không cố biến mọi thao tác thành selection/block magic nữa.
+Đổi hoàn toàn phần soạn thảo Admin sang Visual Builder (GrapesJS).
 
-## Chế độ thường
-- Sửa text trực tiếp như WYSIWYG.
+## Trực tiếp
+- Double click text để sửa.
+- Click phần tử/box để chọn.
+- Kéo thả block mới vào bài.
+- Undo / Redo.
+- Nhân bản / Xóa.
+- Di chuyển lên / xuống.
 
-## Inspector
-- Bấm `🔎 Inspector`.
-- Click phần tử trong bài.
-- Panel bên phải cho sửa:
-  - text
-  - class
-  - id
-  - style
-  - href (link)
-  - src (img/iframe/video/source)
+## Tab bên phải
+### Thêm
+- Văn bản
+- Tiêu đề
+- Danh sách
+- Khung
+- Ảnh
+- Link
+- Bảng
 
-## Điều hướng cấu trúc
-- Chọn cha
-- Phần tử trước
-- Phần tử sau
-- Nhân bản
-- Xóa
+### Thuộc tính
+- width / min-height
+- margin / padding
+- font / size / weight / line-height
+- màu chữ
+- căn lề
+- background
+- border
+- border radius
+- shadow / opacity
 
-## Style
-- Copy style = class + inline style
-- Paste style = áp class + inline style sang phần tử khác
+### Cấu trúc
+- Cây HTML cha/con để chọn đúng phần tử.
 
-## An toàn khi lưu
-- class chọn của Inspector bị loại bỏ trước Save/Commit.
-- UI editor không đi vào HTML public.
+## HTML
+Nút `</> HTML` vẫn có cho trường hợp cần chỉnh source.
+
+## Giữ nguyên
+- GitHub PAT / API
+- Safe JSON
+- Public site
+- Search / video / Dã Tẩu
+- Copyright sidebar
+
+Lưu ý: Visual Builder được tải từ CDN `unpkg.com`, nên khi vào Admin cần có Internet.
