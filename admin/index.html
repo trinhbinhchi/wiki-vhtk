@@ -210,6 +210,15 @@ button,input,textarea,select{font:inherit}
   right:10px!important;
   opacity:.88;
 }
+</style><style id="v26-html-source-style">
+#sourceEditor{
+  width:100%;min-height:760px;max-height:calc(100vh - 205px);resize:vertical;
+  border:0;outline:none;padding:18px 20px;box-sizing:border-box;
+  background:#111827;color:#e5e7eb;font:13px/1.55 Consolas,"Courier New",monospace;
+  tab-size:2;white-space:pre;
+}
+#sourceEditor.active{display:block!important}
+.v26-mode-indicator{margin-left:auto;font-size:11px;color:#6f7d75;font-weight:700}
 </style></head>
 <body>
 <div class="login" id="loginView">
@@ -275,10 +284,10 @@ button,input,textarea,select{font:inherit}
 <button id="linkBtn">🔗</button><button id="imageBtn">🖼 Ảnh</button><button id="videoBtn">▶ Video</button><button id="tableBtn">▦ Bảng</button><button data-cmd="insertHorizontalRule">―</button>
 <span class="sep"></span>
 <button id="sourceBtn">&lt;/&gt; HTML</button><button data-cmd="removeFormat">⌫ Format</button>
-</div>
+<span class="v26-mode-indicator" id="v26ModeIndicator">Chế độ: Trực quan</span></div>
 <div class="editor" contenteditable="true" id="editor"></div><div class="public-live-wrap" id="publicLiveWrap"><div class="preview-badge">PUBLIC ARTICLE • sửa trực tiếp</div><iframe id="publicLiveFrame" title="Trang Public thật"></iframe></div>
 <textarea class="source" id="sourceEditor" spellcheck="false"></textarea>
-<div class="help">V15: Admin chỉ sửa phần thân bài. Header/hero Public được giữ nguyên nên không còn lặp tiêu đề như “Cơ Bản” hai lần.</div>
+<div class="help">V26: sửa trực tiếp trên Public hoặc bấm &lt;/&gt; HTML để chỉnh mã nguồn thật. Chuyển qua lại hai chiều; Ctrl+S để Lưu &amp; Commit.</div>
 </div>
 </section>
 <section class="settings-panel hidden" id="settingsPanel">
@@ -569,6 +578,11 @@ function collectArticle(){
 
 async function saveArticle(){
   if(!currentFile)return;
+  if(sourceMode){
+    const raw=$("#sourceEditor").value;
+    if("section_html" in currentData)currentData.section_html=raw;
+    else currentData.body_html=raw;
+  }
   collectArticle();setStatus("Đang commit...");
   try{
     const content=safeJSONStringify(currentData);
@@ -652,24 +666,41 @@ function syncEditors(){
   if(!sourceMode)syncFromPublic();
 }
 function updateSourceMode(){
-  $("#sourceEditor").classList.toggle("active",sourceMode);
-  $("#publicLiveWrap").classList.toggle("hidden",sourceMode);
+  const src=$("#sourceEditor");
+  const wrap=$("#publicLiveWrap");
+  if(src)src.classList.toggle("active",sourceMode);
+  if(wrap)wrap.classList.toggle("hidden",sourceMode);
   $("#sourceBtn").textContent=sourceMode?"👁 Trực quan":"</> HTML";
+  const mi=$("#v26ModeIndicator");
+  if(mi)mi.textContent=sourceMode?"Chế độ: HTML Source":"Chế độ: Trực quan";
 }
 function toggleSource(){
-  sourceMode=!sourceMode;
-  if(sourceMode){
-    $("#sourceEditor").value=getVisualHTML();
+  if(!currentData)return;
+
+  if(!sourceMode){
+    const html=getVisualHTML();
+    $("#sourceEditor").value=html;
+    sourceMode=true;
+    updateSourceMode();
+    setStatus("Đang sửa mã HTML trực tiếp","ok");
   }else{
     const html=$("#sourceEditor").value;
-    $("#editor").innerHTML=html;
-    if(currentData){
-      if("section_html" in currentData)currentData.section_html=html;
-      else currentData.body_html=html;
+    const parser=new DOMParser();
+    const parsed=parser.parseFromString("<section id='x'>"+html+"</section>","text/html");
+    if(!parsed.querySelector("#x")){
+      setStatus("HTML không hợp lệ, chưa chuyển về Trực quan","bad");
+      return;
     }
-    ensurePublicEditMode();
+
+    $("#editor").innerHTML=html;
+    if("section_html" in currentData)currentData.section_html=html;
+    else currentData.body_html=html;
+
+    sourceMode=false;
+    updateSourceMode();
+    loadPublicForEditing();
+    setStatus("Đã áp dụng HTML vào chế độ Trực quan","ok");
   }
-  updateSourceMode();
 }
 function addLink(){const u=prompt("URL liên kết:");if(u)exec("createLink",u)}
 function addVideo(){
@@ -739,6 +770,32 @@ $("#foreColor").onchange=e=>exec("foreColor",e.target.value);$("#backColor").onc
     }catch(e){localStorage.removeItem("vhtk_pat");sessionStorage.removeItem("vhtk_pat");token=""}
   }
 })();
+
+$("#sourceEditor").addEventListener("keydown",e=>{
+  if(e.key==="Tab"){
+    e.preventDefault();
+    const el=e.currentTarget;
+    const start=el.selectionStart,end=el.selectionEnd;
+    el.value=el.value.substring(0,start)+"  "+el.value.substring(end);
+    el.selectionStart=el.selectionEnd=start+2;
+  }
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="s"){
+    e.preventDefault();
+    saveArticle();
+  }
+});
+$("#sourceEditor").addEventListener("input",()=>{
+  if(sourceMode){
+    const mi=$("#v26ModeIndicator");
+    if(mi)mi.textContent="Chế độ: HTML Source • chưa lưu";
+  }
+});
+document.addEventListener("keydown",e=>{
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="s"){
+    e.preventDefault();
+    saveArticle();
+  }
+});
 </script>
 </body>
 </html>
