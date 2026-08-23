@@ -236,6 +236,18 @@ button,input,textarea,select{font:inherit}
   text-overflow:ellipsis;
 }
 </style>
+
+<style id="v29-wysiwyg-style">
+.v29-selection-status{
+  padding:4px 7px;
+  border-radius:7px;
+  background:#eef6f1;
+  color:#315d4a;
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap;
+}
+</style>
 </head>
 <body>
 <div class="login" id="loginView">
@@ -300,8 +312,8 @@ button,input,textarea,select{font:inherit}
 <span class="sep"></span>
 <button id="linkBtn">🔗</button><button id="imageBtn">🖼 Ảnh</button><button id="videoBtn">▶ Video</button><button id="tableBtn">▦ Bảng</button><button data-cmd="insertHorizontalRule">―</button>
 <span class="sep"></span>
-<button id="duplicateBlockBtn" title="Nhân bản nguyên khối HTML đang đặt con trỏ">⧉ Nhân khối</button><button id="moveBlockUpBtn" title="Di chuyển khối lên">↑ Khối</button><button id="moveBlockDownBtn" title="Di chuyển khối xuống">↓ Khối</button><button id="deleteBlockBtn" title="Xóa nguyên khối HTML đang chọn">🗑 Xóa khối</button><button id="sourceBtn">&lt;/&gt; HTML</button><button data-cmd="removeFormat">⌫ Format</button>
-<span class="v26-mode-indicator" id="v26ModeIndicator">Chế độ: Trực quan</span><span id="v28BlockStatus" class="v28-block-status">Khối: chưa chọn</span></div>
+<button id="duplicateBlockBtn" title="Nhân bản nguyên khối HTML đang đặt con trỏ">⧉ Nhân khối</button><button id="moveBlockUpBtn" title="Di chuyển khối lên">↑ Khối</button><button id="moveBlockDownBtn" title="Di chuyển khối xuống">↓ Khối</button><button id="deleteBlockBtn" title="Xóa nguyên khối HTML đang chọn">🗑 Xóa khối</button><button id="elementPropsBtn" title="Sửa thuộc tính phần tử đang chọn">⚙ Thuộc tính</button><button id="sourceBtn">&lt;/&gt; HTML</button><button data-cmd="removeFormat">⌫ Format</button>
+<span class="v26-mode-indicator" id="v26ModeIndicator">Chế độ: Trực quan</span><span id="v29SelectionStatus" class="v29-selection-status">Selection: chưa chọn</span><span id="v28BlockStatus" class="v28-block-status">Khối: chưa chọn</span></div>
 <div class="editor" contenteditable="true" id="editor"></div><div class="public-live-wrap" id="publicLiveWrap"><div class="preview-badge">PUBLIC ARTICLE • sửa trực tiếp</div><iframe id="publicLiveFrame" title="Trang Public thật"></iframe></div>
 <textarea class="source" id="sourceEditor" spellcheck="false"></textarea>
 <div class="help">V26: sửa trực tiếp trên Public hoặc bấm &lt;/&gt; HTML để chỉnh mã nguồn thật. Chuyển qua lại hai chiều; Ctrl+S để Lưu &amp; Commit.</div>
@@ -667,6 +679,180 @@ function moveCurrentBlock(direction){
   setStatus(direction<0 ? "Đã đưa khối lên" : "Đã đưa khối xuống","ok");
 }
 
+
+let savedVisualRange=null;
+let savedVisualElement=null;
+
+function visualSelection(){
+  const d=publicDoc();
+  return d ? d.getSelection() : null;
+}
+
+function saveVisualSelection(){
+  const d=publicDoc();
+  const root=selectedPublicSection();
+  if(!d || !root)return;
+
+  const sel=d.getSelection();
+  if(sel && sel.rangeCount){
+    const r=sel.getRangeAt(0);
+    if(root.contains(r.commonAncestorContainer)){
+      savedVisualRange=r.cloneRange();
+      let n=sel.anchorNode;
+      if(n && n.nodeType===3)n=n.parentElement;
+      savedVisualElement=n && root.contains(n) ? n : null;
+
+      const st=$("#v29SelectionStatus");
+      if(st){
+        st.textContent=sel.isCollapsed ? "Selection: con trỏ" : "Selection: "+sel.toString().length+" ký tự";
+      }
+    }
+  }
+}
+
+function restoreVisualSelection(){
+  const d=publicDoc();
+  const root=selectedPublicSection();
+  if(!d || !root)return false;
+
+  const sel=d.getSelection();
+  if(savedVisualRange){
+    try{
+      sel.removeAllRanges();
+      sel.addRange(savedVisualRange.cloneRange());
+      return true;
+    }catch(e){}
+  }
+
+  if(savedVisualElement && root.contains(savedVisualElement)){
+    try{
+      const r=d.createRange();
+      r.selectNodeContents(savedVisualElement);
+      r.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(r);
+      return true;
+    }catch(e){}
+  }
+  return false;
+}
+
+function currentVisualElement(){
+  const d=publicDoc();
+  const root=selectedPublicSection();
+  if(!d || !root)return null;
+  const sel=d.getSelection();
+  let n=sel && sel.anchorNode;
+  if(n && n.nodeType===3)n=n.parentElement;
+  if(n && root.contains(n))return n;
+  if(savedVisualElement && root.contains(savedVisualElement))return savedVisualElement;
+  return root;
+}
+
+function installSelectionTracking(d,root){
+  if(!d || !root || root.dataset.selectionTracking==="1")return;
+  root.dataset.selectionTracking="1";
+
+  ["mouseup","keyup","input","click"].forEach(ev=>{
+    root.addEventListener(ev,()=>{
+      setTimeout(saveVisualSelection,0);
+    },true);
+  });
+
+  root.addEventListener("focusin",()=>setTimeout(saveVisualSelection,0),true);
+}
+
+/* Universal visual command.
+   Critical point: restore iframe selection BEFORE execCommand. */
+function execVisual(cmd,arg=null){
+  const d=publicDoc();
+  const root=selectedPublicSection();
+  if(!d || !root)return;
+
+  restoreVisualSelection();
+  root.focus();
+
+  try{
+    d.execCommand("styleWithCSS",false,true);
+  }catch(e){}
+
+  d.execCommand(cmd,false,arg);
+  saveVisualSelection();
+  syncFromPublic();
+}
+
+/* Edit attrs without opening HTML source. */
+function editCurrentElementProps(){
+  const el=currentVisualElement();
+  const root=selectedPublicSection();
+  if(!el || !root)return;
+
+  let target=el;
+  if(target.closest){
+    target = target.closest("img,a,iframe,video,table,td,th,li,p,div,span,h1,h2,h3,h4,blockquote") || target;
+  }
+  if(target===root){
+    setStatus("Hãy click vào phần tử cần sửa trước","bad");
+    return;
+  }
+
+  const tag=(target.tagName||"").toLowerCase();
+
+  if(tag==="img"){
+    const src=prompt("Đường dẫn ảnh (src):",target.getAttribute("src")||"");
+    if(src===null)return;
+    const alt=prompt("Mô tả ảnh (alt):",target.getAttribute("alt")||"");
+    if(alt===null)return;
+    target.setAttribute("src",src);
+    target.setAttribute("alt",alt);
+  }else if(tag==="a"){
+    const href=prompt("Liên kết (href):",target.getAttribute("href")||"");
+    if(href===null)return;
+    target.setAttribute("href",href);
+    const blank=confirm("Mở liên kết ở tab mới?");
+    if(blank){
+      target.setAttribute("target","_blank");
+      target.setAttribute("rel","noopener noreferrer");
+    }else{
+      target.removeAttribute("target");
+      target.removeAttribute("rel");
+    }
+  }else if(tag==="iframe"){
+    const src=prompt("URL iframe/video:",target.getAttribute("src")||"");
+    if(src===null)return;
+    target.setAttribute("src",src);
+  }else{
+    const cls=prompt("Class CSS:",target.getAttribute("class")||"");
+    if(cls===null)return;
+    const sty=prompt("Style inline:",target.getAttribute("style")||"");
+    if(sty===null)return;
+    if(cls.trim())target.setAttribute("class",cls.trim()); else target.removeAttribute("class");
+    if(sty.trim())target.setAttribute("style",sty.trim()); else target.removeAttribute("style");
+  }
+
+  syncFromPublic();
+  saveVisualSelection();
+  setStatus("Đã cập nhật thuộc tính "+tag,"ok");
+}
+
+function installVisualShortcuts(d,root){
+  if(!d || !root || root.dataset.visualShortcuts==="1")return;
+  root.dataset.visualShortcuts="1";
+
+  root.addEventListener("keydown",e=>{
+    if(!(e.ctrlKey||e.metaKey))return;
+    const k=e.key.toLowerCase();
+
+    if(k==="b"){e.preventDefault();saveVisualSelection();execVisual("bold")}
+    if(k==="i"){e.preventDefault();saveVisualSelection();execVisual("italic")}
+    if(k==="u"){e.preventDefault();saveVisualSelection();execVisual("underline")}
+    if(k==="k"){
+      e.preventDefault();
+      saveVisualSelection();
+      addLink();
+    }
+  },true);
+}
 function ensurePublicEditMode(){
   const d=publicDoc();
   if(!d || !currentData)return false;
@@ -730,6 +916,8 @@ function ensurePublicEditMode(){
   sec.addEventListener("input",syncFromPublic);
   sec.addEventListener("blur",syncFromPublic);
   installRichClipboard(d,sec);
+  installSelectionTracking(d,sec);
+  installVisualShortcuts(d,sec);
 
   if(!d.getElementById("vhtk-admin-live-style")){
     const marker=d.createElement("style");
@@ -964,12 +1152,7 @@ async function newArticle(){
 }
 
 function exec(cmd,arg=null){
-  const d=publicDoc(),node=editablePublicNode();
-  if(d&&node){
-    node.focus();
-    d.execCommand(cmd,false,arg);
-    syncFromPublic();
-  }
+  execVisual(cmd,arg);
 }
 function syncEditors(){
   if(!sourceMode)syncFromPublic();
@@ -1011,7 +1194,14 @@ function toggleSource(){
     setStatus("Đã áp dụng HTML vào chế độ Trực quan","ok");
   }
 }
-function addLink(){const u=prompt("URL liên kết:");if(u)exec("createLink",u)}
+function addLink(){
+  saveVisualSelection();
+  const u=prompt("URL liên kết:");
+  if(u){
+    restoreVisualSelection();
+    execVisual("createLink",u);
+  }
+}
 function addVideo(){
   const u=prompt("Dán URL YouTube:");if(!u)return;
   let src=u;const m=u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([A-Za-z0-9_-]{6,})/);
@@ -1062,13 +1252,21 @@ $("#duplicateBlockBtn").onclick=duplicateCurrentBlock;
 $("#deleteBlockBtn").onclick=deleteCurrentBlock;
 $("#moveBlockUpBtn").onclick=()=>moveCurrentBlock(-1);
 $("#moveBlockDownBtn").onclick=()=>moveCurrentBlock(1);
+$("#elementPropsBtn").onclick=editCurrentElementProps;
 $("#sourceBtn").onclick=toggleSource;$("#linkBtn").onclick=addLink;$("#videoBtn").onclick=addVideo;$("#tableBtn").onclick=addTable;
 $("#imageBtn").onclick=openMedia;$("#closeMediaBtn").onclick=()=>$("#mediaModal").classList.add("hidden");$("#uploadBtn").onclick=uploadImage;
-document.querySelectorAll("[data-cmd]").forEach(b=>b.onmousedown=e=>e.preventDefault());
+document.querySelectorAll(".toolbar button,.toolbar select,.toolbar input").forEach(el=>{
+  el.addEventListener("mousedown",e=>{
+    saveVisualSelection();
+    /* Prevent buttons/selects from destroying iframe selection.
+       Color input remains clickable via click event. */
+    if(el.tagName==="BUTTON")e.preventDefault();
+  });
+});
 document.querySelectorAll("[data-cmd]").forEach(b=>b.onclick=()=>exec(b.dataset.cmd));
-$("#blockSelect").onchange=e=>{if(e.target.value)exec("formatBlock",e.target.value)};
-$("#fontSizeSelect").onchange=e=>{if(e.target.value)exec("fontSize",e.target.value)};
-$("#foreColor").onchange=e=>exec("foreColor",e.target.value);$("#backColor").onchange=e=>exec("hiliteColor",e.target.value);
+$("#blockSelect").onchange=e=>{if(e.target.value){restoreVisualSelection();execVisual("formatBlock",e.target.value)}};
+$("#fontSizeSelect").onchange=e=>{if(e.target.value){restoreVisualSelection();execVisual("fontSize",e.target.value)}};
+$("#foreColor").onchange=e=>restoreVisualSelection();execVisual("foreColor",e.target.value);$("#backColor").onchange=e=>restoreVisualSelection();execVisual("hiliteColor",e.target.value);
 /* V13 syncs directly from same-origin Public iframe */$("#sourceEditor").oninput=()=>{if(sourceMode){}};
 
 // Auto-login from stored token.
