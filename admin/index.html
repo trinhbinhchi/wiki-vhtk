@@ -283,7 +283,7 @@ button,input,textarea,select{font:inherit}
 <span class="sep"></span>
 <button id="linkBtn">🔗</button><button id="imageBtn">🖼 Ảnh</button><button id="videoBtn">▶ Video</button><button id="tableBtn">▦ Bảng</button><button data-cmd="insertHorizontalRule">―</button>
 <span class="sep"></span>
-<button id="sourceBtn">&lt;/&gt; HTML</button><button data-cmd="removeFormat">⌫ Format</button>
+<button id="duplicateBlockBtn" title="Nhân bản nguyên khối HTML đang đặt con trỏ">⧉ Nhân khối</button><button id="sourceBtn">&lt;/&gt; HTML</button><button data-cmd="removeFormat">⌫ Format</button>
 <span class="v26-mode-indicator" id="v26ModeIndicator">Chế độ: Trực quan</span></div>
 <div class="editor" contenteditable="true" id="editor"></div><div class="public-live-wrap" id="publicLiveWrap"><div class="preview-badge">PUBLIC ARTICLE • sửa trực tiếp</div><iframe id="publicLiveFrame" title="Trang Public thật"></iframe></div>
 <textarea class="source" id="sourceEditor" spellcheck="false"></textarea>
@@ -359,6 +359,117 @@ function syncFromPublic(){
   $("#editor").innerHTML=html;
   if(!sourceMode)$("#sourceEditor").value=html;
 }
+
+function nearestCloneBlock(node, root){
+  if(!node)return null;
+  if(node.nodeType===3)node=node.parentElement;
+  const preferred=[
+    ".clean-table-wrap",".clean-guide-table",
+    ".notice-box",".info-box",".warning-box",".success-box",
+    ".callout",".quote-box",".rework-video-box",
+    ".da-tau-section",".da-tau-collapse-body",
+    ".notion-callout",".notion-text-block",
+    "li","p","blockquote","table","figure",
+    "div"
+  ];
+  for(const sel of preferred){
+    const el=node.closest ? node.closest(sel) : null;
+    if(el && root.contains(el) && el!==root)return el;
+  }
+  return null;
+}
+
+function insertHTMLAtSelection(d, html){
+  const sel=d.getSelection();
+  if(!sel || !sel.rangeCount)return false;
+  const range=sel.getRangeAt(0);
+  range.deleteContents();
+
+  const holder=d.createElement("div");
+  holder.innerHTML=html;
+  const frag=d.createDocumentFragment();
+  let last=null;
+  while(holder.firstChild){
+    last=frag.appendChild(holder.firstChild);
+  }
+  range.insertNode(frag);
+
+  if(last){
+    range.setStartAfter(last);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+  return true;
+}
+
+function installRichClipboard(d, root){
+  if(!d || !root || root.dataset.richClipboardInstalled==="1")return;
+  root.dataset.richClipboardInstalled="1";
+
+  /* Paste HTML first, not plain text. This preserves class/style/data-* attrs. */
+  root.addEventListener("paste",e=>{
+    const cd=e.clipboardData;
+    if(!cd)return;
+    const rich=cd.getData("text/html");
+    if(rich){
+      e.preventDefault();
+      insertHTMLAtSelection(d,rich);
+      syncFromPublic();
+      setStatus("Đã dán HTML và giữ thuộc tính","ok");
+    }
+  },true);
+
+  /* Store the last selected semantic block for one-click duplication. */
+  root.addEventListener("mouseup",()=>{
+    const sel=d.getSelection();
+    const node=sel && sel.anchorNode;
+    const block=nearestCloneBlock(node,root);
+    if(block)root.__vhtkLastBlock=block;
+  },true);
+
+  root.addEventListener("keyup",()=>{
+    const sel=d.getSelection();
+    const node=sel && sel.anchorNode;
+    const block=nearestCloneBlock(node,root);
+    if(block)root.__vhtkLastBlock=block;
+  },true);
+
+  /* Ctrl+D duplicates the complete outerHTML block, including class/styles/attrs. */
+  root.addEventListener("keydown",e=>{
+    if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="d"){
+      e.preventDefault();
+      const sel=d.getSelection();
+      const node=sel && sel.anchorNode;
+      const block=nearestCloneBlock(node,root) || root.__vhtkLastBlock;
+      if(!block)return;
+      const clone=block.cloneNode(true);
+      block.insertAdjacentElement("afterend",clone);
+      root.__vhtkLastBlock=clone;
+      syncFromPublic();
+      setStatus("Đã nhân nguyên khối HTML","ok");
+    }
+  },true);
+}
+
+function duplicateCurrentBlock(){
+  const d=publicDoc();
+  const root=selectedPublicSection();
+  if(!d || !root)return;
+  const sel=d.getSelection();
+  const node=sel && sel.anchorNode;
+  const block=nearestCloneBlock(node,root) || root.__vhtkLastBlock;
+  if(!block){
+    setStatus("Hãy đặt con trỏ vào khối cần nhân bản trước","bad");
+    return;
+  }
+  const clone=block.cloneNode(true);
+  block.insertAdjacentElement("afterend",clone);
+  root.__vhtkLastBlock=clone;
+  syncFromPublic();
+  setStatus("Đã nhân nguyên khối, giữ class/style/thuộc tính","ok");
+}
+
 function ensurePublicEditMode(){
   const d=publicDoc();
   if(!d || !currentData)return false;
@@ -421,6 +532,7 @@ function ensurePublicEditMode(){
 
   sec.addEventListener("input",syncFromPublic);
   sec.addEventListener("blur",syncFromPublic);
+  installRichClipboard(d,sec);
 
   if(!d.getElementById("vhtk-admin-live-style")){
     const marker=d.createElement("style");
@@ -749,6 +861,7 @@ async function uploadImage(){
 $("#loginBtn").onclick=login;$("#logoutBtn").onclick=logout;$("#reloadBtn").onclick=()=>loadArticles();
 $("#saveBtn").onclick=saveArticle;$("#settingsBtn").onclick=loadSettings;$("#saveSettingsBtn").onclick=saveSettings;
 $("#newArticleBtn").onclick=newArticle;$("#articleSearch").oninput=renderArticleList;
+$("#duplicateBlockBtn").onclick=duplicateCurrentBlock;
 $("#sourceBtn").onclick=toggleSource;$("#linkBtn").onclick=addLink;$("#videoBtn").onclick=addVideo;$("#tableBtn").onclick=addTable;
 $("#imageBtn").onclick=openMedia;$("#closeMediaBtn").onclick=()=>$("#mediaModal").classList.add("hidden");$("#uploadBtn").onclick=uploadImage;
 document.querySelectorAll("[data-cmd]").forEach(b=>b.onmousedown=e=>e.preventDefault());
