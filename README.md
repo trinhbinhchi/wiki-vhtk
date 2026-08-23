@@ -1,15 +1,45 @@
-# CMS v38 — Public-like Visual Builder
+# CMS v39 — Custom Block Editor chuyên dụng
 
-Cải thiện giao diện v37:
+Bỏ GrapesJS làm editor chính. Editor mới được viết riêng cho cấu trúc cẩm nang.
 
-- Nhúng CSS thật của trang Public vào canvas GrapesJS.
-- Canvas dùng nền, font, card, heading, khoảng cách và layout gần Public 1:1.
-- Bỏ cảm giác canvas xám/dev-tool.
-- Panel phải thu từ 310px xuống 260px.
-- Có nút `☰ Panel` để ẩn/hiện panel thuộc tính.
-- Vùng bài viết rộng hơn.
-- Giữ Thêm / Thuộc tính / Cấu trúc.
-- Giữ Undo / Redo / Nhân bản / Xóa / Lên / Xuống / HTML.
-- Giữ GitHub PAT/API, Safe JSON và toàn bộ Public.
+## Sửa trực tiếp
+- Double-click/click text và gõ trực tiếp.
+- Public CSS được nhúng vào iframe nên giao diện gần Public 1:1.
 
-Visual Builder vẫn tải GrapesJS từ CDN nên Admin cần Internet.
+## Semantic blocks
+Editor nhận các block thường dùng:
+- Văn bản
+- Tiêu đề
+- Danh sách
+- Guide callout / box
+- Ảnh
+- Video
+- Bảng
+- Accordion Dã Tẩu
+
+## Giữa block
+- Có nút `+ Thêm block` giữa các top-level block trong article-content/intro-panel.
+
+## Block toolbar
+Thanh trên:
+- Undo / Redo
+- Nhân bản
+- Xóa
+- Lên / Xuống
+- HTML
+
+## Panel phải
+- Thêm block
+- Class / Style / Text / href / src
+- Chọn cha / chọn con
+- Copy style / Paste style
+- Nhân bản / Xóa
+
+## HTML
+Có modal HTML Source riêng, không cần rời editor.
+
+## Giữ nguyên
+- GitHub PAT/API
+- Safe JSON
+- Search / video / Dã Tẩu
+- Public site / copyright
