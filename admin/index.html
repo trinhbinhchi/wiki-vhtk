@@ -937,7 +937,26 @@ button,input,textarea,select{font:inherit}
 #v40HtmlActions{justify-content:flex-end}
 #v40HtmlActions button{padding:7px 10px;border:1px solid #d4ddd7;border-radius:7px;background:#fff;font-weight:800;cursor:pointer}
 </style>
-</head>
+
+<style id="v42-style">
+#v40Shell,#v39EditorShell,#v37BuilderShell,#visualInspectorPanel{display:none!important}
+#v42Shell{display:grid;grid-template-columns:minmax(0,1fr) 285px;height:calc(100vh - 150px);min-height:760px;border:1px solid #d8e1da;border-radius:12px;overflow:hidden;background:#f7f4ea}
+#v42Main{display:flex;flex-direction:column;min-width:0}
+#v42Top{height:40px;display:flex;align-items:center;gap:6px;padding:0 8px;background:#fff;border-bottom:1px solid #dce4de}
+#v42Top button,.v42-sec button{border:1px solid #d4ddd7;border-radius:7px;background:#fff;color:#355044;padding:6px 8px;font-size:10px;font-weight:800;cursor:pointer}
+#v42State{margin-left:auto;color:#68776f;font-size:10px;font-weight:700}
+#v42Canvas{flex:1;overflow:auto;padding:16px;background:#f7f4ea}
+#v42Preview{max-width:1120px;margin:0 auto}
+.v42-block{position:relative;margin:7px 0;padding:6px 8px 6px 34px;border:1px solid transparent;border-radius:9px;background:rgba(255,255,255,.2)}
+.v42-block:hover{border-color:#cbdad1}.v42-block.selected{border-color:#4b9878;background:rgba(239,249,244,.72)}
+.v42-handle{position:absolute;left:7px;top:8px;border:0;background:transparent;color:#688078;font-size:16px;cursor:grab}
+.v42-render{padding:4px 6px}.v42-insert{height:16px;display:flex;align-items:center;justify-content:center}
+.v42-insert button{opacity:.2;border:1px solid #a8bbb0;border-radius:999px;background:#fff;color:#356f56;font-size:10px;font-weight:800;padding:1px 8px}.v42-insert:hover button{opacity:1}
+#v42Side{overflow:auto;background:#fbfcfa;border-left:1px solid #dce4de}.v42-head{position:sticky;top:0;padding:10px 11px;background:#fff;border-bottom:1px solid #e0e7e2;color:#315a47;font-size:12px;font-weight:900}
+.v42-sec{padding:10px;border-bottom:1px solid #e8ece9}.v42-sec h4{margin:0 0 8px;font-size:10px;color:#4b5d54}.v42-grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.v42-sec label{display:block;margin:7px 0;color:#69776f;font-size:10px;font-weight:800}.v42-sec input,.v42-sec textarea{width:100%;box-sizing:border-box;margin-top:4px;padding:7px;border:1px solid #d9e1dc;border-radius:7px;background:#fff;font:11px/1.4 "Segoe UI",Arial}
+.v42-tip{padding:8px;border-radius:8px;background:#fff8e9;color:#75613d;font-size:10px;line-height:1.45}
+</style></head>
 <body>
 <div class="login" id="loginView">
 <div class="login-card">
@@ -1006,6 +1025,22 @@ button,input,textarea,select{font:inherit}
 <div class="editor" contenteditable="true" id="editor"></div>
 
 
+
+<div id="v42Shell"><section id="v42Main">
+<div id="v42Top"><button id="v42Undo">↶ Undo</button><button id="v42Redo">↷ Redo</button><button id="v42Duplicate">⧉ Nhân bản</button><button id="v42Delete">🗑 Xóa</button><button id="v42Up">↑ Lên</button><button id="v42Down">↓ Xuống</button><span id="v42State">Structured CMS</span></div>
+<div id="v42Canvas"><div id="v42Preview"></div></div></section>
+<aside id="v42Side"><div class="v42-head">✦ Structured CMS</div>
+<div class="v42-sec"><h4>Thêm block</h4><div class="v42-grid2">
+<button data-v42add="paragraph">✎ Văn bản</button><button data-v42add="heading">H Tiêu đề</button><button data-v42add="list">• Danh sách</button><button data-v42add="callout">▣ Khung</button><button data-v42add="image">▧ Ảnh</button><button data-v42add="video">▶ Video</button><button data-v42add="table">▦ Bảng</button><button data-v42add="accordion">⌄ Accordion</button>
+</div></div>
+<div class="v42-sec"><h4>Block đang chọn</h4><div id="v42Empty" class="v42-tip">Click block để chỉnh. HTML phức tạp sẽ được giữ nguyên dưới dạng Raw HTML.</div>
+<div id="v42Props" style="display:none">
+<label>Loại<input id="v42Type" readonly></label><label id="v42LevelWrap">Level<input id="v42Level" type="number" min="1" max="6"></label>
+<label id="v42TextWrap">Text<textarea id="v42Text" rows="4"></textarea></label><label id="v42HtmlWrap">HTML nội bộ<textarea id="v42Html" rows="6"></textarea></label>
+<label id="v42ItemsWrap">Danh sách - mỗi dòng 1 mục<textarea id="v42Items" rows="6"></textarea></label><label>Class<input id="v42Class"></label><label>Style<input id="v42Style"></label>
+<label id="v42SrcWrap">Src<input id="v42Src"></label><label id="v42AltWrap">Alt<input id="v42Alt"></label><button id="v42Apply">✓ Áp dụng</button></div></div>
+<div class="v42-sec"><div class="v42-tip">Dữ liệu chính: <b>blocks[]</b><br>Public vẫn dùng <b>section_html</b> được renderer tạo tự động.</div></div>
+</aside></div>
 <div id="v40Shell">
 <section id="v40Main">
 <div id="v40Top">
@@ -1025,7 +1060,7 @@ button,input,textarea,select{font:inherit}
 <button data-v40add="table">▦ Bảng</button><button data-v40add="accordion">⌄ Accordion</button>
 </div></div>
 <div class="v40-side-section"><h4>Block đang chọn</h4>
-<div id="v40Empty" class="v40-tip">Click block hoặc dùng tay cầm ⋮⋮ trong bài để chọn.</div>
+<div id="v40Empty" class="v40-tip">Click chữ để đặt con trỏ và sửa trực tiếp. Tay cầm ⋮⋮ chỉ dành cho khối lớn; Alt+click để chọn nguyên phần tử.</div>
 <div id="v40Props" style="display:none">
 <label>Loại<input id="v40Type" readonly></label><label>Class<input id="v40Class"></label>
 <label>Style<textarea id="v40Style" rows="3"></textarea></label>
@@ -8389,6 +8424,60 @@ function v37CanvasCss(){
 
 
 
+
+function escAttr(s){return String(s??"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function renderBlock(b){
+  if(!b)return "";
+  const cls=b.class?` class="${escAttr(b.class)}"`:"";
+  const sty=b.style?` style="${escAttr(b.style)}"`:"";
+  if(b.type==="heading"){const l=Math.max(1,Math.min(6,Number(b.level||3)));return `<h${l}${cls}${sty}>${b.text||""}</h${l}>`}
+  if(b.type==="paragraph")return `<p${cls}${sty}>${b.html||""}</p>`;
+  if(b.type==="list"){const t=b.ordered?"ol":"ul";return `<${t}${cls}${sty}>${(b.items||[]).map(x=>`<li>${x}</li>`).join("")}</${t}>`}
+  if(b.type==="callout")return `<div${cls||' class="guide-callout"'}${sty}>${b.html||""}</div>`;
+  if(b.type==="image")return `<img src="${escAttr(b.src||"")}" alt="${escAttr(b.alt||"")}"${cls}${sty}>`;
+  if(b.type==="video"){if(b.tag==="video")return `<video src="${escAttr(b.src||"")}" controls${cls}></video>`;return `<iframe src="${escAttr(b.src||"")}" title="${escAttr(b.title||"")}" allowfullscreen${cls}></iframe>`}
+  if(b.type==="video_box")return `<div${cls||' class="rework-video-box"'}>${b.html||""}</div>`;
+  return b.html||"";
+}
+function renderBlocks(d){
+  const a=d.blocks||[],p=a.filter(b=>b.role==="prefix").map(renderBlock).join(""),body=a.filter(b=>b.role!=="prefix").map(renderBlock).join("\n");
+  const m=d.block_meta||{},tag=m.container_tag||"div",cls=m.container_class||"article-content";
+  return p+`<${tag} class="${escAttr(cls)}">${body}</${tag}>`;
+}
+
+let v42Selected=-1,v42History=[],v42Future=[];
+function v42Blocks(){return currentData&&Array.isArray(currentData.blocks)?currentData.blocks:[]}
+function v42Snapshot(){const s=JSON.stringify(v42Blocks());if(v42History[v42History.length-1]!==s){v42History.push(s);if(v42History.length>100)v42History.shift()}v42Future=[]}
+function v42Render(){
+  const w=$("#v42Preview");if(!w||!currentData)return;w.innerHTML="";
+  v42Blocks().forEach((b,i)=>{
+    const ins=document.createElement("div");ins.className="v42-insert";ins.innerHTML="<button>＋</button>";ins.onclick=()=>v42Insert(i);w.appendChild(ins);
+    const r=document.createElement("div");r.className="v42-block"+(i===v42Selected?" selected":"");r.innerHTML=`<button class="v42-handle">⋮⋮</button><div class="v42-render">${renderBlock(b)}</div>`;
+    r.onclick=e=>{if(!e.target.closest(".v42-handle"))v42Select(i)};r.querySelector(".v42-handle").onclick=e=>{e.stopPropagation();v42Select(i)};w.appendChild(r);
+  });
+  const tail=document.createElement("div");tail.className="v42-insert";tail.innerHTML="<button>＋ cuối</button>";tail.onclick=()=>v42Insert(v42Blocks().length);w.appendChild(tail);v42Props();
+}
+function v42Select(i){v42Selected=i;v42Render()}
+function v42Props(){
+  const b=v42Blocks()[v42Selected],e=$("#v42Empty"),p=$("#v42Props");if(!b){e.style.display="";p.style.display="none";return}e.style.display="none";p.style.display="";
+  $("#v42Type").value=b.type||"";$("#v42LevelWrap").style.display=b.type==="heading"?"":"none";$("#v42Level").value=b.level||3;
+  $("#v42TextWrap").style.display=b.type==="heading"?"":"none";$("#v42Text").value=b.text||"";
+  const hs=["paragraph","callout","video_box","table","accordion","raw_html"];$("#v42HtmlWrap").style.display=hs.includes(b.type)?"":"none";$("#v42Html").value=b.html||"";
+  $("#v42ItemsWrap").style.display=b.type==="list"?"":"none";$("#v42Items").value=(b.items||[]).map(x=>x.replace(/<[^>]+>/g,"")).join("\n");
+  $("#v42Class").value=b.class||"";$("#v42Style").value=b.style||"";$("#v42SrcWrap").style.display=["image","video"].includes(b.type)?"":"none";$("#v42Src").value=b.src||"";$("#v42AltWrap").style.display=b.type==="image"?"":"none";$("#v42Alt").value=b.alt||"";
+}
+function v42Apply(){const b=v42Blocks()[v42Selected];if(!b)return;v42Snapshot();b.class=$("#v42Class").value;b.style=$("#v42Style").value;if(b.type==="heading"){b.level=Number($("#v42Level").value||3);b.text=$("#v42Text").value}if(["paragraph","callout","video_box","table","accordion","raw_html"].includes(b.type))b.html=$("#v42Html").value;if(b.type==="list")b.items=$("#v42Items").value.split("\n").filter(Boolean);if(["image","video"].includes(b.type))b.src=$("#v42Src").value;if(b.type==="image")b.alt=$("#v42Alt").value;v42Render()}
+function v42Default(t){if(t==="paragraph")return{type:"paragraph",html:"Nhập nội dung..."};if(t==="heading")return{type:"heading",level:3,text:"Tiêu đề mới"};if(t==="list")return{type:"list",ordered:false,items:["Mục 1","Mục 2"]};if(t==="callout")return{type:"callout",class:"guide-callout",html:"<h3>Tiêu đề khung</h3><p>Nội dung...</p>"};if(t==="image")return{type:"image",src:"assets/uploads/",alt:"Ảnh"};if(t==="video")return{type:"video",tag:"iframe",src:"",title:"Video"};if(t==="table")return{type:"table",html:"<table><tr><th>Tiêu đề</th><th>Tiêu đề</th></tr><tr><td>Nội dung</td><td>Nội dung</td></tr></table>"};if(t==="accordion")return{type:"accordion",html:"<div class='da-tau-section'><button class='da-tau-toggle'>Phần mở rộng</button><div class='da-tau-collapse-body'><p>Nội dung...</p></div></div>"};return{type:"paragraph",html:""}}
+function v42Insert(i,t="paragraph"){v42Snapshot();v42Blocks().splice(i,0,v42Default(t));v42Selected=i;v42Render()}
+function v42Add(t){v42Insert(v42Selected>=0?v42Selected+1:v42Blocks().length,t)}
+function v42Duplicate(){if(v42Selected<0)return;v42Snapshot();v42Blocks().splice(v42Selected+1,0,JSON.parse(JSON.stringify(v42Blocks()[v42Selected])));v42Selected++;v42Render()}
+function v42Delete(){if(v42Selected<0)return;v42Snapshot();v42Blocks().splice(v42Selected,1);v42Selected=Math.min(v42Selected,v42Blocks().length-1);v42Render()}
+function v42Move(d){if(v42Selected<0)return;const j=v42Selected+d;if(j<0||j>=v42Blocks().length)return;v42Snapshot();const[b]=v42Blocks().splice(v42Selected,1);v42Blocks().splice(j,0,b);v42Selected=j;v42Render()}
+function v42Undo(){if(v42History.length<2)return;const c=v42History.pop();v42Future.push(c);currentData.blocks=JSON.parse(v42History[v42History.length-1]);v42Selected=-1;v42Render()}
+function v42Redo(){if(!v42Future.length)return;const s=v42Future.pop();v42History.push(s);currentData.blocks=JSON.parse(s);v42Selected=-1;v42Render()}
+function v42Load(){v42Selected=-1;v42History=[];v42Future=[];v42Snapshot();v42Render()}
+function v42Bind(){$("#v42Undo").onclick=v42Undo;$("#v42Redo").onclick=v42Redo;$("#v42Duplicate").onclick=v42Duplicate;$("#v42Delete").onclick=v42Delete;$("#v42Up").onclick=()=>v42Move(-1);$("#v42Down").onclick=()=>v42Move(1);$("#v42Apply").onclick=v42Apply;document.querySelectorAll("[data-v42add]").forEach(b=>b.onclick=()=>v42Add(b.dataset.v42add))}
+document.addEventListener("DOMContentLoaded",v42Bind);
 function v40CurrentHtml(){return currentData?(currentData.section_html||currentData.body_html||""):""}
 
 function v40Container(){
@@ -8442,9 +8531,19 @@ function v40InstallText(){
   });
 }
 function v40Decorate(){
-  const r=v40Doc.querySelector("#v40Root");r.querySelectorAll(".v40-handle").forEach(x=>x.remove());
-  r.querySelectorAll(".guide-callout,.notion-callout-block,.notice-box,.info-box,.warning-box,.success-box,.rework-video-box,.da-tau-section,.clean-table-wrap,table,figure,ul,ol,h1,h2,h3,h4,p").forEach(b=>{
-    if(b.closest(".v40-ui,.v40-insert"))return;b.classList.add("v40-block");b.style.position=b.style.position||"relative";b.insertBefore(v40MakeHandle(b),b.firstChild)
+  const r=v40Doc.querySelector("#v40Root");
+  r.querySelectorAll(".v40-handle").forEach(x=>x.remove());
+
+  /* V41.1: handle chỉ dành cho khối cấu trúc lớn.
+     Không chèn handle vào text/heading/contenteditable. */
+  r.querySelectorAll(
+    ".guide-callout,.notion-callout-block,.notice-box,.info-box,.warning-box,.success-box,"+
+    ".rework-video-box,.da-tau-section,.clean-table-wrap,table,figure,ul,ol"
+  ).forEach(b=>{
+    if(b.closest(".v40-ui,.v40-insert"))return;
+    b.classList.add("v40-block");
+    b.style.position=b.style.position||"relative";
+    b.insertBefore(v40MakeHandle(b),b.firstChild);
   });
 }
 function v40MakeInsert(){
@@ -8460,6 +8559,18 @@ function v40RefreshInserts(){
   c.insertBefore(v40MakeInsert(),bs[0]);bs.forEach(b=>b.insertAdjacentElement("afterend",v40MakeInsert()));
 }
 function v40Refresh(){v40InstallText();v40Decorate();v40RefreshInserts()}
+function v41IsEditableText(el){
+  if(!el || !el.closest)return false;
+  return !!el.closest("h1,h2,h3,h4,h5,h6,p,li,td,th,a,span,strong,em");
+}
+function v41UpdatePanelForText(el){
+  if(!el)return;
+  /* Chỉ cập nhật panel, KHÔNG add class/outline vào DOM đang edit. */
+  v40Selected=el;
+  $("#v40State").textContent=v40Kind(el)+" • "+(el.tagName||"").toLowerCase();
+  v40UpdateProps();
+}
+
 function v40Select(el){
   if(!el)return;if(v40Selected)v40Selected.classList.remove("v40-selected");v40Selected=el;el.classList.add("v40-selected");
   $("#v40State").textContent=v40Kind(el)+" • "+(el.tagName||"").toLowerCase();v40UpdateProps();
@@ -8514,11 +8625,67 @@ html,body{margin:0;min-height:100%;background:#f7f4ea}body{padding:24px 30px 80p
 .v40-block{position:relative}.v40-handle{position:absolute;left:-24px;top:4px;z-index:99999;width:20px;height:24px;display:flex;align-items:center;justify-content:center;border:1px solid #ccd9d1;border-radius:6px;background:#fff;color:#527061;font:900 14px Arial;cursor:grab;opacity:0;user-select:none}
 .v40-block:hover>.v40-handle,.v40-selected>.v40-handle{opacity:1}.v40-selected{outline:3px solid rgba(34,110,79,.45)!important;outline-offset:3px!important}
 .v40-insert{height:18px;display:flex;align-items:center;justify-content:center}.v40-insert button{opacity:.12;transition:.15s;border:1px solid #9db4a8;border-radius:999px;background:#fff;color:#2f6b51;padding:1px 8px;font:800 10px Arial;cursor:pointer}.v40-insert:hover button,.v40-insert.over button{opacity:1}
+[contenteditable=true]{cursor:text!important;user-select:text!important;-webkit-user-select:text!important}
 [contenteditable=true]:focus{outline:1px dashed rgba(36,104,78,.28)}</style></head><body><div id="v40Root">${h}</div></body></html>`}
 function v40Load(){
-  const f=$("#v40Frame");if(!f||!currentData)return;f.onload=()=>{v40Doc=f.contentDocument;v40Selected=null;v40History=[];v40Future=[];v40Refresh();const r=v40Doc.querySelector("#v40Root");
-  r.addEventListener("click",e=>{if(e.target.closest(".v40-insert,.v40-handle"))return;const b=v40Semantic(e.target);if(b)v40Select(b)},true);
-  r.addEventListener("focusin",e=>{const b=v40Semantic(e.target);if(b)v40Select(b)},true);r.addEventListener("input",()=>v40UpdateProps(),true);v40Snapshot();v40UpdateProps()};f.srcdoc=v40DocHtml(v40CurrentHtml());
+  const f=$("#v40Frame");
+  if(!f||!currentData)return;
+
+  f.onload=()=>{
+    v40Doc=f.contentDocument;
+    v40Selected=null;
+    v40History=[];
+    v40Future=[];
+    v40Refresh();
+
+    const r=v40Doc.querySelector("#v40Root");
+
+    /* Click text là thao tác edit tự nhiên.
+       Không preventDefault, không select-block, không chèn class. */
+    r.addEventListener("mousedown",e=>{
+      if(e.target.closest(".v40-insert,.v40-handle"))return;
+
+      if(e.altKey){
+        const b=v40Semantic(e.target);
+        if(b){
+          e.preventDefault();
+          e.stopPropagation();
+          v40Select(b);
+        }
+        return;
+      }
+
+      const editable=e.target.closest(
+        "h1,h2,h3,h4,h5,h6,p,li,td,th,a,span,strong,em"
+      );
+      if(editable && r.contains(editable)){
+        v41UpdatePanelForText(editable);
+        return;
+      }
+
+      const b=v40Semantic(e.target);
+      if(b && !v41IsEditableText(e.target))v40Select(b);
+    },true);
+
+    r.addEventListener("focusin",e=>{
+      const editable=e.target.closest && e.target.closest(
+        "h1,h2,h3,h4,h5,h6,p,li,td,th,a,span,strong,em"
+      );
+      if(editable && r.contains(editable))v41UpdatePanelForText(editable);
+    },true);
+
+    let typingTimer=null;
+    r.addEventListener("input",()=>{
+      v40UpdateProps();
+      clearTimeout(typingTimer);
+      typingTimer=setTimeout(()=>v40Snapshot(),450);
+    },true);
+
+    v40Snapshot();
+    v40UpdateProps();
+  };
+
+  f.srcdoc=v40DocHtml(v40CurrentHtml());
 }
 function v40Bind(){
   $("#v40Undo").onclick=v40Undo;$("#v40Redo").onclick=v40Redo;$("#v40Duplicate").onclick=v40Duplicate;$("#v40Delete").onclick=v40DeleteBlock;$("#v40Up").onclick=()=>v40Move(-1);$("#v40Down").onclick=()=>v40Move(1);$("#v40Html").onclick=v40OpenHtml;
@@ -9172,7 +9339,8 @@ function openArticle(name){
   setStatus("Đang mở trang Public thật...");
   
   
-  setTimeout(v40Load,0);
+  
+  setTimeout(v42Load,0);
 }
 
 function collectArticle(){
@@ -9182,7 +9350,7 @@ function collectArticle(){
   currentData.order=Number($("#orderInput").value||1);
   currentData.visible=$("#visibleInput").checked;
 
-  const edited=v40GetHtml();
+  const edited=(currentData.blocks&&currentData.blocks.length)?renderBlocks(currentData):currentData.section_html;
 
   if("section_html" in currentData){
     currentData.section_html=edited;
@@ -9193,12 +9361,8 @@ function collectArticle(){
 }
 
 async function saveArticle(){
-  if(!currentFile)return;
-  if(currentData){
-    const h=v40GetHtml();
-    if("section_html" in currentData)currentData.section_html=h;
-    else currentData.body_html=h;
-  }
+  if(!currentFile)return;\n  if(currentData&&currentData.blocks)currentData.section_html=renderBlocks(currentData);
+  
   
   
   if(sourceMode){
