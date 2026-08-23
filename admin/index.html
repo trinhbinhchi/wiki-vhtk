@@ -1213,6 +1213,18 @@ button,input,textarea,select{font:inherit}
   line-height:1.45;
 }
 </style>
+
+<style id="v52-html-miniadmin-style">
+#v42Side .v42-sec{display:none!important}
+#v52SideTools{display:block!important}
+#v52SideTools .v52-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#v52SideTools button{border:1px solid #d4dfd8;border-radius:7px;background:#fff;color:#355044;padding:7px 6px;font-size:10px;font-weight:800;cursor:pointer}
+#v52SideTools button:hover{background:#edf6f1}
+#v52SideTools label{display:block;margin:7px 0;color:#69776f;font-size:10px;font-weight:800}
+#v52SideTools input,#v52SideTools textarea{width:100%;box-sizing:border-box;margin-top:4px;padding:7px 8px;border:1px solid #d9e1dc;border-radius:7px;background:#fff;color:#2c4036;font:11px/1.4 "Segoe UI",Arial,sans-serif}
+.v52-note{margin:8px 10px;padding:8px;border-radius:8px;background:#eaf5ef;color:#315d4a;font-size:10px;line-height:1.45}
+#v52SelectedPath{padding:7px 8px;border-radius:7px;background:#f4f6f4;color:#52635a;font:10px/1.4 Consolas,monospace;word-break:break-all}
+</style>
 </head>
 <body>
 <div class="login" id="loginView">
@@ -1284,9 +1296,34 @@ button,input,textarea,select{font:inherit}
 
 
 <div id="v42Shell"><section id="v42Main">
-<div id="v42Top"><button id="v42Undo">↶ Undo</button><button id="v42Redo">↷ Redo</button><button id="v42Duplicate">⧉ Nhân bản</button><button id="v42Delete">🗑 Xóa</button><button id="v42Up">↑ Lên</button><button id="v42Down">↓ Xuống</button><button id="v50TogglePanel" type="button">☰ Panel</button><span id="v42State">Structured CMS</span></div>
+<div id="v42Top"><button id="v42Undo">↶ Undo</button><button id="v42Redo">↷ Redo</button><button id="v42Duplicate">⧉ Nhân bản</button><button id="v42Delete">🗑 Xóa</button><button id="v42Up">↑ Lên</button><button id="v42Down">↓ Xuống</button><button id="v50TogglePanel" type="button">☰ Panel</button><span id="v42State">HTML Mini Admin</span></div>
 <div id="v42Canvas"><iframe id="v51PublicFrame" title="Public 1:1 Editor"></iframe></div></section>
-<aside id="v42Side"><div class="v42-head">✦ Structured CMS</div>
+<aside id="v42Side"><div class="v42-head">✦ HTML Mini Admin</div>
+<div id="v52SideTools" class="v42-sec">
+  <div class="v52-note"><b>v52:</b> nội dung bài dùng trực tiếp <code>section_html</code>. Public thấy thế nào thì Admin sửa đúng DOM đó.</div>
+  <h4>Phần tử đang chọn</h4>
+  <div id="v52SelectedPath">Chưa chọn phần tử</div>
+  <label>Class<input id="v52Class"></label>
+  <label>Style<textarea id="v52Style" rows="3"></textarea></label>
+  <label id="v52HrefWrap" style="display:none">href<input id="v52Href"></label>
+  <label id="v52SrcWrap" style="display:none">src<input id="v52Src"></label>
+  <div class="v52-grid">
+    <button id="v52ApplyProps">✓ Áp dụng</button>
+    <button id="v52Parent">↑ Chọn cha</button>
+    <button id="v52Duplicate">⧉ Nhân bản</button>
+    <button id="v52Delete">🗑 Xóa</button>
+  </div>
+  <h4 style="margin-top:10px">Thêm nhanh</h4>
+  <div class="v52-grid">
+    <button data-v52add="p">✎ Văn bản</button>
+    <button data-v52add="h3">H Tiêu đề</button>
+    <button data-v52add="ul">• Danh sách</button>
+    <button data-v52add="box">▣ Khung</button>
+    <button data-v52add="img">▧ Ảnh</button>
+    <button data-v52add="table">▦ Bảng</button>
+  </div>
+</div>
+
 <div class="v42-sec"><h4>Thêm block</h4><div class="v42-grid2">
 <button data-v42add="paragraph">✎ Văn bản</button><button data-v42add="heading">H Tiêu đề</button><button data-v42add="list">• Danh sách</button><button data-v42add="callout">▣ Khung</button><button data-v42add="image">▧ Ảnh</button><button data-v42add="video">▶ Video</button><button data-v42add="table">▦ Bảng</button><button data-v42add="accordion">⌄ Accordion</button>
 </div></div>
@@ -1296,7 +1333,7 @@ button,input,textarea,select{font:inherit}
 <label id="v42TextWrap">Text<textarea id="v42Text" rows="4"></textarea></label><label id="v42HtmlWrap">HTML nâng cao<textarea id="v42Html" rows="6"></textarea></label>
 <label id="v42ItemsWrap">Danh sách - mỗi dòng 1 mục<textarea id="v42Items" rows="6"></textarea></label><label>Class<input id="v42Class"></label><label>Style<input id="v42Style"></label>
 <label id="v42SrcWrap">Src<input id="v42Src"></label><label id="v42AltWrap">Alt<input id="v42Alt"></label><button id="v42Apply">✓ Áp dụng</button></div></div>
-<div class="v42-sec"><div class="v42-tip">Dữ liệu chính: <b>blocks[]</b><br>Public vẫn dùng <b>section_html</b> được renderer tạo tự động.</div></div>
+<div class="v42-sec"><div class="v42-tip">Dữ liệu chính: <b>section_html</b><br>Public vẫn dùng <b>section_html</b> được renderer tạo tự động.</div></div>
 </aside></div>
 <div id="v40Shell">
 <section id="v40Main">
@@ -14534,6 +14571,291 @@ function v49CleanEditorAttrs(root){
   return root;
 }
 
+
+let v52SelectedEl=null;
+let v52History=[];
+let v52Future=[];
+let v52SyncTimer=null;
+
+function v52CurrentHtml(){
+  return currentData?.section_html || currentData?.legacy_section_html || "";
+}
+
+function v52CleanEditorArtifacts(root){
+  if(!root)return root;
+  root.querySelectorAll(".v51-block-handle,.v52-insert-handle").forEach(x=>x.remove());
+  root.querySelectorAll("[data-v51-block-index],[data-v52-selected]").forEach(x=>{
+    x.removeAttribute("data-v51-block-index");
+    x.removeAttribute("data-v52-selected");
+  });
+  root.querySelectorAll(".v51-selected").forEach(x=>x.classList.remove("v51-selected"));
+  root.querySelectorAll("[contenteditable]").forEach(x=>x.removeAttribute("contenteditable"));
+  root.querySelectorAll("[data-v51-editable]").forEach(x=>x.removeAttribute("data-v51-editable"));
+  return root;
+}
+
+function v52SyncHtml(pushHistory=true){
+  if(!v51Doc||!currentData)return;
+  const article=v51Doc.querySelector("article.article");
+  if(!article)return;
+  const clone=article.cloneNode(true);
+  v52CleanEditorArtifacts(clone);
+  currentData.section_html=clone.innerHTML;
+  currentData.content_mode="html";
+
+  if(pushHistory){
+    const s=currentData.section_html;
+    if(v52History[v52History.length-1]!==s){
+      v52History.push(s);
+      if(v52History.length>100)v52History.shift();
+    }
+    v52Future=[];
+  }
+  v50MarkDirty();
+}
+
+function v52ScheduleSync(){
+  clearTimeout(v52SyncTimer);
+  v52SyncTimer=setTimeout(()=>v52SyncHtml(true),250);
+}
+
+function v52Path(el){
+  if(!el)return "";
+  const a=[];
+  let cur=el;
+  while(cur && cur!==v51Doc.body && a.length<6){
+    let s=(cur.tagName||"").toLowerCase();
+    if(cur.id)s+="#"+cur.id;
+    const c=(cur.className&&typeof cur.className==="string")
+      ?cur.className.split(/\s+/).filter(Boolean).filter(x=>!x.startsWith("v51-")).slice(0,2):[];
+    if(c.length)s+="."+c.join(".");
+    a.unshift(s);
+    cur=cur.parentElement;
+  }
+  return a.join(" > ");
+}
+
+function v52UpdateProps(){
+  const el=v52SelectedEl;
+  if(!el){
+    $("#v52SelectedPath").textContent="Chưa chọn phần tử";
+    return;
+  }
+  $("#v52SelectedPath").textContent=v52Path(el);
+  $("#v52Class").value=(el.getAttribute("class")||"").replace(/\bv51-selected\b/g,"").trim();
+  $("#v52Style").value=el.getAttribute("style")||"";
+  const tag=(el.tagName||"").toLowerCase();
+  $("#v52HrefWrap").style.display=tag==="a"?"":"none";
+  $("#v52Href").value=tag==="a"?(el.getAttribute("href")||""):"";
+  $("#v52SrcWrap").style.display=["img","iframe","video","source"].includes(tag)?"":"none";
+  $("#v52Src").value=["img","iframe","video","source"].includes(tag)?(el.getAttribute("src")||""):"";
+}
+
+function v52Select(el,showToolbar=true){
+  if(!el||!v51Doc)return;
+  v51Doc.querySelectorAll(".v51-selected").forEach(x=>x.classList.remove("v51-selected"));
+  v52SelectedEl=el;
+  el.classList.add("v51-selected");
+  v52UpdateProps();
+
+  if(showToolbar){
+    const frame=$("#v51PublicFrame"),tb=$("#v50MiniToolbar");
+    if(frame&&tb){
+      const fr=frame.getBoundingClientRect(),r=el.getBoundingClientRect();
+      tb.classList.add("show");
+      const width=tb.offsetWidth||430;
+      let left=Math.min(window.innerWidth-width-12,Math.max(8,fr.left+r.right-width));
+      let top=fr.top+r.top-38;
+      if(top<8)top=fr.top+r.top+8;
+      tb.style.left=left+"px";
+      tb.style.top=top+"px";
+    }
+  }
+}
+
+function v52Semantic(node){
+  if(!node)return null;
+  if(node.nodeType===3)node=node.parentElement;
+  if(!node||!node.closest)return null;
+  const article=v51Doc?.querySelector("article.article");
+  if(!article)return null;
+  const sels=[
+    ".guide-callout",".notion-callout-block",".notice-box",".info-box",".warning-box",".success-box",
+    ".rework-video-box",".da-tau-section",".clean-table-wrap",
+    "table","figure","ul","ol","h1","h2","h3","h4","h5","h6","p","img","iframe","video","div"
+  ];
+  for(const s of sels){
+    const el=node.closest(s);
+    if(el&&article.contains(el))return el;
+  }
+  return null;
+}
+
+function v52EnableEditable(){
+  if(!v51Doc)return;
+  const article=v51Doc.querySelector("article.article");
+  if(!article)return;
+
+  article.querySelectorAll("h1,h2,h3,h4,h5,h6,p,li,td,th,a,strong,em,span").forEach(el=>{
+    if(el.querySelector("h1,h2,h3,h4,h5,h6,p,li,td,th"))return;
+    el.contentEditable="true";
+    el.spellcheck=false;
+    el.dataset.v51Editable="1";
+  });
+
+  article.querySelectorAll("div,section,header,footer,label").forEach(el=>{
+    const direct=[...el.childNodes].some(n=>n.nodeType===3&&(n.nodeValue||"").trim());
+    if(direct){
+      el.contentEditable="true";
+      el.spellcheck=false;
+      el.dataset.v51Editable="1";
+    }
+  });
+
+  article.addEventListener("input",v52ScheduleSync,true);
+  article.addEventListener("blur",()=>v52SyncHtml(true),true);
+
+  article.addEventListener("mousedown",e=>{
+    if(e.target.closest("[contenteditable=true]"))return;
+    const el=v52Semantic(e.target);
+    if(el)v52Select(el,true);
+  },true);
+
+  article.addEventListener("focusin",e=>{
+    const el=v52Semantic(e.target);
+    if(el)v52Select(el,true);
+  },true);
+}
+
+function v52DocHtml(sectionHtml){
+  return `<!doctype html><html><head><meta charset="utf-8"><style>${V51_PUBLIC_CSS}\n${v51EditorCss()}</style></head>
+  <body><main class="main v51-editor-main"><article class="article active">${sectionHtml}</article></main></body></html>`;
+}
+
+function v52RenderPublic(){
+  const frame=$("#v51PublicFrame");
+  if(!frame||!currentData)return;
+  frame.onload=()=>{
+    v51Doc=frame.contentDocument;
+    v51Win=frame.contentWindow;
+    v52SelectedEl=null;
+    v52EnableEditable();
+    v51Doc.addEventListener("selectionchange",v50RememberSelection);
+  };
+  frame.srcdoc=v52DocHtml(v52CurrentHtml());
+}
+
+function v52ApplyProps(){
+  const el=v52SelectedEl;if(!el)return;
+  let cls=$("#v52Class").value.trim();
+  if(cls)el.setAttribute("class",cls+" v51-selected");else el.setAttribute("class","v51-selected");
+  const sty=$("#v52Style").value.trim();
+  if(sty)el.setAttribute("style",sty);else el.removeAttribute("style");
+
+  const tag=(el.tagName||"").toLowerCase();
+  if(tag==="a"){
+    const x=$("#v52Href").value.trim();
+    if(x)el.setAttribute("href",x);else el.removeAttribute("href");
+  }
+  if(["img","iframe","video","source"].includes(tag)){
+    const x=$("#v52Src").value.trim();
+    if(x)el.setAttribute("src",x);else el.removeAttribute("src");
+  }
+  v52SyncHtml(true);
+  v52UpdateProps();
+}
+
+function v52Duplicate(){
+  if(!v52SelectedEl||!v52SelectedEl.parentNode)return;
+  const c=v52SelectedEl.cloneNode(true);
+  c.classList.remove("v51-selected");
+  v52SelectedEl.parentNode.insertBefore(c,v52SelectedEl.nextSibling);
+  v52SyncHtml(true);
+  v52Select(c,true);
+}
+
+function v52Delete(){
+  if(!v52SelectedEl)return;
+  const old=v52SelectedEl;
+  v52SelectedEl=null;
+  old.remove();
+  v52SyncHtml(true);
+  v52UpdateProps();
+  $("#v50MiniToolbar")?.classList.remove("show");
+}
+
+function v52Move(dir){
+  const el=v52SelectedEl;if(!el||!el.parentNode)return;
+  const p=el.parentNode;
+  if(dir<0){
+    const prev=el.previousElementSibling;if(prev)p.insertBefore(el,prev);
+  }else{
+    const next=el.nextElementSibling;if(next)p.insertBefore(next,el);
+  }
+  v52SyncHtml(true);
+  v52Select(el,true);
+}
+
+function v52Parent(){
+  const article=v51Doc?.querySelector("article.article");
+  const p=v52SelectedEl?.parentElement;
+  if(p&&p!==article)v52Select(p,true);
+}
+
+function v52Add(type){
+  if(!v51Doc)return;
+  const d=v51Doc;let el=null;
+  if(type==="p"){el=d.createElement("p");el.textContent="Nhập nội dung..."}
+  else if(type==="h3"){el=d.createElement("h3");el.textContent="Tiêu đề mới"}
+  else if(type==="ul"){el=d.createElement("ul");el.innerHTML="<li>Mục 1</li><li>Mục 2</li>"}
+  else if(type==="box"){el=d.createElement("div");el.className="guide-callout";el.innerHTML="<h3>Tiêu đề khung</h3><p>Nội dung...</p>"}
+  else if(type==="img"){el=d.createElement("img");el.src="assets/uploads/";el.alt="Ảnh"}
+  else if(type==="table"){el=d.createElement("table");el.innerHTML="<tr><th>Tiêu đề</th><th>Tiêu đề</th></tr><tr><td>Nội dung</td><td>Nội dung</td></tr>"}
+  if(!el)return;
+
+  if(v52SelectedEl&&v52SelectedEl.parentNode)v52SelectedEl.parentNode.insertBefore(el,v52SelectedEl.nextSibling);
+  else (v51Doc.querySelector(".article-content")||v51Doc.querySelector("article.article")).appendChild(el);
+
+  v52SyncHtml(true);
+  v52RenderPublic();
+}
+
+function v52Undo(){
+  if(v52History.length<2)return;
+  const cur=v52History.pop();
+  v52Future.push(cur);
+  currentData.section_html=v52History[v52History.length-1];
+  v52RenderPublic();
+}
+function v52Redo(){
+  if(!v52Future.length)return;
+  const h=v52Future.pop();
+  v52History.push(h);
+  currentData.section_html=h;
+  v52RenderPublic();
+}
+
+function v52Bind(){
+  $("#v52ApplyProps").onclick=v52ApplyProps;
+  $("#v52Parent").onclick=v52Parent;
+  $("#v52Duplicate").onclick=v52Duplicate;
+  $("#v52Delete").onclick=v52Delete;
+  document.querySelectorAll("[data-v52add]").forEach(b=>b.onclick=()=>v52Add(b.dataset.v52add));
+
+  $("#v42Duplicate").onclick=v52Duplicate;
+  $("#v42Delete").onclick=v52Delete;
+  $("#v42Up").onclick=()=>v52Move(-1);
+  $("#v42Down").onclick=()=>v52Move(1);
+  $("#v42Undo").onclick=v52Undo;
+  $("#v42Redo").onclick=v52Redo;
+
+  $("#v50DupBtn").onclick=v52Duplicate;
+  $("#v50UpBtn").onclick=()=>v52Move(-1);
+  $("#v50DownBtn").onclick=()=>v52Move(1);
+  $("#v50DeleteBtn").onclick=v52Delete;
+}
+document.addEventListener("DOMContentLoaded",v52Bind);
+
 let v51Doc=null;
 let v51Win=null;
 let v51BlockEls=[];
@@ -14655,7 +14977,7 @@ function v51MapBlocks(){
   v51BlockEls=[...content.children].filter(el=>!el.classList.contains("v51-block-handle"));
   const blocks=v42Blocks();
 
-  // Migration v48/v49 maps direct element children of article-content to blocks[].
+  // Migration v48/v49 maps direct element children of article-content to section_html.
   v51BlockEls.forEach((el,i)=>{
     if(i>=blocks.length)return;
     el.dataset.v51BlockIndex=String(i);
@@ -14760,26 +15082,7 @@ function v51SelectBlock(index,showToolbar=true){
   if(showToolbar)setTimeout(()=>v50ShowMiniToolbar(index),0);
 }
 
-function v51RenderPublic(){
-  const frame=$("#v51PublicFrame");
-  if(!frame||!currentData)return;
-  const token=++v51RenderToken;
-
-  // Always regenerate the exact Public section HTML from current structured data.
-  if(currentData.blocks)currentData.section_html=renderBlocks(currentData);
-  const section=currentData.section_html||currentData.legacy_section_html||"";
-
-  frame.onload=()=>{
-    if(token!==v51RenderToken)return;
-    v51Doc=frame.contentDocument;
-    v51Win=frame.contentWindow;
-    v51MapBlocks();
-    v51EnableHeader();
-    v51Doc.addEventListener("selectionchange",v50RememberSelection);
-    if(v42Selected>=0)v51SelectBlock(v42Selected,false);
-  };
-  frame.srcdoc=v51DocHtml(section);
-}
+function v51RenderPublic(){v52RenderPublic()}
 
 function v51FrameBlockRect(index){
   const frame=$("#v51PublicFrame");
@@ -14797,10 +15100,7 @@ function v51FrameBlockRect(index){
   };
 }
 
-function v42Render(){
-  v51RenderPublic();
-  v42Props();
-}
+function v42Render(){v52RenderPublic()}
 
 function v47MakeEditable(render,b,index){
   if(!render||!b)return;
@@ -14873,7 +15173,7 @@ function v42Delete(){if(v42Selected<0)return;v42Snapshot();v42Blocks().splice(v4
 function v42Move(d){if(v42Selected<0)return;const j=v42Selected+d;if(j<0||j>=v42Blocks().length)return;v42Snapshot();const[b]=v42Blocks().splice(v42Selected,1);v42Blocks().splice(j,0,b);v42Selected=j;v42Render()}
 function v42Undo(){if(v42History.length<2)return;const c=v42History.pop();v42Future.push(c);currentData.blocks=JSON.parse(v42History[v42History.length-1]);v42Selected=-1;v42Render()}
 function v42Redo(){if(!v42Future.length)return;const s=v42Future.pop();v42History.push(s);currentData.blocks=JSON.parse(s);v42Selected=-1;v42Render()}
-function v42Load(){v42Selected=-1;v42History=[];v42Future=[];v42Snapshot();v42Render()}
+function v42Load(){v52History=[v52CurrentHtml()];v52Future=[];v52RenderPublic()}
 function v42Bind(){$("#v42Undo").onclick=v42Undo;$("#v42Redo").onclick=v42Redo;$("#v42Duplicate").onclick=v42Duplicate;$("#v42Delete").onclick=v42Delete;$("#v42Up").onclick=()=>v42Move(-1);$("#v42Down").onclick=()=>v42Move(1);$("#v42Apply").onclick=v42Apply;document.querySelectorAll("[data-v42add]").forEach(b=>b.onclick=()=>v42Add(b.dataset.v42add))}
 document.addEventListener("DOMContentLoaded",v42Bind);
 function v40CurrentHtml(){return currentData?(currentData.section_html||currentData.body_html||""):""}
@@ -15718,6 +16018,7 @@ function v37BindUi(){
 function openArticle(name){
   const a=articles.find(x=>x.name===name);if(!a)return;
   currentFile=a.name;currentSha=a.sha;currentData=structuredClone(a.data);
+  v52History=[currentData.section_html||""];v52Future=[];
   v50RestoreDraftIfSafe();
   $("#articlePanel").classList.remove("hidden");$("#settingsPanel").classList.add("hidden");
   $("#currentTitle").textContent=currentData.title||name;
@@ -15781,7 +16082,8 @@ function v50CaptureCurrent(){
   currentData.icon=$("#iconInput").value.trim();
   currentData.order=Number($("#orderInput").value||1);
   currentData.visible=$("#visibleInput").checked;
-  if(currentData.blocks)currentData.section_html=renderBlocks(currentData);
+  if(v51Doc)v52SyncHtml(false);
+  currentData.content_mode="html";
   return currentData;
 }
 
@@ -15916,7 +16218,7 @@ async function v50FastSaveArticle(){
   setStatus("Đang commit nhanh...");
 
   try{
-    if(typeof v51SyncHeader==="function")v51SyncHeader();
+    if(v51Doc)v52SyncHtml(false);
     v50CaptureCurrent();
 
     const content=safeJSONStringify(currentData);
@@ -15973,12 +16275,8 @@ function v50RestoreSelection(){
 
 function v50Exec(cmd,value=null){
   if(!v51Doc||!v50RestoreSelection())return;
-  try{
-    v51Doc.execCommand("styleWithCSS",false,true);
-    v51Doc.execCommand(cmd,false,value);
-  }catch(e){console.warn(e)}
-  v51SyncBlock(v50ToolbarBlock);
-  v50MarkDirty();
+  try{v51Doc.execCommand("styleWithCSS",false,true);v51Doc.execCommand(cmd,false,value)}catch(e){console.warn(e)}
+  v52SyncHtml(true);
 }
 
 function v50ApplyFontSize(px){
@@ -15992,20 +16290,18 @@ function v50ApplyFontSize(px){
       font.replaceWith(span);
     });
   }catch(e){console.warn(e)}
-  v51SyncBlock(v50ToolbarBlock);
-  v50MarkDirty();
+  v52SyncHtml(true);
 }
 
-function v50ShowMiniToolbar(index){
-  v50ToolbarBlock=index;
-  const tb=$("#v50MiniToolbar");
-  const r=v51FrameBlockRect(index);
-  if(!tb||!r)return;
+function v50ShowMiniToolbar(index=0){
+  const tb=$("#v50MiniToolbar"),frame=$("#v51PublicFrame"),el=v52SelectedEl;
+  if(!tb||!frame||!el)return;
+  const fr=frame.getBoundingClientRect(),r=el.getBoundingClientRect();
   tb.classList.add("show");
   const width=tb.offsetWidth||430;
-  let left=Math.min(window.innerWidth-width-12,Math.max(8,r.right-width));
-  let top=r.top-38;
-  if(top<8)top=Math.min(window.innerHeight-40,r.top+8);
+  let left=Math.min(window.innerWidth-width-12,Math.max(8,fr.left+r.right-width));
+  let top=fr.top+r.top-38;
+  if(top<8)top=fr.top+r.top+8;
   tb.style.left=left+"px";
   tb.style.top=top+"px";
 }
