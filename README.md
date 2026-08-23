@@ -1,26 +1,24 @@
-# CMS v33 — Visual Block Controls
+# CMS v34 — Word-like Block Editor
 
-Giải quyết 2 nhu cầu chính:
-1. Viết nội dung giữa hai khối lớn.
-2. Sao chép nguyên khối giữ toàn bộ thuộc tính.
+## Text
+- Click trực tiếp vào chữ -> đặt caret/gõ/sửa như bình thường.
+- Bôi đen text -> dùng toolbar như editor thông thường.
 
-## Cách dùng
-- Click vào một box/khối.
-- Thanh nhỏ xuất hiện trên khối:
-  - + Trên
-  - + Dưới
-  - Sao chép
-  - Xóa
+## Chọn nguyên box
+- Click vào vùng trống/padding của box.
+- Hoặc Alt+click ở bất kỳ đâu trong box.
+- Box được viền xanh để báo đang chọn nguyên khối.
 
-## Thêm giữa hai khối
-- Chọn khối dưới -> + Trên
-hoặc
-- Chọn khối trên -> + Dưới
-=> xuất hiện paragraph mới và con trỏ được đặt sẵn để gõ.
+Khi box được chọn:
+- Ctrl+C -> copy nguyên outerHTML.
+- Ctrl+V -> paste nguyên block cùng cấp.
+- Delete/Backspace -> xóa nguyên box.
+- Toolbar nổi: Copy khối / Nhân bản / + Trên / + Dưới / Xóa.
 
-## Sao chép khối
-- Chọn box như “Giới Hạn Vật Phẩm”
-- Bấm Sao chép
-=> clone nguyên outerHTML, giữ class/style/wrapper/list.
+## Chèn nội dung giữa hai box
+- Có dấu + nhỏ giữa các khối.
+- Click dấu + -> tạo paragraph mới và đặt caret sẵn.
 
-Toolbar này chỉ tồn tại trong editor và bị loại bỏ trước khi Save/Commit.
+## Lưu
+- Toàn bộ rail/toolbar/selection class của editor được loại bỏ trước Save/Commit.
+- Không làm bẩn HTML public.

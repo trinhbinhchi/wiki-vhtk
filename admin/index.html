@@ -270,6 +270,68 @@ button,input,textarea,select{font:inherit}
 .v33-block-toolbar button:hover{background:#edf6f1}
 .v33-block-toolbar .danger{color:#a5453e}
 </style>
+
+<style id="v34-wordlike-style">
+.v34-selected-block{
+  outline:3px solid rgba(35,110,80,.42)!important;
+  outline-offset:3px!important;
+}
+.v34-insert-rail{
+  position:relative!important;
+  display:block!important;
+  height:18px!important;
+  min-height:18px!important;
+  margin:2px 0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  cursor:pointer!important;
+}
+.v34-insert-rail::before{
+  content:"+";
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:22px;
+  height:22px;
+  line-height:20px;
+  text-align:center;
+  border:1px solid rgba(40,90,68,.25);
+  border-radius:50%;
+  background:#fff;
+  color:#2f6f54;
+  font:700 15px/20px "Segoe UI",Arial,sans-serif;
+  opacity:0;
+  transition:.15s;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+.v34-insert-rail:hover::before{opacity:1}
+.v34-block-popover{
+  position:absolute;
+  z-index:100000;
+  display:none;
+  gap:4px;
+  padding:5px;
+  border:1px solid rgba(50,80,63,.18);
+  border-radius:9px;
+  background:rgba(255,255,255,.98);
+  box-shadow:0 7px 22px rgba(0,0,0,.12);
+  font-family:"Segoe UI",Arial,sans-serif;
+}
+.v34-block-popover button{
+  border:1px solid #d6e0d9;
+  border-radius:6px;
+  background:#fff;
+  color:#355044;
+  padding:4px 7px;
+  font-size:11px;
+  font-weight:700;
+  cursor:pointer;
+}
+.v34-block-popover button:hover{background:#edf6f1}
+.v34-block-popover .danger{color:#a5453e}
+</style>
 </head>
 <body>
 <div class="login" id="loginView">
@@ -338,7 +400,7 @@ button,input,textarea,select{font:inherit}
 <span class="v26-mode-indicator" id="v26ModeIndicator">Chế độ: Trực quan</span></div>
 <div class="editor" contenteditable="true" id="editor"></div><div class="public-live-wrap" id="publicLiveWrap"><div class="preview-badge">PUBLIC ARTICLE • sửa trực tiếp</div><iframe id="publicLiveFrame" title="Trang Public thật"></iframe></div>
 <textarea class="source" id="sourceEditor" spellcheck="false"></textarea>
-<div class="help">V33: click vào một khối lớn để hiện thanh thao tác ngay trên khối: ＋ Trên, ＋ Dưới, ⧉ Sao chép, 🗑 Xóa. Muốn viết giữa hai box chỉ cần chọn box rồi bấm ＋ Trên/＋ Dưới. Sao chép lấy nguyên outerHTML nên giữ toàn bộ thuộc tính.</div>
+<div class="help">V34: click chữ để sửa như Word; click vùng trống/padding của box hoặc Alt+click để chọn nguyên box. Khi box được chọn, Ctrl+C copy nguyên outerHTML. Giữa các box có dấu + để chèn đoạn mới ngay tại vị trí đó.</div>
 </div>
 </section>
 <section class="settings-panel hidden" id="settingsPanel">
@@ -405,7 +467,8 @@ function getVisualHTML(){
   const sec=selectedPublicSection();
   if(!sec)return $("#editor").innerHTML||"";
   const clone=sec.cloneNode(true);
-  v33CleanEditorUIFromClone(clone);
+  v34CleanEditorArtifacts(clone);
+  if(typeof v33CleanEditorUIFromClone==="function")v33CleanEditorUIFromClone(clone);
   return clone.innerHTML;
 }
 function syncFromPublic(){
@@ -413,7 +476,8 @@ function syncFromPublic(){
   let html="";
   if(sec){
     const clone=sec.cloneNode(true);
-    v33CleanEditorUIFromClone(clone);
+    v34CleanEditorArtifacts(clone);
+    if(typeof v33CleanEditorUIFromClone==="function")v33CleanEditorUIFromClone(clone);
     html=clone.innerHTML;
   }else{
     html=$("#editor").innerHTML||"";
@@ -852,6 +916,319 @@ function v33CleanEditorUIFromClone(clone){
   });
   return clone;
 }
+
+let v34SelectedBlock=null;
+let v34Popover=null;
+let v34BlockClipboard=null;
+
+function v34ArticleRoot(){
+  return selectedPublicSection();
+}
+
+function v34IsTextLikeTarget(el){
+  if(!el || !el.closest)return false;
+  return !!el.closest("a,button,input,textarea,select,option,span,strong,b,em,i,u,s,code,mark,small,label");
+}
+
+function v34FindMajorBlock(node,root){
+  if(!node)return null;
+  if(node.nodeType===3)node=node.parentElement;
+  if(!node || !node.closest)return null;
+
+  /* Prefer visually meaningful containers. */
+  const sels=[
+    ".notice-box",".info-box",".warning-box",".success-box",
+    ".callout",".quote-box",".guide-box",".content-box",".section-block",
+    ".clean-table-wrap",".rework-video-box",".da-tau-section",
+    ".notion-callout",".notion-text-block",
+    ".article-card",".feature-card",".reward-card",
+    "table","figure","blockquote",
+    "ul","ol",
+    "div"
+  ];
+
+  for(const sel of sels){
+    const el=node.closest(sel);
+    if(el && root.contains(el) && el!==root){
+      /* Prefer the highest meaningful container before root. */
+      let cur=el;
+      while(cur.parentElement && cur.parentElement!==root){
+        const p=cur.parentElement;
+        if(p.matches && p.matches(
+          ".notice-box,.info-box,.warning-box,.success-box,.callout,.quote-box,.guide-box,.content-box,.section-block,.clean-table-wrap,.rework-video-box,.da-tau-section,.notion-callout,.notion-text-block,.article-card,.feature-card,.reward-card"
+        )){
+          cur=p;
+        }else break;
+      }
+      return cur;
+    }
+  }
+  return null;
+}
+
+function v34ClearSelection(){
+  if(v34SelectedBlock){
+    v34SelectedBlock.classList.remove("v34-selected-block");
+  }
+  v34SelectedBlock=null;
+  if(v34Popover)v34Popover.style.display="none";
+  const st=$("#v32CopyStatus");
+  if(st)st.textContent="Copy: thông minh";
+}
+
+function v34SelectBlock(block){
+  if(!block)return;
+  if(v34SelectedBlock && v34SelectedBlock!==block){
+    v34SelectedBlock.classList.remove("v34-selected-block");
+  }
+  v34SelectedBlock=block;
+  block.classList.add("v34-selected-block");
+  v34ShowPopover(block);
+  const st=$("#v32CopyStatus");
+  if(st)st.textContent="Khối: đã chọn";
+  setStatus("Đã chọn nguyên khối • Ctrl+C để copy","ok");
+}
+
+function v34CreatePopover(d){
+  const bar=d.createElement("div");
+  bar.className="v34-block-popover";
+  bar.dataset.vhtkEditorOnly="1";
+  bar.innerHTML=`
+    <button data-act="copy">⧉ Copy khối</button>
+    <button data-act="dup">⧉ Nhân bản</button>
+    <button data-act="before">＋ Trên</button>
+    <button data-act="after">＋ Dưới</button>
+    <button data-act="delete" class="danger">🗑 Xóa</button>
+  `;
+  d.body.appendChild(bar);
+
+  bar.addEventListener("mousedown",e=>e.preventDefault());
+  bar.addEventListener("click",async e=>{
+    const btn=e.target.closest("button[data-act]");
+    if(!btn || !v34SelectedBlock)return;
+    const act=btn.dataset.act;
+
+    if(act==="copy"){
+      v34BlockClipboard=v34SelectedBlock.outerHTML;
+      try{
+        await navigator.clipboard.writeText(v34BlockClipboard);
+      }catch(e){}
+      setStatus("Đã copy nguyên outerHTML của khối","ok");
+    }
+    if(act==="dup")v34DuplicateSelected();
+    if(act==="before")v34InsertParagraph(v34SelectedBlock,-1);
+    if(act==="after")v34InsertParagraph(v34SelectedBlock,1);
+    if(act==="delete")v34DeleteSelected();
+  });
+
+  return bar;
+}
+
+function v34ShowPopover(block){
+  const d=publicDoc();
+  if(!d || !block)return;
+  if(!v34Popover)v34Popover=v34CreatePopover(d);
+
+  const r=block.getBoundingClientRect();
+  const x=Math.max(8,r.left + d.defaultView.scrollX);
+  const y=Math.max(8,r.top + d.defaultView.scrollY - 36);
+  v34Popover.style.left=x+"px";
+  v34Popover.style.top=y+"px";
+  v34Popover.style.display="flex";
+}
+
+function v34InsertParagraph(block,direction){
+  const d=publicDoc();
+  if(!d || !block || !block.parentNode)return;
+  const p=d.createElement("p");
+  p.innerHTML="<br>";
+  if(direction<0)block.parentNode.insertBefore(p,block);
+  else block.parentNode.insertBefore(p,block.nextSibling);
+
+  v34ClearSelection();
+
+  const sel=d.getSelection();
+  const range=d.createRange();
+  range.selectNodeContents(p);
+  range.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(range);
+  p.focus();
+  syncFromPublic();
+  setStatus(direction<0?"Đã thêm đoạn phía trên":"Đã thêm đoạn phía dưới","ok");
+}
+
+function v34DuplicateSelected(){
+  if(!v34SelectedBlock || !v34SelectedBlock.parentNode)return;
+  const clone=v34SelectedBlock.cloneNode(true);
+  clone.classList.remove("v34-selected-block");
+  v34SelectedBlock.parentNode.insertBefore(clone,v34SelectedBlock.nextSibling);
+  v34SelectBlock(clone);
+  syncFromPublic();
+  setStatus("Đã nhân bản nguyên khối","ok");
+}
+
+function v34DeleteSelected(){
+  if(!v34SelectedBlock || !v34SelectedBlock.parentNode)return;
+  const old=v34SelectedBlock;
+  v34ClearSelection();
+  old.remove();
+  syncFromPublic();
+  setStatus("Đã xóa nguyên khối","ok");
+}
+
+function v34MakeRail(d){
+  const rail=d.createElement("div");
+  rail.className="v34-insert-rail";
+  rail.dataset.vhtkEditorOnly="1";
+  rail.setAttribute("contenteditable","false");
+  rail.title="Thêm nội dung tại đây";
+  rail.addEventListener("click",e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    const p=d.createElement("p");
+    p.innerHTML="<br>";
+    rail.parentNode.insertBefore(p,rail.nextSibling);
+
+    const sel=d.getSelection();
+    const range=d.createRange();
+    range.selectNodeContents(p);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    p.focus();
+
+    setTimeout(()=>v34RefreshRails(d,v34ArticleRoot()),0);
+    syncFromPublic();
+    setStatus("Đã tạo đoạn mới tại vị trí này","ok");
+  });
+  return rail;
+}
+
+function v34RefreshRails(d,root){
+  if(!d || !root)return;
+  root.querySelectorAll(".v34-insert-rail").forEach(el=>el.remove());
+
+  const children=[...root.children].filter(el=>{
+    return !el.matches(".v34-insert-rail,.v34-block-popover");
+  });
+
+  if(!children.length){
+    root.appendChild(v34MakeRail(d));
+    return;
+  }
+
+  root.insertBefore(v34MakeRail(d),children[0]);
+  for(const child of children){
+    child.insertAdjacentElement("afterend",v34MakeRail(d));
+  }
+}
+
+function v34CleanEditorArtifacts(clone){
+  if(!clone)return clone;
+  clone.querySelectorAll(
+    ".v34-insert-rail,.v34-block-popover,[data-vhtk-editor-only='1']"
+  ).forEach(el=>el.remove());
+  clone.querySelectorAll(".v34-selected-block").forEach(el=>{
+    el.classList.remove("v34-selected-block");
+  });
+  return clone;
+}
+
+function v34HandleCopy(e,d,root){
+  /* If a whole block is explicitly selected, Ctrl+C always means block copy. */
+  if(v34SelectedBlock){
+    e.preventDefault();
+    v34BlockClipboard=v34SelectedBlock.outerHTML;
+    e.clipboardData.setData("text/html",v34BlockClipboard);
+    e.clipboardData.setData("text/plain",v34SelectedBlock.innerText||v34SelectedBlock.textContent||"");
+    e.clipboardData.setData("application/x-vhtk-whole-block",v34BlockClipboard);
+    setStatus("Đã copy nguyên khối kèm class/style/wrapper","ok");
+  }
+}
+
+function v34HandlePaste(e,d,root){
+  const custom=e.clipboardData && e.clipboardData.getData("application/x-vhtk-whole-block");
+  if(custom && v34SelectedBlock){
+    e.preventDefault();
+    const holder=d.createElement("div");
+    holder.innerHTML=custom;
+    const node=holder.firstElementChild;
+    if(node){
+      v34SelectedBlock.parentNode.insertBefore(node,v34SelectedBlock.nextSibling);
+      v34SelectBlock(node);
+      v34RefreshRails(d,root);
+      syncFromPublic();
+      setStatus("Đã dán nguyên khối cùng cấp","ok");
+    }
+  }
+}
+
+function installWordLikeBlockEditor(d,root){
+  if(!d || !root || root.dataset.v34Installed==="1")return;
+  root.dataset.v34Installed="1";
+
+  v34RefreshRails(d,root);
+
+  /* Text click = normal text editing.
+     Blank/padding click on a major box = select whole box. */
+  root.addEventListener("mousedown",e=>{
+    if(e.target.closest(".v34-insert-rail,.v34-block-popover"))return;
+
+    const block=v34FindMajorBlock(e.target,root);
+    if(!block){
+      v34ClearSelection();
+      return;
+    }
+
+    const target=e.target;
+
+    /* Clicking the block itself (padding/background) selects it.
+       Clicking text/content descendants keeps natural caret editing. */
+    if(target===block || (!v34IsTextLikeTarget(target) && target.children.length===0 && !target.textContent.trim())){
+      e.preventDefault();
+      e.stopPropagation();
+      v34SelectBlock(block);
+      return;
+    }
+
+    /* Alt+click anywhere inside a block selects the whole block. */
+    if(e.altKey){
+      e.preventDefault();
+      e.stopPropagation();
+      v34SelectBlock(block);
+      return;
+    }
+
+    /* Normal text editing clears block-selection mode. */
+    if(v34SelectedBlock && !v34SelectedBlock.contains(target)){
+      v34ClearSelection();
+    }
+  },true);
+
+  root.addEventListener("copy",e=>v34HandleCopy(e,d,root),true);
+  root.addEventListener("paste",e=>v34HandlePaste(e,d,root),true);
+
+  d.addEventListener("keydown",e=>{
+    if(e.key==="Escape")v34ClearSelection();
+
+    if(v34SelectedBlock && (e.key==="Delete" || e.key==="Backspace") && !e.ctrlKey && !e.metaKey){
+      const sel=d.getSelection();
+      if(!sel || sel.isCollapsed){
+        e.preventDefault();
+        v34DeleteSelected();
+      }
+    }
+  },true);
+
+  d.addEventListener("scroll",()=>{
+    if(v34SelectedBlock)v34ShowPopover(v34SelectedBlock);
+  },true);
+
+  d.defaultView.addEventListener("resize",()=>{
+    if(v34SelectedBlock)v34ShowPopover(v34SelectedBlock);
+  });
+}
 function ensurePublicEditMode(){
   const d=publicDoc();
   if(!d || !currentData)return false;
@@ -916,7 +1293,7 @@ function ensurePublicEditMode(){
   sec.addEventListener("blur",syncFromPublic);
   enableSimpleVisualEditor(d,sec);
   installSmartSelectionCopy(d,sec);
-  installVisualBlockControls(d,sec);
+  installWordLikeBlockEditor(d,sec);
 
   if(!d.getElementById("vhtk-admin-live-style")){
     const marker=d.createElement("style");
